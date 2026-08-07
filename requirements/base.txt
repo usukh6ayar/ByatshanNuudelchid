@@ -1,0 +1,31 @@
+Django==5.2.6
+psycopg[binary]==3.2.9
+
+# Task queue — RFP §549 (the system must not freeze while generating reports)
+celery[redis]==5.5.3
+django-celery-beat==2.8.1
+# redis is pulled in by celery[redis]; kombu pins it to <=5.2.1, so do not
+# add a separate pin here — it only creates an unsolvable conflict.
+
+# Environment-based configuration — RFP §14, §690
+django-environ==0.12.0
+
+# Images — RFP §4.4 (HEIC), §17 (thumbnails), §968 (WebP)
+Pillow==11.3.0
+pillow-heif==0.22.0
+
+# Detect the real file type from content — RFP §684
+python-magic==0.4.27
+
+# PDF with Mongolian Cyrillic — RFP §10.3
+weasyprint==66.0
+
+# Per-row change history — RFP §4.1
+django-simple-history==3.10.1
+
+# S3-compatible object storage — RFP §14
+django-storages[s3]==1.14.6
+
+# Web server
+gunicorn==23.0.0
+whitenoise==6.9.0

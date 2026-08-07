@@ -1,0 +1,26 @@
+{% load i18n %}<!-- All user-facing text is in Mongolian — RFP §611 -->
+<main class="auth">
+  <h1>Нэвтрэх</h1>
+
+  {% if form.errors %}
+    <p role="alert" class="error">
+      Нэвтрэх нэр эсвэл нууц үг буруу байна.
+    </p>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+
+    <label for="id_username">Нэвтрэх нэр, и-мэйл эсвэл утасны дугаар</label>
+    <input type="text" name="username" id="id_username"
+           autocomplete="username" autofocus required>
+
+    <label for="id_password">Нууц үг</label>
+    <input type="password" name="password" id="id_password"
+           autocomplete="current-password" required>
+
+    <button type="submit">Нэвтрэх</button>
+  </form>
+
+  <a href="#">Нууц үгээ мартсан</a>
+</main>

@@ -1,0 +1,15 @@
+-r base.txt
+
+pytest==8.4.2
+pytest-django==4.11.1
+pytest-cov==6.2.1
+factory-boy==3.3.3
+
+# Inspect generated PDFs — RFP §10.3. WeasyPrint writes object streams, so
+# byte-level greps do not work; the file has to be parsed.
+pypdf==6.1.1
+
+# Catch N+1 queries — CLAUDE.md §3.5
+django-debug-toolbar==6.0.0
+
+ruff==0.13.1
