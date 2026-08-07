@@ -58,6 +58,91 @@ class BaseModel(models.Model):
         return models.Model.delete(self, *args, **kwargs)
 
 
+class AuditAction(models.TextChoices):
+    """RFP §971 — who viewed, edited or downloaded what, and when."""
+
+    LOGIN = "login", "Нэвтэрсэн"
+    LOGIN_FAILED = "login_failed", "Нэвтрэх оролдлого амжилтгүй"
+    LOGOUT = "logout", "Гарсан"
+    VIEW = "view", "Үзсэн"
+    CREATE = "create", "Үүсгэсэн"
+    UPDATE = "update", "Зассан"
+    DELETE = "delete", "Устгасан"
+    RESTORE = "restore", "Сэргээсэн"
+    DOWNLOAD = "download", "Татсан"
+    EXPORT = "export", "Экспортолсон"
+    PERMISSION_CHANGE = "permission_change", "Эрх өөрчилсөн"
+    PASSWORD_RESET = "password_reset", "Нууц үг сэргээсэн"
+
+
+class AuditLog(models.Model):
+    """Append-only. RFP §15, §16, §971.
+
+    Deliberately not a :class:`BaseModel`: no soft delete, no ``updated_at``,
+    no authorship columns. A row that can be edited or removed is not an
+    audit record.
+
+    ``view`` is recorded selectively — opening a child's portfolio, viewing a
+    report, downloading a file. Not every page load, or the table grows by
+    hundreds of thousands of rows a day for no investigative value.
+    """
+
+    kindergarten = models.ForeignKey(
+        "tenants.Kindergarten", null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="+",
+    )
+    actor_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="+",
+    )
+    actor_role = models.CharField(max_length=20, blank=True)
+    actor_label = models.CharField(
+        max_length=200, blank=True,
+        help_text="Хэрэглэгч устсан ч хэн байсныг мэдэхийн тулд",
+    )
+
+    action = models.CharField(max_length=32, choices=AuditAction.choices,
+                              db_index=True)
+    object_type = models.CharField(max_length=100, blank=True)
+    object_id = models.CharField(max_length=64, blank=True)
+
+    child = models.ForeignKey(
+        "children.Child", null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="+",
+        help_text="Хүүхдийн мэдээлэлд хандсан бол — §971-ээр шүүх боломж",
+    )
+
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=400, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = "үйлдлийн бүртгэл"
+        verbose_name_plural = "үйлдлийн бүртгэл"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["child", "-created_at"]),
+            models.Index(fields=["actor_user", "-created_at"]),
+            models.Index(fields=["kindergarten", "-created_at"]),
+            models.Index(fields=["action", "-created_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.created_at:%Y-%m-%d %H:%M} {self.actor_label} {self.action}"
+
+    def save(self, *args, **kwargs):
+        if self.pk is not None:
+            raise NotImplementedError(
+                "AuditLog is append-only — an editable audit record is worthless."
+            )
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise NotImplementedError("AuditLog is append-only.")
+
+
 class TenantScopedModel(BaseModel):
     """Adds the denormalized kindergarten pointer — CLAUDE.md §3.2.
 

@@ -160,6 +160,58 @@ class Membership(BaseModel):
         return f"{self.user} — {self.get_role_display()} @ {where}"
 
 
+class LoginAttempt(models.Model):
+    """RFP §3.1 — throttle repeated failed logins.
+
+    Append-only and outside the request transaction (CLAUDE.md §6.2): if the
+    counter rolled back with a failed request, the lockout would never engage.
+    """
+
+    identifier = models.CharField(max_length=254, db_index=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    succeeded = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = "нэвтрэх оролдлого"
+        verbose_name_plural = "нэвтрэх оролдлогууд"
+        indexes = [
+            models.Index(fields=["identifier", "succeeded", "-created_at"]),
+            models.Index(fields=["ip_address", "succeeded", "-created_at"]),
+        ]
+
+    def __str__(self) -> str:
+        outcome = "амжилттай" if self.succeeded else "амжилтгүй"
+        return f"{self.identifier} — {outcome}"
+
+
+class PasswordResetToken(models.Model):
+    """RFP §3.1 — "forgot password".
+
+    Only the hash is stored. A leaked database must not yield working reset
+    links.
+    """
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE,
+                             related_name="reset_tokens")
+    token_hash = models.CharField(max_length=64, unique=True, db_index=True)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    requested_ip = models.GenericIPAddressField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "нууц үг сэргээх түлхүүр"
+        verbose_name_plural = "нууц үг сэргээх түлхүүрүүд"
+
+    def __str__(self) -> str:
+        return f"{self.user} — {self.expires_at:%Y-%m-%d %H:%M}"
+
+    @property
+    def is_usable(self) -> bool:
+        return self.used_at is None and self.expires_at > timezone.now()
+
+
 class TeacherProfile(BaseModel):
     """RFP §3.3."""
 

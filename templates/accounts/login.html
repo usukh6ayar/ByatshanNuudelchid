@@ -1,19 +1,27 @@
-{% load i18n %}<!-- All user-facing text is in Mongolian — RFP §611 -->
-<main class="auth">
-  <h1>Нэвтрэх</h1>
+{% extends "base_auth.html" %}
+{# All user-facing text is in Mongolian — RFP §611 #}
 
-  {% if form.errors %}
-    <p role="alert" class="error">
-      Нэвтрэх нэр эсвэл нууц үг буруу байна.
-    </p>
+{% block title %}Нэвтрэх{% endblock %}
+
+{% block content %}
+  <h1>Нэвтрэх</h1>
+  <p class="sub">Хүүхдийн хөгжлийн цахим хувийн хавтас</p>
+
+  {% if error %}
+    <p class="error" role="alert">{{ error }}</p>
+    {% if retries_left %}
+      <p class="hint">Үлдсэн оролдлого: {{ retries_left }}</p>
+    {% endif %}
   {% endif %}
 
-  <form method="post">
+  <form method="post" novalidate>
     {% csrf_token %}
 
     <label for="id_username">Нэвтрэх нэр, и-мэйл эсвэл утасны дугаар</label>
     <input type="text" name="username" id="id_username"
-           autocomplete="username" autofocus required>
+           value="{{ identifier|default:'' }}"
+           autocomplete="username" autocapitalize="none"
+           autofocus required>
 
     <label for="id_password">Нууц үг</label>
     <input type="password" name="password" id="id_password"
@@ -22,5 +30,7 @@
     <button type="submit">Нэвтрэх</button>
   </form>
 
-  <a href="#">Нууц үгээ мартсан</a>
-</main>
+  <p class="links">
+    <a href="{% url 'accounts:password_reset' %}">Нууц үгээ мартсан уу?</a>
+  </p>
+{% endblock %}

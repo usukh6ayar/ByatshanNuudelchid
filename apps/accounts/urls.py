@@ -1,13 +1,16 @@
-from django.contrib.auth import views as auth_views
 from django.urls import path
+
+from . import views
 
 app_name = "accounts"
 
 urlpatterns = [
-    path(
-        "nevtreh/",
-        auth_views.LoginView.as_view(template_name="accounts/login.html"),
-        name="login",
-    ),
-    path("garah/", auth_views.LogoutView.as_view(), name="logout"),
+    path("nevtreh/", views.login_view, name="login"),
+    path("garah/", views.logout_view, name="logout"),
+    path("nuuts-ug-sergeeh/", views.password_reset_request,
+         name="password_reset"),
+    path("nuuts-ug-sergeeh/shineelegdlee/", views.password_reset_complete,
+         name="password_reset_complete"),
+    path("nuuts-ug-sergeeh/<str:token>/", views.password_reset_confirm,
+         name="password_reset_confirm"),
 ]

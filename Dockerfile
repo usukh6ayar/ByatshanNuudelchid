@@ -26,6 +26,9 @@ RUN fc-cache -f
 
 WORKDIR /app
 
+# WhiteNoise warns on every request if this is missing.
+RUN mkdir -p /app/staticfiles
+
 COPY requirements/ requirements/
 ARG REQUIREMENTS=requirements/dev.txt
 RUN pip install --upgrade pip && pip install -r ${REQUIREMENTS}
