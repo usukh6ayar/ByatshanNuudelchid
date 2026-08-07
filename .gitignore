@@ -1,0 +1,42 @@
+# Нууц тохиргоо — ТЗ §690, §14
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Django
+*.log
+db.sqlite3
+/staticfiles/
+/mediafiles/
+/media/
+
+# Хүүхдийн бодит өгөгдөл хөгжүүлэлтийн орчинд орохгүй — ТЗ §707
+/local_data/
+*.dump
+*.sql.gz
+
+# Node (frontend build хэрэгсэл)
+node_modules/
+/static/dist/
+
+# Засварлагч, OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
