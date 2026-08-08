@@ -45,3 +45,6 @@ node_modules/
 *.swp
 !staticfiles/.gitkeep
 !static/.gitkeep
+
+# Duplicate design exports — see docs/design/INDEX.md
+docs/design/screens/_duplicates/
