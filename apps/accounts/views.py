@@ -151,3 +151,92 @@ def password_reset_confirm(request, token):
 
 def password_reset_complete(request):
     return render(request, "accounts/password_reset_complete.html")
+
+
+# ---------------------------------------------------------------- activation
+# RFP §2.1, §3.5. Staff create the account; the person sets their own password
+# here, so staff never learn it.
+
+
+def _validated_password(request, context) -> str | None:
+    """Shared password checks for both activation paths."""
+    password = request.POST.get("password", "")
+    if password != request.POST.get("password_confirm", ""):
+        context["error"] = "Хоёр нууц үг таарахгүй байна."
+        return None
+    try:
+        validate_password(password)
+    except ValidationError as exc:
+        context["error"] = " ".join(exc.messages)
+        return None
+    return password
+
+
+@never_cache
+@csrf_protect
+def activate_by_token(request, token):
+    """Email path: a single-use link."""
+    invitation = services.resolve_invitation_token(token)
+    if invitation is None:
+        return render(request, "accounts/activate_invalid.html", status=400)
+
+    context: dict = {"invited_user": invitation.user}
+
+    if request.method == "POST":
+        password = _validated_password(request, context)
+        if password is not None:
+            services.activate_invitation(
+                request=request, invitation=invitation, password=password
+            )
+            return redirect("accounts:activate_done")
+
+    return render(request, "accounts/activate.html", context)
+
+
+@never_cache
+@csrf_protect
+@transaction.non_atomic_requests
+def activate_by_code(request):
+    """Paper path: identifier plus the six-digit code the teacher wrote down.
+
+    Throttled like login (RFP §3.1). Six digits alone would be searchable;
+    pairing it with the identifier and counting attempts is what makes it
+    safe. ``non_atomic_requests`` for the same reason as the login view —
+    the counter must survive a failed request (CLAUDE.md §6.2).
+    """
+    context: dict = {"by_code": True}
+
+    if request.method == "POST":
+        identifier = request.POST.get("identifier", "").strip()
+        code = request.POST.get("code", "").strip()
+        context["identifier"] = identifier
+
+        if services.is_locked_out(identifier, services.client_ip(request)):
+            context["error"] = (
+                f"Хэт олон удаа буруу оролдсон тул түр хаагдлаа. "
+                f"{settings.LOGIN_LOCKOUT_MINUTES} минутын дараа оролдоно уу."
+            )
+            return render(request, "accounts/activate.html", context)
+
+        invitation = services.resolve_invitation_code(identifier, code)
+        if invitation is None:
+            services.record_attempt(
+                identifier=identifier,
+                ip=services.client_ip(request),
+                succeeded=False,
+            )
+            context["error"] = "Код буруу эсвэл хугацаа нь дууссан байна."
+            return render(request, "accounts/activate.html", context)
+
+        password = _validated_password(request, context)
+        if password is not None:
+            services.activate_invitation(
+                request=request, invitation=invitation, password=password
+            )
+            return redirect("accounts:activate_done")
+
+    return render(request, "accounts/activate.html", context)
+
+
+def activate_done(request):
+    return render(request, "accounts/activate_done.html")

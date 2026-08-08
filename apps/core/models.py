@@ -73,6 +73,8 @@ class AuditAction(models.TextChoices):
     EXPORT = "export", "Экспортолсон"
     PERMISSION_CHANGE = "permission_change", "Эрх өөрчилсөн"
     PASSWORD_RESET = "password_reset", "Нууц үг сэргээсэн"
+    INVITE = "invite", "Урилга үүсгэсэн"
+    ACTIVATE = "activate", "Бүртгэл идэвхжүүлсэн"
 
 
 class AuditLog(models.Model):

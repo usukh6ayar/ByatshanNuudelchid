@@ -1,0 +1,58 @@
+{% extends "base_auth.html" %}
+
+{% block title %}Бүртгэл идэвхжүүлэх{% endblock %}
+
+{% block content %}
+  <h1>Бүртгэл идэвхжүүлэх</h1>
+
+  {% if by_code %}
+    <p class="sub">
+      Цэцэрлэгээс өгсөн 6 оронтой кодоо оруулж, нууц үгээ өөрөө тохируулна уу.
+    </p>
+  {% else %}
+    <p class="sub">
+      Сайн байна уу, {{ invited_user }}. Нууц үгээ тохируулснаар бүртгэл
+      идэвхжинэ.
+    </p>
+  {% endif %}
+
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    {% if by_code %}
+      <label for="id_identifier">Утасны дугаар эсвэл и-мэйл</label>
+      <input type="text" name="identifier" id="id_identifier"
+             value="{{ identifier|default:'' }}"
+             autocomplete="username" autocapitalize="none" autofocus required>
+
+      <label for="id_code">Идэвхжүүлэх код</label>
+      <input type="text" name="code" id="id_code"
+             inputmode="numeric" pattern="[0-9]*" maxlength="6"
+             autocomplete="one-time-code" required>
+    {% endif %}
+
+    <ul class="rules">
+      <li>8-аас доошгүй тэмдэгт</li>
+      <li>Том үсэг орсон байх</li>
+      <li>Жижиг үсэг орсон байх</li>
+      <li>Тоо орсон байх</li>
+    </ul>
+
+    <label for="id_password">Нууц үг</label>
+    <input type="password" name="password" id="id_password"
+           autocomplete="new-password"
+           {% if not by_code %}autofocus{% endif %} required>
+
+    <label for="id_password_confirm">Нууц үг давтах</label>
+    <input type="password" name="password_confirm" id="id_password_confirm"
+           autocomplete="new-password" required>
+
+    <button type="submit">Идэвхжүүлэх</button>
+  </form>
+
+  <p class="links">
+    Код байхгүй юу? Цэцэрлэгийн багш эсвэл администратортаа хандана уу.
+  </p>
+{% endblock %}

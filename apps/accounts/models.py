@@ -212,6 +212,67 @@ class PasswordResetToken(models.Model):
         return self.used_at is None and self.expires_at > timezone.now()
 
 
+class Invitation(models.Model):
+    """Account activation for teachers and guardians — RFP §2.1, §3.5.
+
+    Nobody self-registers. An administrator creates the teacher account
+    (§2.1); a teacher registers the child and attaches the guardian (§3.4,
+    §3.5). The invitation only lets that person set their own password, so
+    staff never learn it.
+
+    Two delivery paths, one row:
+
+    ``token``  a single-use link, for people with an email address
+    ``code``   six digits, read off the screen and written on paper
+
+    The code is deliberately checked **together with the identifier**. Six
+    digits is only a million combinations; searchable on its own, but not
+    when the attacker must also know which phone number or email it belongs
+    to, and not against the §3.1 attempt throttle.
+    """
+
+    class Delivery(models.TextChoices):
+        EMAIL = "email", "И-мэйл"
+        PAPER = "paper", "Цаасан код"
+        BOTH = "both", "И-мэйл ба цаасан код"
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE,
+                             related_name="invitations")
+    kindergarten = models.ForeignKey(
+        "tenants.Kindergarten", null=True, blank=True,
+        on_delete=models.CASCADE, related_name="invitations",
+    )
+
+    token_hash = models.CharField(max_length=64, unique=True, db_index=True)
+    code_hash = models.CharField(max_length=64)
+    delivery = models.CharField(max_length=10, choices=Delivery.choices,
+                                default=Delivery.BOTH)
+
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    created_by = models.ForeignKey(
+        User, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="+",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "урилга"
+        verbose_name_plural = "урилгууд"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["user", "used_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user} — {self.expires_at:%Y-%m-%d}"
+
+    @property
+    def is_usable(self) -> bool:
+        return self.used_at is None and self.expires_at > timezone.now()
+
+
 class TeacherProfile(BaseModel):
     """RFP §3.3."""
 

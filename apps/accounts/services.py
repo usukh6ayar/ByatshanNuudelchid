@@ -14,9 +14,13 @@ from django.utils import timezone
 from apps.core.models import AuditAction
 from apps.core.services import audit, client_ip
 
-from .models import LoginAttempt, PasswordResetToken, User
+from .models import Invitation, LoginAttempt, Membership, PasswordResetToken, Role, User
 
 TOKEN_TTL_HOURS = 2
+
+# Longer than a password reset on purpose: a guardian may not visit the
+# kindergarten for a week or more after their child is registered.
+INVITATION_TTL_DAYS = 14
 
 
 # ---------------------------------------------------------------- throttling
@@ -167,3 +171,182 @@ def complete_password_reset(*, request, raw_token: str, new_password: str) -> bo
 
     audit(action=AuditAction.PASSWORD_RESET, request=request, actor=token.user)
     return True
+
+
+# ---------------------------------------------------------------- invitations
+# RFP §2.1, §3.5. Nobody self-registers: staff create the account, the person
+# activates it and chooses their own password, so staff never learn it.
+
+
+def _six_digit_code() -> str:
+    return f"{secrets.randbelow(1_000_000):06d}"
+
+
+@transaction.atomic
+def create_invitation(*, actor, user, kindergarten=None,
+                      delivery=Invitation.Delivery.BOTH,
+                      request=None) -> tuple[str, str]:
+    """Issue an invitation. Returns ``(raw_token, raw_code)``.
+
+    Only the hashes are stored, so a re-send is a new invitation rather than
+    a lookup — the previous one is spent immediately.
+    """
+    Invitation.objects.filter(user=user, used_at__isnull=True).update(
+        used_at=timezone.now()
+    )
+
+    raw_token = secrets.token_urlsafe(48)
+    raw_code = _six_digit_code()
+
+    invitation = Invitation.objects.create(
+        user=user,
+        kindergarten=kindergarten,
+        token_hash=_hash(raw_token),
+        code_hash=_hash(raw_code),
+        delivery=delivery,
+        expires_at=timezone.now() + timezone.timedelta(days=INVITATION_TTL_DAYS),
+        created_by=actor,
+    )
+    audit(action=AuditAction.INVITE, request=request, actor=actor,
+          kindergarten=kindergarten, obj=invitation, invited=str(user))
+    return raw_token, raw_code
+
+
+def resolve_invitation_token(raw: str) -> Invitation | None:
+    invitation = Invitation.objects.filter(token_hash=_hash(raw or "")).first()
+    return invitation if invitation and invitation.is_usable else None
+
+
+def resolve_invitation_code(identifier: str, raw_code: str) -> Invitation | None:
+    """Paper path: the code is only valid together with the identifier.
+
+    Six digits is a million combinations — searchable on its own. Requiring
+    the phone number or email as well means an attacker has to know both,
+    and :func:`is_locked_out` still applies on top.
+    """
+    identifier = (identifier or "").strip()
+    if not identifier or not raw_code:
+        return None
+
+    from django.db.models import Q
+
+    user = User.objects.filter(
+        Q(username__iexact=identifier)
+        | Q(email__iexact=identifier)
+        | Q(phone=identifier)
+    ).first()
+    if user is None:
+        return None
+
+    invitation = Invitation.objects.filter(
+        user=user, code_hash=_hash(raw_code)
+    ).first()
+    return invitation if invitation and invitation.is_usable else None
+
+
+@transaction.atomic
+def activate_invitation(*, request, invitation: Invitation, password: str) -> User:
+    """Set the password and spend the invitation."""
+    user = invitation.user
+    user.set_password(password)
+    user.is_active = True
+    user.save(update_fields=["password", "is_active"])
+
+    invitation.used_at = timezone.now()
+    invitation.save(update_fields=["used_at"])
+
+    audit(action=AuditAction.ACTIVATE, request=request, actor=user,
+          kindergarten=invitation.kindergarten, obj=invitation)
+    return user
+
+
+# ---------------------------------------------------------------- onboarding
+
+
+@transaction.atomic
+def invite_teacher(*, actor, kindergarten, last_name, first_name,
+                   username=None, email=None, phone=None,
+                   request=None) -> tuple[User, str, str]:
+    """RFP §2.1 — the administrator creates the teacher account."""
+    user = User.objects.create_user(
+        password=None,          # unusable until the invitation is activated
+        username=username or None,
+        email=email or None,
+        phone=phone or None,
+        last_name=last_name,
+        first_name=first_name,
+    )
+    membership = Membership.objects.create(
+        user=user, kindergarten=kindergarten, role=Role.TEACHER,
+        created_by=actor, updated_by=actor,
+    )
+    audit(action=AuditAction.CREATE, request=request, actor=actor,
+          kindergarten=kindergarten, obj=membership)
+
+    token, code = create_invitation(
+        actor=actor, user=user, kindergarten=kindergarten, request=request
+    )
+    return user, token, code
+
+
+@transaction.atomic
+def register_guardian(*, actor, child, last_name, first_name, relation,
+                      email=None, phone=None, is_primary=False,
+                      request=None) -> tuple[object, str | None, str | None]:
+    """RFP §3.4, §3.5 — the teacher attaches a guardian to a child.
+
+    The ``Guardianship`` row is the §21.3 authorization boundary, so it is
+    created here by staff who know the family, never by the guardian.
+
+    An existing account is reused when the phone or email already matches —
+    the second-child case. That person already has a password, so no new
+    invitation is issued and the returned token and code are ``None``.
+    """
+    from django.db.models import Q
+
+    from apps.children.models import Guardianship
+
+    user = None
+    if email or phone:
+        lookup = Q()
+        if email:
+            lookup |= Q(email__iexact=email)
+        if phone:
+            lookup |= Q(phone=phone)
+        user = User.objects.filter(lookup).first()
+
+    is_new = user is None
+    if is_new:
+        user = User.objects.create_user(
+            password=None,
+            email=email or None,
+            phone=phone or None,
+            last_name=last_name,
+            first_name=first_name,
+        )
+
+    Membership.objects.get_or_create(
+        user=user, kindergarten=child.kindergarten, role=Role.GUARDIAN,
+        defaults={"created_by": actor, "updated_by": actor},
+    )
+
+    guardianship, _ = Guardianship.objects.get_or_create(
+        child=child, guardian_user=user,
+        defaults={
+            "kindergarten": child.kindergarten,
+            "relation": relation,
+            "is_primary": is_primary,
+            "created_by": actor,
+            "updated_by": actor,
+        },
+    )
+    audit(action=AuditAction.CREATE, request=request, actor=actor,
+          kindergarten=child.kindergarten, child=child, obj=guardianship)
+
+    if not is_new:
+        return guardianship, None, None
+
+    token, code = create_invitation(
+        actor=actor, user=user, kindergarten=child.kindergarten, request=request
+    )
+    return guardianship, token, code

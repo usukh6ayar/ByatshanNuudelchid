@@ -36,6 +36,25 @@ prefixed `overview-`.
 | `teacher-attendance-health.jpeg` | Ирц, Эрүүл мэнд | Daily attendance table, temperature and wellbeing entry, red-flag panel |
 | `teacher-surveys-analytics.jpeg` | Судалгаа & Аналитик | Survey list, response rates, analytics, start-vs-end comparison |
 
+## Parent / guardian
+
+| File | Screen title in image | Notes |
+|---|---|---|
+| `parent-home.jpeg` | Нүүр хуудас | Child switcher in the header (RFP §2.3), child card with links to the 360° page and portfolio, teacher feed with photos, upcoming events, per-domain progress bars, quick-link grid, support widget |
+
+What the parent home needs from the MVP: the child switcher, child card,
+teacher feed, announcements, domain progress, and the portfolio link. The rest
+of its sidebar — Өнөөдрийн мэдээлэл, Ирц & Эрүүл мэнд, Хоол & Цэс, Мессеж,
+Судалгаа, Төлбөр & Нэхэмжлэл — is deferred work.
+
+**One conflict to resolve.** The design fixes a single kindergarten's name and
+logo in the top-left, with only the child varying in the dropdown. Spec section
+4.2 allows a guardian to have children at two kindergartens, and resolves the
+tenant from the child rather than the session. So the branding and the
+kindergarten label have to follow the **selected child**, not sit fixed in the
+chrome. For a parent with children at one kindergarten — the common case —
+the screen looks exactly as drawn.
+
 ## Administrator
 
 | File | Screen title in image | Notes |
@@ -95,16 +114,48 @@ system is broken.
 
 | Item | Detail |
 |---|---|
-| **No full-size parent screens** | The parent dashboard appears only as a small panel inside two overview sheets. Phase 3 builds exactly this. Worth requesting full-size mockups |
-| **Password reset method** | Design uses a 6-digit OTP with a ~3-minute expiry; the implementation uses a single-use hashed link valid for 2 hours. Both satisfy RFP §3.1 — pick one |
-| **Password length** | Design says 8+ characters; `AUTH_PASSWORD_VALIDATORS` is set to 10 |
-| **Role tabs on login** | Design shows Багш / Эцэг эх / Админ tabs. The backend resolves role from `Membership`, so these can only be cosmetic — filtering authentication by the selected tab would turn the form into a role oracle |
-| **Google / Apple sign-in** | Shown in one login variant. Not in the RFP; needs a decision |
-| **Observation tags** | Design has "Холбогдох шошго (tag)". Not in the data model |
-| **Teacher confidence rating** | Design has a 1–5 star "Багшийн итгэлцлийн түвшин" on observations. Not in the data model |
-| **Child display code** | Design shows `CHD-0002` alongside the registration number. The model has one `national_id` field |
+### Resolved
+
+| Item | Decision |
+|---|---|
+| **Password reset method** | Keep the implementation's single-use hashed link, not the 6-digit OTP drawn in the design |
+| **Password length** | Follow the design: 8+ characters, plus upper case, lower case and a digit (`PasswordComplexityValidator`) |
+| **Role tabs on login** | Built as drawn, presentational only. They change which identifier the field asks for; authentication ignores them. Tests assert a teacher can log in with the "Эцэг эх" tab selected and that failure responses are identical across tabs |
+| **Google / Apple sign-in** | Dropped. Not in the RFP |
+| **Parent screens** | Supplied — see `parent-home.jpeg` |
+| **Self-registration** | The design's "Бүртгүүлэх" link is not built. Staff create the account and the person activates it — see below |
+| **Assistant teacher** | Already covered by `GroupTeacher.Role.ASSISTANT` |
+
+### Still open
+
+| Item | Detail |
+|---|---|
+| **Observation tags** | Design has "Холбогдох шошго (tag)". Not in the data model. Decide during the observation phase |
+| **Teacher confidence rating** | Design has a 1–5 star "Багшийн итгэлцлийн түвшин" on observations. Not in the data model. Decide during the observation phase |
+| **Child display code** | Design shows `CHD-0002` alongside the registration number. The model has one `national_id` field. Decide during the child-registration phase |
 | **Storage quota per kindergarten** | Sidebars show "Хадгалах сан 12.6 GB / 50 GB". No quota field exists |
-| **Assistant teacher** | Design shows Багш plus Туслах багш. Already covered by `GroupTeacher.Role.ASSISTANT` |
+
+### Registration and activation
+
+The design shows "Бүртгэлгүй юу? **Бүртгүүлэх**" on the login screen. Free
+self-registration is not built, because it leaves one question unanswered:
+how does the system know this person is that child's parent? The
+`Guardianship` row *is* the §21.3 authorization boundary, so it cannot be
+created by the person it grants access to.
+
+Agreed flow:
+
+- **Teacher** — the administrator creates the account (RFP §2.1) and the
+  system issues an invitation. The teacher sets their own password.
+- **Guardian** — the teacher registers the child and attaches the guardian,
+  which creates the `Guardianship` immediately. The guardian receives an
+  invitation and sets their own password.
+- **Delivery** — an emailed single-use link where an address exists, and a
+  six-digit code the teacher reads off the screen and writes on paper where
+  it does not. Mongolian guardians frequently have no email, so the paper
+  path is the primary one in practice. SMS arrives with §20-IV.
+
+Staff never learn anyone's password.
 
 ## Confirmed by the designs
 
