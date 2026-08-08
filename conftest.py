@@ -151,3 +151,9 @@ def world(make_kindergarten, make_group, make_teacher, make_child, make_guardian
         "oyun": make_teacher(och, petal, username="oyun"),
         "bataa_mother": make_guardian(bataa, naran, username="bataa_mother"),
     }
+
+
+@pytest.fixture
+def naran_admin_user(world, make_admin):
+    """A director of the Naran kindergarten. Used as ``actor`` in services."""
+    return make_admin(world["naran"], username="naran_director")

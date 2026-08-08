@@ -3,7 +3,7 @@
 from django.db import transaction
 from django.utils import timezone
 
-from .models import AuditLog
+from .models import AuditAction, AuditLog
 
 
 def client_ip(request) -> str | None:
@@ -49,8 +49,39 @@ def audit(*, action, request=None, actor=None, kindergarten=None, child=None,
     )
 
 
+def _kindergarten_of(obj):
+    """The tenant a record belongs to.
+
+    A ``Kindergarten`` is its own tenant; everything else points at one.
+    """
+    from apps.tenants.models import Kindergarten
+
+    if isinstance(obj, Kindergarten):
+        return obj
+    return getattr(obj, "kindergarten", None)
+
+
 @transaction.atomic
-def soft_delete(*, actor, obj):
+def save_record(*, actor, obj, created: bool, request=None):
+    """Persist a record with authorship and an audit row — RFP §15, §971.
+
+    The audit write shares this transaction with the change it describes, so
+    the two can never disagree (CLAUDE.md §8).
+    """
+    stamp(actor=actor, obj=obj, created=created)
+    obj.save()
+    audit(
+        action=AuditAction.CREATE if created else AuditAction.UPDATE,
+        request=request,
+        actor=actor,
+        obj=obj,
+        kindergarten=_kindergarten_of(obj),
+    )
+    return obj
+
+
+@transaction.atomic
+def soft_delete(*, actor, obj, request=None):
     """Archive a record instead of removing it — RFP §3.4, CLAUDE.md §3.3.
 
     ``obj.delete()`` raises, so this is the only way a record leaves the
@@ -59,16 +90,20 @@ def soft_delete(*, actor, obj):
     obj.deleted_at = timezone.now()
     obj.deleted_by = actor
     obj.save(update_fields=["deleted_at", "deleted_by", "updated_at"])
+    audit(action=AuditAction.DELETE, request=request, actor=actor, obj=obj,
+          kindergarten=_kindergarten_of(obj))
     return obj
 
 
 @transaction.atomic
-def restore(*, actor, obj):
+def restore(*, actor, obj, request=None):
     """Bring an archived record back — RFP §693."""
     obj.deleted_at = None
     obj.deleted_by = None
     obj.updated_by = actor
     obj.save(update_fields=["deleted_at", "deleted_by", "updated_by", "updated_at"])
+    audit(action=AuditAction.RESTORE, request=request, actor=actor, obj=obj,
+          kindergarten=_kindergarten_of(obj))
     return obj
 
 
