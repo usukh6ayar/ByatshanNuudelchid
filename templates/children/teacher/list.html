@@ -1,0 +1,150 @@
+{% extends "base_teacher.html" %}
+{# RFP §11 filters, §716 pagination. Modelled on
+   docs/design/screens/teacher-children-list.jpeg #}
+
+{% block title %}Хүүхдийн жагсаалт{% endblock %}
+{% block heading %}Хүүхдийн жагсаалт{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <form method="get" class="filters">
+      <div>
+        <label for="id_q">Хайх</label>
+        <input type="search" name="q" id="id_q" value="{{ filters.q }}"
+               placeholder="Нэр эсвэл код">
+      </div>
+
+      <div>
+        <label for="id_group">Бүлэг</label>
+        <select name="group" id="id_group">
+          <option value="">Бүгд</option>
+          {% for group in groups %}
+            <option value="{{ group.pk }}"
+              {% if selected_group.pk == group.pk %}selected{% endif %}>
+              {{ group.name }} ({{ group.school_year.name }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label for="id_status">Төлөв</label>
+        <select name="status" id="id_status">
+          <option value="">Бүгд</option>
+          {% for value, label in statuses %}
+            <option value="{{ value }}"
+              {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label for="id_sex">Хүйс</label>
+        <select name="sex" id="id_sex">
+          <option value="">Бүгд</option>
+          {% for value, label in sexes %}
+            <option value="{{ value }}"
+              {% if filters.sex == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label for="id_age">Нас</label>
+        <select name="age" id="id_age">
+          <option value="">Бүгд</option>
+          {% for value in "2345" %}
+            <option value="{{ value }}"
+              {% if filters.age == value %}selected{% endif %}>{{ value }} нас</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label for="id_sort">Эрэмбэ</label>
+        <select name="sort" id="id_sort">
+          <option value="name" {% if filters.sort == "name" %}selected{% endif %}>Нэрээр</option>
+          <option value="age" {% if filters.sort == "age" %}selected{% endif %}>Насаар (бага→их)</option>
+          <option value="-age" {% if filters.sort == "-age" %}selected{% endif %}>Насаар (их→бага)</option>
+          <option value="-enrolled" {% if filters.sort == "-enrolled" %}selected{% endif %}>Элссэн огноогоор</option>
+          <option value="-updated" {% if filters.sort == "-updated" %}selected{% endif %}>Сүүлд шинэчлэгдсэн</option>
+        </select>
+      </div>
+
+      <div style="flex:0 0 auto">
+        <button type="submit" class="btn">Шүүх</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="btn-row" style="margin:0 0 16px">
+      <a class="btn" href="{% url 'children:create' %}">Шинэ хүүхэд нэмэх</a>
+    </div>
+
+    {% if page.object_list %}
+      <div class="table-wrap">
+        <table>
+          <caption class="sr-only">Хүүхдийн жагсаалт</caption>
+          <thead>
+            <tr>
+              <th scope="col">Овог, нэр</th>
+              <th scope="col">Код</th>
+              <th scope="col">Хүйс</th>
+              <th scope="col">Төрсөн огноо</th>
+              <th scope="col">Бүлэг</th>
+              <th scope="col">Эцэг эх</th>
+              <th scope="col">Төлөв</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for child in page.object_list %}
+              <tr>
+                <td>
+                  <a class="name" href="{% url 'children:detail' child.pk %}">
+                    {{ child.full_name }}
+                  </a>
+                </td>
+                <td>{{ child.national_id }}</td>
+                <td>{{ child.get_sex_display }}</td>
+                <td>{{ child.date_of_birth|date:"Y.m.d" }}</td>
+                <td>
+                  {% for enrollment in child.active_enrollments %}
+                    {{ enrollment.group.name }}
+                  {% empty %}
+                    <span class="badge badge--muted">Бүлэггүй</span>
+                  {% endfor %}
+                </td>
+                <td>
+                  {% for link in child.guardianships.all %}
+                    {{ link.guardian_user }} ({{ link.get_relation_display }}){% if not forloop.last %}<br>{% endif %}
+                  {% empty %}
+                    <span class="badge badge--warn">Холбогдоогүй</span>
+                  {% endfor %}
+                </td>
+                <td>
+                  <span class="badge {% if child.status == 'active' %}badge--ok{% else %}badge--muted{% endif %}">
+                    {{ child.get_status_display }}
+                  </span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <span>Нийт {{ page.paginator.count }} хүүхэд</span>
+        {% if page.has_previous %}
+          <a href="?{{ request.GET.urlencode }}&page={{ page.previous_page_number }}">← Өмнөх</a>
+        {% endif %}
+        <span>{{ page.number }} / {{ page.paginator.num_pages }}</span>
+        {% if page.has_next %}
+          <a href="?{{ request.GET.urlencode }}&page={{ page.next_page_number }}">Дараах →</a>
+        {% endif %}
+      </div>
+    {% else %}
+      <p class="empty">Хүүхэд олдсонгүй.</p>
+    {% endif %}
+  </div>
+{% endblock %}

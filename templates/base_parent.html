@@ -1,0 +1,54 @@
+{% load static %}<!doctype html>
+{# Guardian layout — RFP §13 asks for clarity over density.
+
+   The kindergarten name follows the selected child rather than sitting fixed
+   in the chrome: spec section 4.2 allows children at two kindergartens and
+   resolves the tenant from the child. With one kindergarten this looks
+   exactly like the mockup. #}
+<html lang="mn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Эцэг эхийн хэсэг{% endblock %} · Хүүхдийн хөгжлийн хавтас</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand__mark" aria-hidden="true">🌱</span>
+      <span>
+        <span class="brand__name">
+          {% if child %}{{ child.kindergarten.name }}{% else %}Хүүхдийн хавтас{% endif %}
+        </span>
+        <span class="brand__sub">Эцэг эхийн хэсэг</span>
+      </span>
+    </div>
+
+    <nav class="nav" aria-label="Үндсэн цэс">
+      <a href="{% url 'children:parent_home' %}"
+         {% if nav == 'home' %}aria-current="page"{% endif %}>Нүүр хуудас</a>
+      <a href="{% url 'accounts:logout' %}">Гарах</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <h1>{% block heading %}{% endblock %}</h1>
+      <div class="who">
+        {{ request.user }}<br>
+        <span class="brand__sub">Эцэг эх</span>
+      </div>
+    </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <p class="msg msg--ok" role="status">{{ message }}</p>
+      {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+</div>
+</body>
+</html>

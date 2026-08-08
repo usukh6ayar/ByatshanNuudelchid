@@ -1,0 +1,38 @@
+{% extends "base_teacher.html" %}
+{# The code is shown exactly once. Only its hash is stored, so it cannot be
+   looked up again — re-sending issues a new invitation. #}
+
+{% block title %}Урилга бэлэн боллоо{% endblock %}
+{% block heading %}Урилга бэлэн боллоо{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width:620px">
+    <h2>Идэвхжүүлэх код</h2>
+    <p class="brand__sub" style="margin-top:0">
+      {{ child.full_name }}-ийн асран хамгаалагчид дараах кодыг бичиж өгнө үү.
+    </p>
+
+    <p class="code-box">{{ activation_code }}</p>
+
+    <p class="msg msg--error" role="note">
+      Энэ код <strong>зөвхөн нэг удаа</strong> харагдана. Систем кодыг задлах
+      боломжгүй хэлбэрээр хадгалдаг тул дахин харах боломжгүй. Мартвал шинэ
+      урилга үүсгэнэ.
+    </p>
+
+    <h2 style="margin-top:22px">Заавар</h2>
+    <ol style="color:var(--muted); font-size:.92rem; padding-left:1.2rem">
+      <li>Эцэг эх <strong>{{ activation_link }}</strong> хаягаар орно, эсвэл
+          нэвтрэх хуудаснаас «Бүртгэл идэвхжүүлэх» сонгоно.</li>
+      <li>Утасны дугаар эсвэл и-мэйлээ, дараа нь энэ кодыг оруулна.</li>
+      <li>Нууц үгээ өөрөө тохируулна. Багш нууц үгийг нь мэдэхгүй.</li>
+      <li>Код 14 хоногийн турш хүчинтэй.</li>
+    </ol>
+
+    <div class="btn-row">
+      <a class="btn" href="{% url 'children:detail' child.pk %}">
+        Хүүхдийн хуудас руу
+      </a>
+    </div>
+  </div>
+{% endblock %}

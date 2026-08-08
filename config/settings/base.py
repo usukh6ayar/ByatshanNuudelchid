@@ -100,6 +100,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LOGIN_URL = "accounts:login"
+# "/" is the role-based landing view, which forwards to the right screen.
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "accounts:login"
 

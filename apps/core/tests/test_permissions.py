@@ -174,3 +174,38 @@ def test_anonymous_user_is_denied(world):
 
 def test_none_user_is_denied(world):
     assert not can_access_child(None, world["bataa"])
+
+
+# ------------------------------------------------------------------ invariant
+# visible_children (lists) and can_access_child (detail pages) must agree.
+# A child in a list that 404s when opened is a bug; the reverse is a leak.
+
+def test_visible_children_agrees_with_can_access_child(
+    world, make_admin, make_child, transferred
+):
+    from apps.children.models import Child
+    from apps.core.permissions import visible_children
+
+    # The `transferred` fixture is here for its side effect: it puts one
+    # child in two kindergartens, which is the case most likely to make the
+    # list query and the detail check disagree.
+    assert transferred["bataa"].kindergarten_id == world["och"].id
+
+    # A child nobody in `world` is attached to, plus one with no enrollment.
+    make_child(world["och"], world["petal"], first_name="Гадны")
+    make_child(world["naran"], first_name="Бүлэггүй")
+
+    users = [
+        world["dulmaa"], world["oyun"], world["bataa_mother"],
+        make_admin(world["naran"], username="inv_naran_admin"),
+        make_admin(world["och"], username="inv_och_admin"),
+        make_admin(kindergarten=None, role=Role.SUPERADMIN, username="inv_boss"),
+    ]
+
+    for user in users:
+        listed = set(visible_children(user).values_list("pk", flat=True))
+        for child in Child.objects.all():
+            assert (child.pk in listed) == can_access_child(user, child), (
+                f"{user} vs {child}: list says {child.pk in listed}, "
+                f"detail says {can_access_child(user, child)}"
+            )

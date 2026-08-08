@@ -151,10 +151,14 @@ class Enrollment(TenantScopedModel):
         verbose_name_plural = "бүртгэлүүд"
         ordering = ["-started_on"]
         constraints = [
+            # One *active* enrollment per school year, not one enrollment.
+            # RFP §3.4 allows moving a child to another group mid-year, which
+            # closes the old row and opens a new one — both live in the same
+            # school year, and the history is the point (spec section 6.1).
             models.UniqueConstraint(
                 fields=["child", "school_year"],
-                condition=models.Q(deleted_at__isnull=True),
-                name="uniq_enrollment_per_year",
+                condition=models.Q(deleted_at__isnull=True, status="active"),
+                name="uniq_active_enrollment_per_year",
             ),
         ]
         indexes = [

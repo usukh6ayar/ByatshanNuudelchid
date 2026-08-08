@@ -33,6 +33,9 @@ migrate:
 superuser:
 	docker compose run --rm web python manage.py createsuperuser
 
+seed:          ## Demo kindergarten, staff and children (development only, RFP §707)
+	docker compose run --rm web python manage.py seed_demo
+
 pdf-spike:     ## Render the Cyrillic sample PDF (spec section 13.1)
 	docker compose run --rm web python manage.py pdf_spike --out /app/spike.pdf
 

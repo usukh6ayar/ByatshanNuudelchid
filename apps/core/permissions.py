@@ -13,10 +13,11 @@ when a child transfers, which would silently revoke a teacher's access to
 observations they wrote themselves.
 """
 
+from django.db.models import Q
 from django.http import Http404
 
 from apps.accounts.models import Role
-from apps.children.models import Enrollment, Guardianship
+from apps.children.models import Child, Enrollment, Guardianship
 from apps.tenants.models import GroupTeacher
 
 __all__ = [
@@ -25,6 +26,7 @@ __all__ = [
     "can_access_child",
     "assert_can_access_child",
     "visible_kindergartens",
+    "visible_children",
 ]
 
 
@@ -98,6 +100,54 @@ def assert_can_access_child(user, child) -> None:
     """
     if not can_access_child(user, child):
         raise Http404
+
+
+def _admin_kindergarten_ids(user) -> set[int]:
+    return set(
+        user.memberships.filter(
+            is_active=True, role=Role.ADMIN, kindergarten__isnull=False
+        ).values_list("kindergarten_id", flat=True)
+    )
+
+
+def _is_superadmin(user) -> bool:
+    return user.memberships.filter(is_active=True, role=Role.SUPERADMIN).exists()
+
+
+def visible_children(user):
+    """Every child this user may see, as a queryset.
+
+    The list-level counterpart to :func:`can_access_child`. The two must
+    agree: a child that appears in a list but 404s when opened is a bug, and
+    the reverse is a disclosure. ``test_permissions.py`` asserts the
+    equivalence over every user and child in the fixtures rather than
+    trusting that these two functions were kept in step by hand.
+    """
+    if user is None or not user.is_authenticated or not user.is_active:
+        return Child.objects.none()
+
+    if _is_superadmin(user):
+        return Child.objects.all()
+
+    # Guardian — the Guardianship row is the authorization.
+    condition = Q(guardianships__guardian_user=user,
+                  guardianships__can_view=True)
+
+    # Teacher — assigned to any group the child has ever been enrolled in.
+    condition |= Q(
+        enrollments__group__teacher_assignments__teacher_membership__user=user,
+        enrollments__group__teacher_assignments__teacher_membership__is_active=True,
+    )
+
+    # Admin — any kindergarten in the child's enrollment history, plus the
+    # newly-registered case with no enrollment yet (see
+    # child_kindergarten_history).
+    admin_ids = _admin_kindergarten_ids(user)
+    if admin_ids:
+        condition |= Q(enrollments__kindergarten_id__in=admin_ids)
+        condition |= Q(kindergarten_id__in=admin_ids, enrollments__isnull=True)
+
+    return Child.objects.filter(condition).distinct()
 
 
 def visible_kindergartens(user, child) -> set[int]:

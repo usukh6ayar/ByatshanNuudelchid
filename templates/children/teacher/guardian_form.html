@@ -1,0 +1,69 @@
+{% extends "base_teacher.html" %}
+
+{% block title %}Асран хамгаалагч нэмэх{% endblock %}
+{% block heading %}Асран хамгаалагч нэмэх{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width:720px">
+    <p class="brand__sub" style="margin-top:0">
+      {{ child.full_name }} · {{ child.national_id }}
+    </p>
+
+    {% if error %}<p class="msg msg--error" role="alert">{{ error }}</p>{% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="grid grid--2" style="gap:0 16px">
+        <div>
+          <label for="id_last_name">Овог</label>
+          <input type="text" name="last_name" id="id_last_name"
+                 value="{{ form.last_name|default:'' }}" required>
+        </div>
+        <div>
+          <label for="id_first_name">Нэр</label>
+          <input type="text" name="first_name" id="id_first_name"
+                 value="{{ form.first_name|default:'' }}" required>
+        </div>
+      </div>
+
+      <label for="id_relation">Хүүхэдтэй ямар холбоотой</label>
+      <select name="relation" id="id_relation" required>
+        <option value="">— сонгоно уу —</option>
+        {% for value, label in relations %}
+          <option value="{{ value }}"
+            {% if form.relation == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+
+      <div class="grid grid--2" style="gap:0 16px">
+        <div>
+          <label for="id_phone">Утасны дугаар</label>
+          <input type="tel" name="phone" id="id_phone"
+                 value="{{ form.phone|default:'' }}">
+        </div>
+        <div>
+          <label for="id_email">И-мэйл</label>
+          <input type="email" name="email" id="id_email"
+                 value="{{ form.email|default:'' }}">
+        </div>
+      </div>
+
+      <p class="brand__sub">
+        Утас эсвэл и-мэйлийн аль нэгийг бөглөнө үү. Аль хэдийн бүртгэлтэй
+        эцэг эх бол байгаа бүртгэлд нь энэ хүүхэд нэмэгдэнэ.
+      </p>
+
+      <label style="display:flex; gap:8px; align-items:center; font-weight:500">
+        <input type="checkbox" name="is_primary" style="width:auto"
+               {% if form.is_primary %}checked{% endif %}>
+        Үндсэн асран хамгаалагч
+      </label>
+
+      <div class="btn-row">
+        <button type="submit" class="btn">Нэмэх</button>
+        <a class="btn btn--ghost" href="{% url 'children:detail' child.pk %}">Цуцлах</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}
