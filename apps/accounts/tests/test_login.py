@@ -198,3 +198,61 @@ def test_logged_in_user_is_redirected_away_from_the_login_page(
     post_login(client, login_url, "bagsh1")
 
     assert client.get(login_url).status_code == 302
+
+
+# ------------------------------------------------------------------ role tabs
+# The design shows Багш / Эцэг эх / Админ tabs. They are presentational only.
+
+def test_all_three_tabs_are_rendered(client, login_url):
+    body = client.get(login_url).content.decode()
+
+    for label in ("Багш", "Эцэг эх", "Админ"):
+        assert label in body
+
+
+def test_tab_changes_only_the_identifier_label(client, login_url):
+    teacher = client.get(login_url, {"role": "teacher"}).content.decode()
+    parent = client.get(login_url, {"role": "parent"}).content.decode()
+
+    assert "Нэвтрэх нэр эсвэл и-мэйл" in teacher
+    assert "Утасны дугаар эсвэл и-мэйл" in parent
+
+
+def test_unknown_tab_falls_back_to_the_default(client, login_url):
+    body = client.get(login_url, {"role": "../../etc/passwd"}).content.decode()
+
+    assert "Нэвтрэх нэр эсвэл и-мэйл" in body
+
+
+def test_tab_does_not_filter_authentication(client, login_url, make_user):
+    """The tab must not gate login by role.
+
+    If it did, an attacker could learn which role an address belongs to by
+    watching which tab accepts it. A teacher logging in with the "Эцэг эх"
+    tab selected must still succeed.
+    """
+    user = make_user(username="bagsh1")
+
+    response = client.post(login_url, {"username": "bagsh1",
+                                       "password": PASSWORD,
+                                       "role": "parent"})
+
+    assert response.status_code == 302
+    assert client.session.get("_auth_user_id") == str(user.pk)
+
+
+def test_failure_response_is_identical_across_tabs(client, login_url, make_user):
+    """Any per-tab difference on failure would be the same oracle."""
+    make_user(username="bagsh1")
+
+    responses = []
+    for role in ("teacher", "parent", "admin"):
+        LoginAttempt.objects.all().delete()
+        responses.append(
+            client.post(login_url, {"username": "bagsh1",
+                                    "password": "wrong-one",
+                                    "role": role}).content.decode()
+        )
+
+    message = "Нэвтрэх нэр эсвэл нууц үг буруу байна."
+    assert all(message in body for body in responses)

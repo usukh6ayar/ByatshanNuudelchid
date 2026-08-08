@@ -65,7 +65,10 @@ def test_admin_login_uses_the_projects_throttled_login_page(client):
 
     assert response.redirect_chain
     assert response.redirect_chain[0][0].startswith(reverse("accounts:login"))
-    assert "Нэвтрэх нэр, и-мэйл эсвэл утасны дугаар" in response.content.decode()
+    # The role tabs only exist on the project's own login page.
+    body = response.content.decode()
+    assert "Хэрэглэгчийн төрөл" in body
+    assert "Нууц үгээ мартсан уу?" in body
 
 
 def test_admin_lockout_applies_to_administrators(client, naran_admin, settings):

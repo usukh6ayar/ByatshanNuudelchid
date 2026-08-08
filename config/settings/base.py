@@ -87,12 +87,16 @@ AUTHENTICATION_BACKENDS = [
     "apps.accounts.backends.MultiIdentifierBackend",
 ]
 
+# The approved design states the rules on screen (8+ characters, upper case,
+# lower case, digit), so RFP §21.15 makes them part of the acceptance surface.
+# The shorter minimum is offset by the character-class requirement and the
+# §3.1 lockout below.
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-     "OPTIONS": {"min_length": 10}},
+     "OPTIONS": {"min_length": 8}},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    {"NAME": "apps.accounts.validators.PasswordComplexityValidator"},
 ]
 
 LOGIN_URL = "accounts:login"

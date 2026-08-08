@@ -7,6 +7,17 @@
   <h1>Нэвтрэх</h1>
   <p class="sub">Хүүхдийн хөгжлийн цахим хувийн хавтас</p>
 
+  {# Tabs come from the approved design. They only change which identifier
+     the field asks for — see LOGIN_TABS in views.py. Plain links, so they
+     work without JavaScript. #}
+  <nav class="tabs" aria-label="Хэрэглэгчийн төрөл">
+    {% for key, label in tabs %}
+      <a href="?role={{ key }}"
+         class="tab{% if key == active_tab %} tab--active{% endif %}"
+         {% if key == active_tab %}aria-current="page"{% endif %}>{{ label }}</a>
+    {% endfor %}
+  </nav>
+
   {% if error %}
     <p class="error" role="alert">{{ error }}</p>
     {% if retries_left %}
@@ -16,8 +27,9 @@
 
   <form method="post" novalidate>
     {% csrf_token %}
+    <input type="hidden" name="role" value="{{ active_tab }}">
 
-    <label for="id_username">Нэвтрэх нэр, и-мэйл эсвэл утасны дугаар</label>
+    <label for="id_username">{{ identifier_label }}</label>
     <input type="text" name="username" id="id_username"
            value="{{ identifier|default:'' }}"
            autocomplete="username" autocapitalize="none"

@@ -23,6 +23,25 @@ from django.views.decorators.csrf import csrf_protect
 
 from . import services
 
+# The approved design shows Багш / Эцэг эх / Админ tabs on the login screen.
+#
+# They are presentational only: they change which identifier the field asks
+# for, nothing else. Filtering authentication by the selected tab would turn
+# the form into a role oracle — an attacker could learn which role an address
+# belongs to by watching which tab accepts it. The backend resolves the role
+# from Membership after a successful login, as it does everywhere else.
+LOGIN_TABS = {
+    "teacher": ("Багш", "Нэвтрэх нэр эсвэл и-мэйл"),
+    "parent": ("Эцэг эх", "Утасны дугаар эсвэл и-мэйл"),
+    "admin": ("Админ", "Нэвтрэх нэр эсвэл и-мэйл"),
+}
+DEFAULT_LOGIN_TAB = "teacher"
+
+
+def _login_tab(request) -> str:
+    requested = request.POST.get("role") or request.GET.get("role")
+    return requested if requested in LOGIN_TABS else DEFAULT_LOGIN_TAB
+
 
 @never_cache
 @csrf_protect
@@ -31,7 +50,12 @@ def login_view(request):
     if request.user.is_authenticated:
         return redirect(settings.LOGIN_REDIRECT_URL)
 
-    context: dict = {}
+    tab = _login_tab(request)
+    context: dict = {
+        "tabs": [(key, label) for key, (label, _) in LOGIN_TABS.items()],
+        "active_tab": tab,
+        "identifier_label": LOGIN_TABS[tab][1],
+    }
 
     if request.method == "POST":
         result = services.attempt_login(

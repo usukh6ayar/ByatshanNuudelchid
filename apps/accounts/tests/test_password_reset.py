@@ -10,7 +10,8 @@ from apps.core.models import AuditAction, AuditLog
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
-NEW_PASSWORD = "brand-new-password-99"
+# Satisfies the design's rules: 8+ characters, upper case, lower case, digit.
+NEW_PASSWORD = "ShineNuuts99"
 
 
 @pytest.fixture
