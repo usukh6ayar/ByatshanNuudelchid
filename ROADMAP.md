@@ -2,8 +2,8 @@
 
 Children's Development Digital Portfolio System.
 
-**Status as of 2026-08-09: Phase 1 in progress — 7 of 17 requirement groups
-complete, 3 partial, 7 not started.** Detail in section 7.
+**Status as of 2026-08-09: Phase 1 in progress — 8 of 17 requirement groups
+complete, 4 partial, 5 not started.** Detail in section 7.
 
 This file is kept in sync with the codebase. Every "done" below names the file
 or test that proves it.
@@ -76,7 +76,7 @@ children at two kindergartens.
 | Object storage | S3-compatible (MinIO in dev) | ⚠️ configured, no upload yet |
 | Runtime | Docker + docker-compose | ✅ in place |
 | Row history | django-simple-history | ✅ on `Child` |
-| Lint / test | ruff, pytest | ✅ 156 tests passing |
+| Lint / test | ruff, pytest | ✅ 189 tests passing |
 
 ## 5. Architecture overview
 
@@ -134,7 +134,7 @@ end to end.
 | 3 | Teacher management — profile, assigned kindergarten/group/children | ⚠️ partial | Model + assignment done; no self-service profile edit screen |
 | 4 | Child management — create, edit, view, photo, group, year, guardian link, active/archived | ⚠️ partial | Create/view/archive done; **no edit view**, **no profile photo** |
 | 5 | Parent management — account, parent↔child, access only to own children | ✅ done | `register_guardian`, `test_views_authorization.py` |
-| 6 | Digital child portfolio — About Me, birthday, ages 2–5, basic photos | ❌ not started | — |
+| 6 | Digital child portfolio — About Me, birthday, ages 2–5, basic photos | ⚠️ partial | `apps/portfolio/`, `test_portfolio.py`. Photos arrive on Day 7 |
 | 7 | Teacher observation — full entry form with photo and parent visibility | ❌ not started | — |
 | 8 | Basic development assessment — areas, levels 1–4, comment, progress | ❌ not started | — |
 | 9 | Basic parent observation — submit, teacher views, visibility | ❌ not started | — |
@@ -147,7 +147,7 @@ end to end.
 | 16 | Basic security — hashing, RBAC, ownership, no cross-child access, secure files, HTTPS, validation, injection/XSS, cookies | ✅ done | 40+ authorization tests; HTTPS and file access land with 15 and 4 |
 | 17 | Responsive web — desktop, tablet, mobile browser | ⚠️ partial | Mobile-first CSS written; not tested on real devices |
 
-**7 done · 4 partial · 6 not started.**
+**8 done · 4 partial · 5 not started.**
 
 ### Delivered ahead of schedule
 
@@ -201,20 +201,20 @@ QPay/SocialPay.
 | 2 | Admin, kindergarten, group, school year | ✅ done |
 | 3 | Teacher, child management | ✅ mostly (child edit view outstanding) |
 | 4 | Parent, parent↔child, child profile | ✅ done |
-| 5 | Digital portfolio — About Me, ages 2–5 | ⬜ **next** |
-| 6 | Teacher observations, development assessment | ⬜ |
+| 5 | Digital portfolio — About Me, ages 2–5 | ✅ done |
+| 6 | Teacher observations, development assessment | ⬜ **next** |
 | 7 | Parent observation, notifications, media upload | ⬜ |
 | 8 | Dashboards, search, filters, basic PDF | ⬜ |
 | 9 | Security, responsive fixes, deployment, backup, error handling | ⬜ |
 | 10 | Integration, bug fixes, production build, documentation, handover | ⬜ |
 
-**Position: end of Day 4.** Days 1–4 also produced work not on the original
+**Position: end of Day 5.** Days 1–4 also produced work not on the original
 plan — the invitation system, the audit log and the Cyrillic PDF spike — which
 is why the remaining days are tight rather than comfortable.
 
 ## 11. Database entities
 
-**Built (17 tables):**
+**Built (20 tables):**
 
 ```
 core       AuditLog
@@ -222,12 +222,12 @@ accounts   User · Membership · TeacherProfile · GuardianProfile ·
            Invitation · LoginAttempt · PasswordResetToken
 tenants    Kindergarten · SchoolYear · Group · GroupTeacher
 children   Child · Guardianship · Enrollment · HistoricalChild
+portfolio  AboutMe · ChildAgeProfile · BirthdayNote (+ history mirrors)
 ```
 
 **Still needed for Phase 1:**
 
 ```
-portfolio    AboutMe · ChildAgeProfile · BirthdayNote
 observations ObservationType · Observation · ObservationDomain ·
              ObservationMedia
 assessment   DevelopmentDomain · AssessmentScale · AssessmentLevel ·
@@ -321,7 +321,7 @@ Formal QA is the client's. Before handover we still verify:
 | Backup and restore | ⬜ |
 | PDF with Cyrillic and images | ⚠️ automated checks pass; **printed A4 page not yet inspected by a human** |
 
-Current: **156 tests passing, ruff clean.**
+Current: **189 tests passing, ruff clean.**
 
 ## 17. Definition of done — Phase 1
 
@@ -336,8 +336,8 @@ Current: **156 tests passing, ruff clean.**
 | Parent can be linked to children | ✅ |
 | Parent can only see their own children | ✅ |
 | Child profile works | ✅ |
-| Digital portfolio works | ❌ |
-| Age 2–5 information works | ❌ |
+| Digital portfolio works | ✅ |
+| Age 2–5 information works | ✅ |
 | Teacher observation works | ❌ |
 | Basic assessment works | ❌ |
 | Parent observation works | ❌ |
@@ -352,7 +352,7 @@ Current: **156 tests passing, ruff clean.**
 | Critical authorization / security issues fixed | ✅ |
 | No known blocking runtime errors | ✅ |
 
-**12 of 24 met.**
+**14 of 24 met.**
 
 ## 18. Out of scope for Phase 1
 
