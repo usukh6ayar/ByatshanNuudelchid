@@ -106,6 +106,9 @@
   </div>
 
   <div class="btn-row">
+    <a class="btn" href="{% url 'portfolio:overview' child.pk %}">
+      Хувийн хавтас үзэх
+    </a>
     <a class="btn btn--ghost" href="{% url 'children:list' %}">← Жагсаалт руу буцах</a>
   </div>
 {% endblock %}

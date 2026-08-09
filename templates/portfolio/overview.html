@@ -1,0 +1,160 @@
+{% extends base_template %}
+{# RFP §4.1–§4.3. Layout follows docs/design/screens/teacher-child-profile-360.jpeg #}
+
+{% block title %}{{ child.full_name }} — хувийн хавтас{% endblock %}
+{% block heading %}{{ child.full_name }} — хувийн хавтас{% endblock %}
+
+{% block content %}
+  <div class="grid grid--tiles">
+    <div class="tile">
+      <div class="tile__label">Нас</div>
+      <div class="tile__value">{{ birth.age }}</div>
+    </div>
+    <div class="tile">
+      <div class="tile__label">Төрсөн огноо</div>
+      <div class="tile__value" style="font-size:1.1rem">
+        {{ birth.date_of_birth|date:"Y.m.d" }}
+      </div>
+    </div>
+    <div class="tile">
+      <div class="tile__label">Өрнийн орд</div>
+      <div class="tile__value" style="font-size:1.1rem">{{ birth.zodiac_sign }}</div>
+    </div>
+    <div class="tile">
+      <div class="tile__label">Монгол жилийн амьтан</div>
+      <div class="tile__value" style="font-size:1.1rem">{{ birth.year_animal }}</div>
+    </div>
+  </div>
+
+  {# ---------------------------------------------------------- Миний тухай #}
+  <div class="card">
+    <h2>Миний тухай</h2>
+
+    {% if about %}
+      <dl class="facts">
+        {% if about.introduction %}
+          <dt>Танилцуулга</dt><dd>{{ about.introduction|linebreaksbr }}</dd>
+        {% endif %}
+        {% if about.name_meaning %}
+          <dt>Нэрний утга</dt><dd>{{ about.name_meaning|linebreaksbr }}</dd>
+        {% endif %}
+        {% if about.memorable_sayings %}
+          <dt>Сонирхолтой үг</dt><dd>{{ about.memorable_sayings|linebreaksbr }}</dd>
+        {% endif %}
+        {% if about.dream %}
+          <dt>Миний мөрөөдөл</dt><dd>{{ about.dream|linebreaksbr }}</dd>
+        {% endif %}
+        {% if about.distinguishing_traits %}
+          <dt>Миний онцлог</dt><dd>{{ about.distinguishing_traits|linebreaksbr }}</dd>
+        {% endif %}
+        {% if about.height_cm %}
+          <dt>Миний өндөр</dt><dd>{{ about.height_cm }} см</dd>
+        {% endif %}
+        {% if about.weight_kg %}
+          <dt>Миний жин</dt><dd>{{ about.weight_kg }} кг</dd>
+        {% endif %}
+        {% if about.recorded_on %}
+          <dt>Бүртгэсэн огноо</dt><dd>{{ about.recorded_on|date:"Y.m.d" }}</dd>
+        {% endif %}
+      </dl>
+    {% else %}
+      <p class="empty" style="padding:20px 0">
+        «Миний тухай» хэсэг хараахан бөглөгдөөгүй байна.
+      </p>
+    {% endif %}
+
+    <div class="btn-row">
+      <a class="btn" href="{% url 'portfolio:about_me_edit' child.pk %}">
+        {% if about %}Засах{% else %}Бөглөх{% endif %}
+      </a>
+    </div>
+  </div>
+
+  {# ---------------------------------------------------------- Нас 2–5 #}
+  <div class="card">
+    <h2>
+      Нас тус бүрийн мэдээлэл
+      <span class="badge badge--muted">
+        {{ completeness.ages_filled }} / {{ completeness.ages_total }}
+      </span>
+    </h2>
+
+    <div class="grid grid--2">
+      {% for age, profile in age_profiles.items %}
+        <div class="tile">
+          <div style="display:flex; justify-content:space-between; align-items:center">
+            <strong>{{ age }} нас</strong>
+            {% if profile %}
+              <span class="badge badge--ok">Бөглөсөн</span>
+            {% else %}
+              <span class="badge badge--muted">Хоосон</span>
+            {% endif %}
+          </div>
+
+          {% if profile %}
+            <dl class="facts" style="margin-top:10px; font-size:.86rem">
+              {% if profile.favorite_color %}
+                <dt>Дуртай өнгө</dt><dd>{{ profile.favorite_color }}</dd>
+              {% endif %}
+              {% if profile.favorite_food %}
+                <dt>Дуртай хоол</dt><dd>{{ profile.favorite_food }}</dd>
+              {% endif %}
+              {% if profile.favorite_toy %}
+                <dt>Дуртай тоглоом</dt><dd>{{ profile.favorite_toy }}</dd>
+              {% endif %}
+              {% if profile.new_skills %}
+                <dt>Шинэ чадвар</dt><dd>{{ profile.new_skills|truncatechars:80 }}</dd>
+              {% endif %}
+            </dl>
+          {% endif %}
+
+          <div class="btn-row" style="margin-top:12px">
+            <a class="btn btn--ghost"
+               href="{% url 'portfolio:age_profile_edit' child.pk age %}">
+              {% if profile %}Засах{% else %}Бөглөх{% endif %}
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# ---------------------------------------------------------- Төрсөн өдөр #}
+  <div class="card">
+    <h2>Төрсөн өдрийн тэмдэглэл</h2>
+
+    {% if birthdays %}
+      {% for entry in birthdays %}
+        <form method="post"
+              action="{% url 'portfolio:birthday_note_edit' child.pk entry.age %}"
+              style="padding:14px 0; border-bottom:1px solid var(--line)">
+          {% csrf_token %}
+          <label for="id_note_{{ entry.age }}">
+            {{ entry.age }} нас · {{ entry.date|date:"Y.m.d" }}
+          </label>
+          <div style="display:flex; gap:10px; align-items:flex-start">
+            <input type="text" name="note" id="id_note_{{ entry.age }}"
+                   value="{{ entry.note.note|default:'' }}"
+                   placeholder="Тэмдэглэл бичих">
+            <button type="submit" class="btn btn--ghost"
+                    style="flex:0 0 auto">Хадгалах</button>
+          </div>
+        </form>
+      {% endfor %}
+    {% else %}
+      <p class="empty" style="padding:20px 0">
+        Төрсөн өдөр хараахан болоогүй байна.
+      </p>
+    {% endif %}
+  </div>
+
+  <div class="btn-row">
+    {% if is_guardian %}
+      <a class="btn btn--ghost"
+         href="{% url 'children:parent_child_detail' child.pk %}">← Хүүхдийн хуудас</a>
+    {% else %}
+      <a class="btn btn--ghost"
+         href="{% url 'children:detail' child.pk %}">← Хүүхдийн хуудас</a>
+    {% endif %}
+  </div>
+{% endblock %}

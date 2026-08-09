@@ -1,0 +1,56 @@
+{% extends base_template %}
+{# RFP §4.1 #}
+
+{% block title %}Миний тухай{% endblock %}
+{% block heading %}Миний тухай — {{ child.full_name }}{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width:760px">
+    {% if error %}<p class="msg msg--error" role="alert">{{ error }}</p>{% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <label for="id_introduction">Хүүхдийн танилцуулга</label>
+      <textarea name="introduction" id="id_introduction"
+                placeholder="Хүүхдийн тухай товч">{{ form.introduction|default:'' }}</textarea>
+
+      <label for="id_name_meaning">Нэрний утга</label>
+      <textarea name="name_meaning" id="id_name_meaning">{{ form.name_meaning|default:'' }}</textarea>
+
+      <label for="id_memorable_sayings">Миний хэлсэн сонирхолтой үг</label>
+      <textarea name="memorable_sayings" id="id_memorable_sayings">{{ form.memorable_sayings|default:'' }}</textarea>
+
+      <label for="id_dream">Миний мөрөөдөл</label>
+      <textarea name="dream" id="id_dream">{{ form.dream|default:'' }}</textarea>
+
+      <label for="id_distinguishing_traits">Миний онцлог</label>
+      <textarea name="distinguishing_traits" id="id_distinguishing_traits">{{ form.distinguishing_traits|default:'' }}</textarea>
+
+      <div class="grid grid--2" style="gap:0 16px">
+        <div>
+          <label for="id_height_cm">Миний өндөр (см)</label>
+          <input type="number" step="0.1" min="30" max="200"
+                 name="height_cm" id="id_height_cm"
+                 value="{{ form.height_cm|default:'' }}">
+        </div>
+        <div>
+          <label for="id_weight_kg">Миний жин (кг)</label>
+          <input type="number" step="0.01" min="2" max="100"
+                 name="weight_kg" id="id_weight_kg"
+                 value="{{ form.weight_kg|default:'' }}">
+        </div>
+      </div>
+
+      <label for="id_recorded_on">Бүртгэсэн огноо</label>
+      <input type="date" name="recorded_on" id="id_recorded_on"
+             value="{{ form.recorded_on|date:'Y-m-d'|default:'' }}">
+
+      <div class="btn-row">
+        <button type="submit" class="btn">Хадгалах</button>
+        <a class="btn btn--ghost"
+           href="{% url 'portfolio:overview' child.pk %}">Цуцлах</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}
