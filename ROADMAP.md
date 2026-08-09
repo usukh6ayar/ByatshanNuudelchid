@@ -382,36 +382,30 @@ shape scheduling:
 
 ---
 
-## Open decisions
+## Decisions
 
-Marked rather than decided, per the brief's instruction to surface ambiguity.
+Recorded rather than left implicit, per the original brief's instruction to
+surface ambiguity. **D3 is still open and now blocking.**
 
-### D1 — MVP scope: growth tracking and document library
+### D1 — MVP scope: growth tracking and document library ✅ resolved 2026-08-09
 
-The design spec section 1.1 lists **growth measurements** and the **document
-library** as in-scope MVP. This roadmap places both in Phase 2.
+**Decision: this roadmap governs. Both move to Phase 2**, along with the full
+portfolio timeline, milestones, photo albums, term and annual reports, Excel,
+activity posts and consent records.
 
-**Recommendation:** follow this roadmap. Both are self-contained and neither
-is needed for the core workflow. Removing them from Phase 1 is the difference
-between a tight ten days and an impossible one. Spec section 1.1 should be
-amended to match.
+Design spec section 1 has been rewritten to match, with section 1.5 recording
+what moved and why. `CLAUDE.md` §7.1, `README.md` and `docs/design/INDEX.md`
+now point here for phase boundaries.
 
-**Status: awaiting confirmation.**
+### D2 — "Clean REST API" as a Phase 1 item ✅ resolved 2026-08-09
 
-### D2 — "Clean REST API" as a Phase 1 item
+**Decision: the deferral stands.** Phase 1 ships a server-rendered web
+application whose views call `services/` in process. Line 72 of the original
+brief requires only that the backend be *designed* to support a mobile client
+later, which the service layer does.
 
-Phase 1 item 14 lists a REST API. The build deliberately defers DRF: the web
-app calls services in-process, and line 72 of the brief only requires the
-backend be *designed* to support a mobile client later, which the service
-layer does.
-
-**Recommendation:** keep the deferral. Building an API surface nothing
-consumes costs days now and gets rewritten when the mobile client's real
-requirements arrive.
-
-**Status: awaiting confirmation.** If a REST API is genuinely a Phase 1
-deliverable — for example because a third party will integrate — say so, and
-it becomes roughly two days of work.
+Revisit if a third party needs to integrate before the mobile client exists;
+adding DRF on top of the existing services is roughly two days.
 
 ### D3 — Hosting and object storage
 

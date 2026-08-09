@@ -42,7 +42,7 @@ prefixed `overview-`.
 |---|---|---|
 | `parent-home.jpeg` | Нүүр хуудас | Child switcher in the header (RFP §2.3), child card with links to the 360° page and portfolio, teacher feed with photos, upcoming events, per-domain progress bars, quick-link grid, support widget |
 
-What the parent home needs from the MVP: the child switcher, child card,
+What the parent home needs in Phase 1: the child switcher, child card,
 teacher feed, announcements, domain progress, and the portfolio link. The rest
 of its sidebar — Өнөөдрийн мэдээлэл, Ирц & Эрүүл мэнд, Хоол & Цэс, Мессеж,
 Судалгаа, Төлбөр & Нэхэмжлэл — is deferred work.
@@ -66,8 +66,8 @@ the screen looks exactly as drawn.
 
 ## Overview sheets
 
-Several screens on one image. Useful for navigation structure and for the
-parent-facing screens, which have no full-size mockup of their own.
+Several screens on one image. Useful for the overall navigation structure and
+for comparing style variants.
 
 | File | Contents |
 |---|---|
@@ -77,43 +77,47 @@ parent-facing screens, which have no full-size mockup of their own.
 | `overview-mobile-app-variants.jpeg` | Five visual styles for the mobile app, plus module screens and a proposed stack diagram |
 | `overview-mobile-app-screens.jpeg` | Mobile app layout variants and per-feature screens |
 
-## Duplicates
-
-`screens/_duplicates/` holds three byte-identical copies and three
-lower-resolution versions of images kept at full size. Safe to delete.
+Three byte-identical copies and three lower-resolution duplicates were removed
+on the client's instruction; 21 unique screens remain.
 
 ---
 
 ## Scope: what these designs imply
 
-The mockups render the **whole RFP**, including everything spec section 1.2
-defers. Every teacher screen's sidebar lists Ирц, Эрүүл мэнд, Судалгаа,
-Хоол/цэс, Санхүү and Аюулгүй байдал, so building the navigation exactly as
-drawn would promise all of it.
+The mockups render the **whole RFP**, across all three phases. Every teacher
+screen's sidebar lists Ирц, Эрүүл мэнд, Судалгаа, Хоол/цэс, Санхүү and
+Аюулгүй байдал, so building the navigation exactly as drawn would promise all
+of it on day one.
 
-Outside the current MVP:
+Which phase each drawn feature belongs to (`ROADMAP.md` is the authority):
 
-| In the design | Deferred to |
+| In the design | Phase |
 |---|---|
-| Ирц, Эрүүл мэнд, Аюулгүй байдал, Эмийн санамж, Харшил | Module 2 |
-| Судалгаа & Аналитик, Excel 5-sheet export | Module 1, §20-III |
-| Санхүү, Төлбөр, QPay / SocialPay | Appendix (business) |
-| Дуут тэмдэглэл, speech-to-text | Appendix |
-| Хоол, цэс | Appendix |
-| Авах/ирэх QR баталгаажуулалт | Appendix |
-| Мессеж / чат | §20-IV |
-| Mobile app | §20-IV |
-| Хэл сонгох (MN switcher) | §20-IV |
+| Нэвтрэх, хүүхдийн жагсаалт, хүүхдийн хуудас, эцэг эхийн нүүр | **1** |
+| Ажиглалтын маягт (voice note and tags excluded) | **1** |
+| Түргэн үнэлгээ (Matrix) | **1** |
+| Мэдэгдэл, унших төлөв | **1** |
+| Багш, админы хяналтын самбар — үндсэн тоонууд | **1** |
+| Энгийн хүүхдийн PDF | **1** |
+| Зургийн цомог, timeline, milestone | 2 |
+| Өсөлтийн график | 2 |
+| Тайлан үүсгэгч бүрэн хувилбар, улирал/жилийн тайлан | 2 |
+| Баримт бичгийн сан, Excel | 2 |
+| Өдөр тутмын мэдээллийн урсгал (Post feed) | 2 |
+| Судалгаа & Аналитик | 3 |
+| Ирц, Эрүүл мэнд, Аюулгүй байдал, Эмийн санамж, Харшил | 3 |
+| Хоол, цэс · Дуут тэмдэглэл · QR авах | 3 |
+| Санхүү, Төлбөр, QPay / SocialPay | 3 |
+| Мессеж / чат · Хэл сонгох | 3 |
+| Mobile app | out of scope |
 
-**How to use this during the MVP:** build the layout, spacing, colour and copy
-from these mockups, but render only the navigation entries that exist. Adding a
-sidebar item later is trivial; a disabled or dead menu entry teaches users the
-system is broken.
+**How to use this during Phase 1:** take the layout, spacing, colour and copy
+from these mockups, but render only the navigation entries that exist. Adding
+a sidebar item later is trivial; a dead menu entry teaches users the system is
+broken.
 
-## Gaps and mismatches to resolve
+## Gaps and mismatches
 
-| Item | Detail |
-|---|---|
 ### Resolved
 
 | Item | Decision |

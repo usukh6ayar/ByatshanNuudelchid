@@ -9,10 +9,11 @@ The rules below are not suggestions. Read them before writing code and verify ag
 Code that violates a rule **does not get written**. If a rule blocks the task at hand, do not work around it — **stop and ask the user**. Every rule derives from a specific requirement in the RFP and maps directly to the acceptance criteria in §21.
 
 **Required reading:**
-- `Project_Info.md` — the client's RFP, in Mongolian. Final authority.
+- `Project_Info.md` — the client's RFP, in Mongolian. Final authority on requirements.
+- `ROADMAP.md` — what ships in which phase, and current status.
 - `docs/superpowers/specs/2026-08-07-kindergarten-portfolio-design.md` — architecture and data model.
 
-Precedence on conflict: RFP > spec > CLAUDE.md > existing code.
+Precedence on conflict: RFP > ROADMAP > spec > CLAUDE.md > existing code.
 
 **Language policy:** documentation and code (comments, identifiers, commit messages) in English. All user-facing UI text in Mongolian — RFP §611. `Project_Info.md` stays in Mongolian; it is the client's document.
 
@@ -255,10 +256,14 @@ Never inside a request:
 | Work | Where |
 |---|---|
 | PDF generation | Celery, tracked via `ReportJob` status (RFP §549) |
-| Image conversion, thumbnails, WebP | Celery (RFP §17, §968) |
+| Image conversion, thumbnails, WebP | Celery (RFP §17, §968) — Phase 2 and 3 |
 | Excel export | Celery |
 | Bulk notifications | Celery |
 | Kindergarten-wide statistics | Celery beat, cached |
+
+Phase 1 image upload is the exception: verifying the MIME type and stripping
+EXIF are millisecond operations on a single photo, so they run inline. The
+queue starts earning its keep once conversion arrives (spec section 7).
 
 ### 6.1 Always enqueue with `transaction.on_commit`
 
@@ -292,9 +297,21 @@ manage their own transactions. Do not remove that decorator.
 
 ### 7.1 Scope
 
-The MVP scope is listed in spec section 1.2. **Do not build deferred items on your own initiative** — surveys/analytics, health records, attendance, medication reminders, QR pickup, voice notes, QPay payments, mobile app.
+`ROADMAP.md` decides what belongs to which phase. Phase 1 is listed in its
+section 7; spec section 1 mirrors it.
 
-If the user asks for one of them, it can be built — but first ask: "this is outside the MVP, build it now or defer to the next phase?"
+**Do not build a later phase's work on your own initiative.** Not in Phase 1:
+
+- **Phase 2** — full portfolio timeline, milestones, photo albums, growth
+  tracking, term and annual reports, document library, Excel, activity posts,
+  consent records, HEIC conversion
+- **Phase 3** — surveys, analytics, health and safety, attendance, medication,
+  voice notes, WebP and thumbnails, CDN, QPay payments
+- **Never** — native mobile applications
+
+If the user asks for one, it can be built — but first say which phase it
+belongs to and ask whether to pull it forward. Pulling work forward without
+saying so is how a ten-day delivery becomes a twenty-day one.
 
 ### 7.2 Commits
 

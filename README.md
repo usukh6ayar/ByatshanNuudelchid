@@ -11,8 +11,12 @@ as a printable PDF covering ages 2 through 5.
 | Document | What it is |
 |---|---|
 | [`Project_Info.md`](Project_Info.md) | The client's RFP, in Mongolian. Final authority on requirements |
+| [`ROADMAP.md`](ROADMAP.md) | Phases, current status, the 10-day Phase 1 plan, open decisions |
 | [`docs/superpowers/specs/2026-08-07-kindergarten-portfolio-design.md`](docs/superpowers/specs/2026-08-07-kindergarten-portfolio-design.md) | Architecture and data model |
+| [`docs/design/INDEX.md`](docs/design/INDEX.md) | The client's UI mockups, screen by screen |
 | [`CLAUDE.md`](CLAUDE.md) | **Mandatory** coding rules. Read before writing code |
+
+Precedence on conflict: RFP > ROADMAP > spec > CLAUDE.md > existing code.
 
 ## Stack
 
@@ -64,7 +68,12 @@ of licensed materials.
 
 ## Scope
 
-The current milestone is the MVP defined in RFP §20-II. Surveys and analytics,
-health records, attendance, payments and the mobile app are deferred — see
-section 1.2 of the spec for the full list. Do not start deferred work without
-agreeing it first.
+The current milestone is **Phase 1**, the paid MVP: 10 days, 3,000,000 ₮.
+Status, the day-by-day plan and the open decisions are in
+[`ROADMAP.md`](ROADMAP.md).
+
+Growth tracking, the document library, full reporting, albums and Excel are
+Phase 2. Surveys, analytics, health records, attendance and payments are
+Phase 3. Native mobile applications are out of scope entirely.
+
+Do not start a later phase's work without agreeing it first.

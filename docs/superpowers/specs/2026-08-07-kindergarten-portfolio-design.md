@@ -1,10 +1,13 @@
 # Child Development Digital Portfolio — Architecture & Data Model
 
-**Date:** 2026-08-07
+**Date:** 2026-08-07 · **Last revised:** 2026-08-09
 **Source document:** `Project_Info.md` (client RFP, in Mongolian)
-**Status:** Approved design. Implementation plan is the next step.
+**Schedule:** `ROADMAP.md`
+**Status:** In build. Days 1–4 complete; see section 14.
 
-This document covers **how** to build what the RFP specifies. The RFP defines **what**. On conflict, the RFP wins.
+This document covers **how** to build what the RFP specifies. The RFP defines
+**what**, and `ROADMAP.md` defines **when**. On conflict: RFP > ROADMAP > this
+document.
 
 RFP section references appear as §N throughout.
 
@@ -12,39 +15,62 @@ RFP section references appear as §N throughout.
 
 ## 1. Scope
 
-### 1.1 In scope (RFP §20-II, the MVP)
+`ROADMAP.md` is the authority on **what ships when**. This document covers
+**how** it is built. Where the two disagreed, the roadmap won — see 1.5.
 
-- Login and authorization for admin / teacher / guardian
+### 1.1 Phase 1 — the paid MVP
+
+- Login and authorization for admin / teacher / guardian, with password reset
 - Kindergarten, school year, group and teacher management
-- Child registration, linking children to guardians
-- Child portfolio: About Me, per-age pages (2–5), milestones, photo albums
-- Teacher observations and parent-submitted observations
-- Development assessment, term reports, annual reports
-- Growth measurements and charts
-- Announcements and activity posts
-- Document library
-- PDF reports generated on a background queue
-- Audit log and consent records
-- Backups
+- Child registration and editing, linking children to guardians
+- Child portfolio: About Me, birthday information, per-age pages (2–5),
+  basic photos
+- Teacher observations, and basic parent-submitted observations
+- Basic development assessment: domains, four levels, comment, progress
+- Notifications from teacher to guardian, with read status
+- Basic teacher and administrator dashboards
+- Search and filtering
+- Simple secure image upload — profile photo and observation attachments
+- A simple child PDF, generated on the background queue
+- Audit log
+- Deployment: HTTPS, production database, backup, health check
 
-### 1.2 Deliberately deferred
+### 1.2 Phase 2
 
-The following are **structurally accommodated** but not implemented in this phase:
+Full digital portfolio (complete 2–5 history, timeline, milestones) · advanced
+gallery (albums, captions, categories, ordering, multi-upload, HEIC,
+compression) · growth measurements and charts · full reporting (term, annual,
+development profile, growth, group, batch) · advanced PDF · document library ·
+Excel import and export · improved dashboards · activity posts · consent
+records.
 
-| Deferred | RFP source |
-|---|---|
-| Surveys, questionnaires, analytics | Module 1 |
-| Safety and health incident records | Module 2 |
-| Attendance, medication reminders, allergy/menu checks | Appendix |
-| QR / PIN-code child pickup | Appendix |
-| Voice notes (speech-to-text) | Appendix |
-| Report acknowledgement (digital signature) | Appendix |
-| Tuition billing, QPay/SocialPay | Appendix |
-| Excel import/export, batch reports, work comparison | §20-III |
-| Mobile app (Android/iOS) | §20-IV |
-| Multi-language | §20-IV |
+### 1.3 Phase 3
 
-**Rationale:** the RFP bundles three products of different sizes. Payments, attendance and pickup are effectively a separate system. Starting everything at once is the most common way projects like this fail. §20 already defines the phasing.
+Surveys and analytics (RFP Module 1) · health, safety, attendance, allergies,
+vaccinations (Module 2) · medication management · daily highlights, voice
+notes, speech-to-text · WebP, thumbnails, CDN · tuition billing and
+QPay/SocialPay · report acknowledgement · QR pickup · multi-language.
+
+### 1.4 Never in this project
+
+Native mobile applications in any form. The service layer is structured so a
+mobile client can be added later without rewriting business logic (RFP
+§20-IV), but no mobile work happens here.
+
+### 1.5 What changed, and why
+
+This section originally put **growth tracking, the document library, term and
+annual reports, milestones, photo albums, activity posts and consent records**
+in the MVP. The roadmap places them in Phase 2, and that is now the plan.
+
+Each is self-contained, and none is needed for the core workflow — a teacher
+recording an observation and a guardian seeing it. Moving them is the
+difference between a tight ten days and an impossible one.
+
+The deferred tables are still described in section 6 and marked with their
+phase. The schema conventions they rely on — `kindergarten_id` everywhere,
+soft delete, school-year scoping — have to be right from the first migration,
+so designing them now costs nothing. Building them now costs the delivery.
 
 ---
 
@@ -215,7 +241,7 @@ These apply to every table.
 
 ## 6. Data model
 
-### 6.1 Foundation (9 tables + 2 profiles)
+### 6.1 Foundation (9 tables + 2 profiles) — Phase 1 ✅ built
 
 ```
 Kindergarten      name, logo, photo, address, phone, email, description, status   §3.2
@@ -250,7 +276,7 @@ Writing the group directly onto `Child` would make every prior year's observatio
 
 **Profiles:** `TeacherProfile` (specialization, years of service, education, bio — §3.3) and `GuardianProfile` (§3.5 extras).
 
-### 6.2 Child portfolio (7 tables)
+### 6.2 Child portfolio (7 tables) — Phase 1 for AboutMe / ChildAgeProfile / BirthdayNote, Phase 2 for milestones and albums
 
 ```
 AboutMe           child, introduction, meaning of name, first signature (media),
@@ -279,7 +305,7 @@ BirthdayNote      child, year, note, media                                §4.2
 
 **§4.1's "record who changed what and when"** is handled by `django-simple-history` snapshots, enabled on `AboutMe`, `ChildAgeProfile`, `Assessment`, `Observation` and `Child`. This is row-level rather than field-level history, but diffing two versions shows which field changed — sufficient in practice and far simpler to operate.
 
-### 6.3 Observations (4 tables)
+### 6.3 Observations (4 tables) — Phase 1
 
 ```
 ObservationType     kindergarten, name, code, order, is_active            §5.2
@@ -302,7 +328,7 @@ ObservationMedia    observation, media_file, caption, taken on, order
 
 **Why `ObservationDomain` is its own table:** a single observation ("built a tower from blocks and explained it to a friend") belongs to Creativity, Language and Communication simultaneously. A single-column domain would make the §12.3 per-domain averages wrong.
 
-### 6.4 Assessment (8 tables)
+### 6.4 Assessment (8 tables) — Phase 1 except TermReport and AnnualReport, which are Phase 2
 
 ```
 DevelopmentDomain   kindergarten(null = system default), name, color,
@@ -310,7 +336,7 @@ DevelopmentDomain   kindergarten(null = system default), name, color,
                     → Physical, Language, Cognitive, Social, Emotional,
                       Creative, Self-care, Communication, Habits
 
-DevelopmentIndicator domain, name, age range, order   (unused in MVP)
+DevelopmentIndicator domain, name, age range, order   (unused in Phase 1)
 AssessmentScale     kindergarten, name, is_default                        §6.2
 AssessmentLevel     scale, value(1..N), label, color, description
                     → 1 Needs support | 2 Developing |
@@ -334,11 +360,11 @@ AnnualReport        child, school_year, progress, strengths,
 
 **`unique(child, enrollment, domain, term)`** enforces §17's "a double-click must not save the same record twice" at the database level. The §6.3 quick-assessment screen is exactly where that happens. With the constraint in the database, even a bug in the application cannot create a duplicate.
 
-**Assessment is at the domain level.** §6.4, §6.5, §12.3 and the Module 1.4 radar chart all work per domain. The `DevelopmentIndicator` table and the `Assessment.indicator` column stay empty in the MVP — they are there so that finer-grained criteria can be added later. An unused nullable column is nearly free; restructuring `Assessment` later would require migrating all existing data.
+**Assessment is at the domain level.** §6.4, §6.5, §12.3 and the Module 1.4 radar chart all work per domain. The `DevelopmentIndicator` table and the `Assessment.indicator` column stay empty in Phase 1 — they are there so that finer-grained criteria can be added later. An unused nullable column is nearly free; restructuring `Assessment` later would require migrating all existing data.
 
 **`TermReport.status`** — teachers write a report over several days. It must not be visible to guardians before it is finalized. PDF generation and acknowledgement both key off this status.
 
-### 6.5 Growth (3 tables)
+### 6.5 Growth (3 tables) — Phase 2
 
 ```
 GrowthMeasurement     child, measured on, age in months, height, weight,
@@ -352,7 +378,7 @@ GrowthStandardPoint   source, sex, age in months, metric(height|weight|head),
 
 The §427 disclaimer ("this system does not provide medical diagnoses") is displayed in the UI.
 
-### 6.6 Media (2 tables)
+### 6.6 Media (2 tables) — MediaFile is Phase 1, MediaVariant is Phase 3
 
 ```
 MediaFile     kindergarten, child(nullable), uploaded_by,
@@ -367,7 +393,7 @@ MediaVariant  media_file, kind: thumb|medium|full|webp_thumb|webp_medium,
               storage_key, width, height, size_bytes, format
 ```
 
-### 6.7 Communication (8 tables)
+### 6.7 Communication (8 tables) — Announcement group is Phase 1, Post group is Phase 2
 
 ```
 Announcement            kindergarten, author, title, body,
@@ -387,7 +413,7 @@ PostView                post, user   unique  ← repeat views not counted
 
 **Why `AnnouncementTarget` is separate:** §8.1 lists both "recipient group" and "guardians of selected children". One announcement can go to three groups plus two individual children at once. A single column cannot express that.
 
-### 6.8 Documents (4 tables)
+### 6.8 Documents (4 tables) — Phase 2
 
 ```
 DocumentCategory  kindergarten, name, order                               §9
@@ -398,7 +424,7 @@ DocumentVersion   document, version number, file, page count,
 DocumentBookmark  document, user   unique
 ```
 
-### 6.9 System (6 tables)
+### 6.9 System (6 tables) — Phase 1 except Consent, which is Phase 2
 
 ```
 ReportJob             kindergarten, type, params JSON, requested_by,
@@ -438,20 +464,32 @@ PasswordResetToken    user, token_hash, expires_at, used_at               §3.1
 
 ## 7. File processing pipeline
 
+The full pipeline, with the phase each step belongs to:
+
 ```
-Photo from a phone → stored temporarily → queued, response returns IMMEDIATELY
-                                      │
-                                      ▼  Celery worker
-                    1. Verify the real MIME type          §15
-                       (a .jpg that is actually a .exe)
-                    2. Strip GPS coordinates from EXIF    ★
-                    3. Convert HEIC → JPEG                §4.4
-                    4. Generate thumb / medium / full     §17
-                    5. Generate WebP variants             §968
-                    6. status = ready
+Photo upload
+   │
+   ├─ 1. Verify the real MIME type       §15    ── Phase 1
+   ├─ 2. Strip GPS coordinates from EXIF  ★     ── Phase 1
+   ├─ 3. Convert HEIC → JPEG             §4.4   ── Phase 2
+   ├─ 4. Generate thumb / medium / full  §17    ── Phase 3
+   └─ 5. Generate WebP variants          §968   ── Phase 3
 ```
 
-**★ Stripping EXIF GPS** is not stated in the RFP but is mandatory. Phone photos embed location coordinates; a leaked child photo would carry the child's home address. This falls squarely under the §16 privacy principles.
+**Phase 1 does steps 1 and 2 only**, and does them inline: checking a MIME
+type and stripping EXIF are millisecond operations on a single photo, so the
+queue would add latency and failure modes for nothing. From step 3 onward the
+work becomes slow enough to belong in Celery, at which point uploads switch to
+returning immediately with `status = processing`.
+
+Phase 1 accepts JPEG and PNG. A guardian uploading a HEIC from an iPhone gets
+a clear message rather than a broken image — the conversion arrives in Phase 2.
+
+**★ Stripping EXIF GPS** is not stated in the RFP but is mandatory from the
+first upload. Phone photos embed location coordinates; a leaked child photo
+would otherwise carry the child's home address. This falls squarely under the
+§16 privacy principles, and it is not something to add later — by then the
+coordinates are already stored.
 
 ### 7.1 Serving images — no public URLs
 
@@ -464,6 +502,10 @@ GET /media/<uuid>/<variant>/
 ```
 
 The signed link is created **after** the permission check. Satisfies §4.4 and §21.10.
+
+This applies from Phase 1. The `<variant>` segment stays in the URL even while
+`full` is the only variant, so adding thumbnails in Phase 3 does not invalidate
+links already stored in reports and templates.
 
 ---
 
@@ -622,21 +664,26 @@ This is where projects of this shape most often fail. Discovering in month three
 
 ---
 
-## 14. Implementation phases (outline)
+## 14. Implementation order
 
-A detailed plan lives in a separate document.
+Superseded by the day-by-day plan in `ROADMAP.md` section 10. Kept here as the
+mapping between this document's sections and that schedule.
 
-1. **Foundation** — Docker environment, Django project, `User`/`Membership`, authentication, permission layer, authorization tests, Cyrillic PDF spike
-2. **Organization data** — Kindergarten, SchoolYear, Group, GroupTeacher, admin screens
-3. **Children** — Child, Guardianship, Enrollment, guardian home screen
-4. **Media** — MediaFile pipeline, signed URLs, photo albums
-5. **Portfolio** — AboutMe, ChildAgeProfile, Milestone, BirthdayNote
-6. **Observations** — Observation and related tables
-7. **Assessment** — configuration tables, Assessment, quick-assessment screen
-8. **Reports** — ReportJob, TermReport, AnnualReport, PDF templates
-9. **Communication** — Announcement, Post
-10. **Growth, documents, dashboards**
-11. **Hardening** — full audit log, consent, backups, load testing, security testing
+| Day | Work | Spec sections | Status |
+|---|---|---|---|
+| 1 | Docker, Django, `User`/`Membership`, auth, permission layer, Cyrillic PDF spike | 3, 4, 6.1, 13.1 | ✅ done |
+| 2 | Kindergarten, SchoolYear, Group, GroupTeacher, admin screens | 3.3, 6.1 | ✅ done |
+| 3 | Child, Enrollment, teacher screens | 6.1, 10 | ✅ done |
+| 4 | Guardianship, invitations, guardian home | 6.1, 4.2 | ✅ done |
+| 5 | AboutMe, BirthdayNote, ChildAgeProfile (ages 2–5) | 6.2 | ⬜ next |
+| 6 | ObservationType, Observation, assessment config, Assessment | 6.3, 6.4 | ⬜ |
+| 7 | Parent observation, Announcement, MediaFile upload | 6.3, 6.7, 7 | ⬜ |
+| 8 | Dashboards, remaining filters, ReportJob and the simple child PDF | 8, 10.3 | ⬜ |
+| 9 | Security review, responsive fixes, deployment, backup | 11, 12, 13 | ⬜ |
+| 10 | Integration, bug fixes, production build, documentation, handover | — | ⬜ |
+
+Phase 2 and Phase 3 work — growth, documents, full reporting, albums,
+milestones, consent, WebP — is scheduled in `ROADMAP.md`, not here.
 
 ---
 
@@ -644,9 +691,9 @@ A detailed plan lives in a separate document.
 
 | Question | Needed by |
 |---|---|
-| After a transfer, how long do the previous kindergarten's staff retain access? (Section 4.2 sets no time limit. Should §16 retention policy bound it?) | Before phase 3 |
-| Are the nine development domains in §6.1 system defaults, or does each kindergarten define its own? | Before phase 7 |
-| Which growth reference standard — WHO or a national one? | Before phase 10 |
-| Where do backups live and who can access them? | Before phase 11 |
-| **Hosting and object storage** — VPS + Docker, or managed PaaS? Cloudflare R2 in section 2 is a **suggestion**, not a decision | Before phase 4 (media) |
-| Domain name, SSL, server location | Before deployment |
+| **Hosting and object storage** — VPS + Docker, or managed PaaS? Cloudflare R2 in section 2 is a **suggestion**, not a decision. Blocks both upload and deployment | **Day 7** |
+| Domain name, SSL certificate, server location | Day 9 |
+| Where do backups live and who can access them? | Day 9 |
+| Are the nine development domains in §6.1 system defaults, or does each kindergarten define its own? | Day 6 |
+| After a transfer, how long do the previous kindergarten's staff retain access? (Section 4.2 sets no time limit. Should the §16 retention policy bound it?) | Phase 2 |
+| Which growth reference standard — WHO or a national one? | Phase 2 (growth tracking) |
