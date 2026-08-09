@@ -75,7 +75,7 @@ children at two kindergartens.
 | PDF | WeasyPrint | ✅ proven (Cyrillic spike) |
 | Object storage | S3-compatible (MinIO in dev) | ⚠️ configured, no upload yet |
 | Runtime | Docker + docker-compose | ✅ in place |
-| Row history | django-simple-history | ✅ on `Child` |
+| Row history | django-simple-history | ✅ on `Child`, `AboutMe`, `ChildAgeProfile` |
 | Lint / test | ruff, pytest | ✅ 189 tests passing |
 
 ## 5. Architecture overview
@@ -211,21 +211,24 @@ QPay/SocialPay.
 | 9 | Security, responsive fixes, deployment, backup, error handling | ⬜ |
 | 10 | Integration, bug fixes, production build, documentation, handover | ⬜ |
 
-**Position: end of Day 5.** Days 1–4 also produced work not on the original
-plan — the invitation system, the audit log and the Cyrillic PDF spike — which
-is why the remaining days are tight rather than comfortable.
+**Position: end of Day 5.** Days 1–5 also produced work not on the original
+plan — the invitation system, the audit log, the administrator workspace and
+the Cyrillic PDF spike — which is why the remaining days are tight rather than
+comfortable. Full record in section 21.
 
 ## 11. Database entities
 
-**Built (20 tables):**
+**Built — 18 models, plus 3 history mirrors:**
 
 ```
 core       AuditLog
 accounts   User · Membership · TeacherProfile · GuardianProfile ·
            Invitation · LoginAttempt · PasswordResetToken
 tenants    Kindergarten · SchoolYear · Group · GroupTeacher
-children   Child · Guardianship · Enrollment · HistoricalChild
-portfolio  AboutMe · ChildAgeProfile · BirthdayNote (+ history mirrors)
+children   Child · Guardianship · Enrollment
+portfolio  AboutMe · ChildAgeProfile · BirthdayNote
+
+history    HistoricalChild · HistoricalAboutMe · HistoricalChildAgeProfile
 ```
 
 **Still needed for Phase 1:**
@@ -382,6 +385,103 @@ shape scheduling:
 - Never claim a feature works without running the tests and showing the output
 - Update this roadmap after every major feature: mark completed items, record
   architectural decisions, record blockers
+
+---
+
+## 21. Progress log
+
+What was actually delivered, in order, with the decisions and blockers each
+day produced. Updated after every major feature.
+
+### Day 1 — 2026-08-07 · Foundation
+`115b08d` `0dad690`
+
+Docker environment (web, worker, beat, PostgreSQL 17, Redis, MinIO), Django
+project with split settings, `User` / `Membership`, the authorization layer,
+and the Cyrillic PDF spike. Then the full authentication flow: login by
+username, email or phone; lockout; password reset; `AuditLog`.
+
+**Decisions.** Authorization derives from `Enrollment` history, not
+`Child.kindergarten_id` — the field changes on transfer and would silently
+revoke a teacher's access to their own observations. Roles live on
+`Membership`, not `User`, so one person can be both a teacher and a guardian.
+Authentication views carry `transaction.non_atomic_requests`, or
+`ATOMIC_REQUESTS` rolls the lockout counter back with the failed request.
+
+**Risk closed.** Mongolian Cyrillic renders in PDF: DejaVu Sans embedded in
+the image covers Ө ө Ү ү, verified by reading the font's character map and by
+parsing the generated file. A printed A4 page still needs a human's eyes.
+
+### Day 2 — 2026-08-08 · Administrator workspace
+`14bf0e4`
+
+`/udirdlaga/` as a separate admin site: kindergartens, school years, groups,
+teacher assignment. Organizational rules in `tenants/services.py`.
+
+**Decisions.** Admin access comes from `Membership`, not `is_staff` — granting
+a director `is_staff` would hand them Django's raw superuser site as a side
+effect. Every list and every foreign-key dropdown is filtered by the user's
+kindergartens, and object lookups go through `get_queryset` so another
+kindergarten's record is *not found* rather than *forbidden*.
+
+**Security fix.** Django's own admin login was a second authentication path
+that skipped the lockout and the audit log, leaving administrator accounts as
+the only unthrottled way in. It now redirects to the project's login view.
+
+### Day 3–4 — 2026-08-08 · Children, guardians, onboarding
+`c47fd67` `591a91e` `5e70335` `045587b`
+
+Client mockups read and catalogued. Design decisions applied to the auth
+screens. Invitation-based account creation. Child registration, the teacher
+list and detail screens, and the guardian home.
+
+**Decisions.** Nobody self-registers: the `Guardianship` row *is* the §21.3
+authorization boundary, so it cannot be created by the person it grants access
+to. Staff create the account; the person activates it and sets their own
+password. Two delivery paths — an emailed link, and identifier plus a
+six-digit code on paper, since Mongolian guardians frequently have no email.
+The code is never checked alone; six digits is searchable, but not when the
+attacker must also know the phone number and beat the attempt throttle.
+
+`visible_children()` was added as the list-level counterpart to
+`can_access_child()`, with a test asserting the two agree over every user and
+child in the fixtures — a child listed but 404ing when opened is a bug, and
+the reverse is a disclosure.
+
+**Bug fixed.** `unique(child, school_year)` blocked RFP §3.4: a mid-year group
+change puts two enrollments in one year. Now unique on *active* enrollments
+only, which is what the rule actually means.
+
+### Day 5 — 2026-08-09 · Portfolio and documentation alignment
+`4694c8b` `c97f2f1` `323cebe` `93f5db0` `2e8c38f`
+
+This roadmap written from the client's brief. All other documents aligned to
+its phase boundaries. Then `apps/portfolio`: About Me, birthday notes, and the
+four age pages.
+
+**Decisions.** D1 and D2 resolved — growth tracking, the document library,
+term and annual reports, milestones, albums, activity posts and consent move
+to Phase 2; the REST API stays deferred. The media plan corrected: Phase 1
+verifies the MIME type and strips EXIF GPS only, and does both inline.
+
+Zodiac sign and year animal are computed, never stored (§206). The portfolio
+has one set of views for both roles, because it is one artifact both write to;
+duplicating them per role would be two copies of the same rules drifting
+apart. The two notes are kept apart in the service, not the template.
+
+**Known limitation.** The year animal uses the calendar year. Цагаан сар falls
+in January or February, so January birthdays may be off by one until a lunar
+table is added. Documented in `zodiac.py`.
+
+### Running totals
+
+| | Day 1 | Day 2 | Day 4 | Day 5 |
+|---|---|---|---|---|
+| Tests | 64 | 93 | 156 | **189** |
+| Models | 14 | 14 | 15 | **18** |
+| DoD met | — | — | 12/24 | **14/24** |
+
+Models excludes the three `django-simple-history` mirrors.
 
 ---
 
