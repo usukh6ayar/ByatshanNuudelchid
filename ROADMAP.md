@@ -94,10 +94,13 @@ apps/core/       base models, permissions, audit log, PDF, admin site
 apps/accounts/   User, Membership, profiles, login, invitations
 apps/tenants/    Kindergarten, SchoolYear, Group, GroupTeacher
 apps/children/   Child, Guardianship, Enrollment
+apps/portfolio/  AboutMe, ChildAgeProfile, BirthdayNote
 ```
 
 Three URL zones with three layouts: `/bagsh/` (teacher), `/etseg-eh/`
-(guardian), `/udirdlaga/` (administrator).
+(guardian), `/udirdlaga/` (administrator). `/hawtas/` is shared: the portfolio
+is one artifact both a teacher and a guardian write to, so it has one set of
+views and picks its layout per request.
 
 **The authorization rule that shapes everything:** a child's kindergarten is
 derived from their `Enrollment` history, never from `Child.kindergarten_id`.
