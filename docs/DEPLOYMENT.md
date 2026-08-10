@@ -73,36 +73,62 @@ listing them is so nobody adds them a second time somewhere else:
 - S3 storage with `default_acl: private` and signed URLs
 - WhiteNoise's manifest static storage
 
-## 3. First deployment
+## 3. Deploying
+
+One command, and the same one for the first deployment and every update
+afterwards:
 
 ```bash
-# 1. Build
-docker compose build
-
-# 2. Schema
-docker compose run --rm web python manage.py migrate
-
-# 3. The media bucket, if you are running your own MinIO.
-#    On R2 or S3 the bucket is created with the account — this command will
-#    not create one and will not guess a policy.
-docker compose run --rm web python manage.py init_storage
-
-# 4. Static files. Fails loudly if a stylesheet references a missing file,
-#    which is the point of running it before traffic arrives.
-docker compose run --rm web python manage.py collectstatic --noinput
-
-# 5. The first account
-docker compose run --rm web python manage.py createsuperuser
-
-# 6. Verify the configuration before starting
-docker compose run --rm web python manage.py check --deploy
+./scripts/deploy.sh
 ```
 
-`check --deploy` should report nothing. A `SECRET_KEY` warning means step 2
-of the configuration was skipped.
+It backs the database up, builds, runs `check --deploy`, migrates, builds the
+static files, starts everything and waits for `/healthz` to answer. Anything
+that only works the first time gets replaced by a half-remembered sequence
+typed at 23:00, so there is no separate first-run path.
+
+**It refuses rather than guesses.** Each of these stops the deployment with a
+sentence instead of producing a site that is up and broken:
+
+| Refusal | What it would otherwise cause |
+|---|---|
+| `DJANGO_SETTINGS_MODULE` is not `config.settings.prod` | `DEBUG` on in production |
+| `DJANGO_SECRET_KEY` still the placeholder | Forgeable sessions and CSRF tokens |
+| `DOMAIN` unset | Caddy cannot request a certificate |
+| `POSTGRES_PASSWORD` unset | Database starts with no password |
+| `AWS_STORAGE_BUCKET_NAME` unset | Uploads fail after the site is live |
+| `DJANGO_ALLOWED_HOSTS` missing the domain | Django refuses every request |
+| `DJANGO_CSRF_TRUSTED_ORIGINS` missing the domain | Every form POST fails |
+
+Afterwards, create the first account:
+
+```bash
+docker compose -f docker-compose.prod.yml run --rm web python manage.py createsuperuser
+```
+
+If you are running your own MinIO rather than R2, create the bucket too —
+`python manage.py init_storage`. On R2 the bucket comes with the account, and
+that command will not create one or guess a policy.
 
 **Do not run `seed_demo` on a production database.** It refuses to run with
 `DEBUG` off (RFP §707), but do not rely on that as the only barrier.
+
+### What the production stack differs in
+
+`docker-compose.prod.yml` is a separate file, not an override of the
+development one. An override inherits what it does not mention, and the
+development file mounts the source directory, publishes PostgreSQL on 5432
+and runs `runserver` — three things that must not reach a server by being
+forgotten.
+
+| | Development | Production |
+|---|---|---|
+| Server | `runserver`, single-threaded | `gunicorn`, 3 workers |
+| Code | Bind-mounted from disk | Baked into the image |
+| Database port | Published on 5432 | Reachable only inside the network |
+| Files | MinIO container | Cloudflare R2 |
+| HTTPS | None | Caddy, certificate renewed automatically |
+| On crash | Stays down | `restart: unless-stopped` |
 
 ## 4. The processes
 
@@ -114,12 +140,14 @@ of the configuration was skipped.
 | postgres | | Data |
 | redis | | Celery broker, and the cache the web and worker processes share |
 
-`docker-compose.yml` in the repository root runs all five and is written for
-development — it uses `runserver` and mounts the source directory. For a
-server, override the `web` command with gunicorn and drop the bind mount.
+`docker-compose.prod.yml` runs all five plus Caddy. `docker-compose.yml` in
+the repository root is the development stack and must not be used on a
+server: it runs `runserver`, mounts the source directory and publishes
+PostgreSQL on 5432.
 
 Beat and worker are not optional. A deployment with only `web` looks healthy,
-serves every page, and silently never produces a PDF.
+serves every page, and silently never produces a PDF — which is why
+`deploy.sh` prints the container list at the end and why it is worth reading.
 
 ## 5. Health
 
@@ -163,15 +191,13 @@ bucket is created.
 
 ```bash
 git pull
-docker compose build
-docker compose run --rm web python manage.py migrate
-docker compose run --rm web python manage.py collectstatic --noinput
-docker compose up -d
+./scripts/deploy.sh
 ```
 
-Take a backup first. Migrations are reviewed by hand for data-losing
-operations before they are committed (CLAUDE.md §3.4), but review is not the
-same as a restore point.
+The same script. It takes the backup itself before anything replaces the
+running code — migrations are reviewed by hand for data-losing operations
+before they are committed (CLAUDE.md §3.4), but review is not a restore
+point.
 
 ## 8. Running it, month to month
 

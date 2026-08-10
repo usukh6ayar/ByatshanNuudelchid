@@ -1,0 +1,42 @@
+# HTTPS and the reverse proxy — RFP §15.
+#
+# Caddy issues and renews a Let's Encrypt certificate on its own, which is
+# why it is here rather than nginx: the alternative is a certbot container
+# and a renewal cron nobody remembers until the certificate expires.
+#
+# DOMAIN comes from .env. Point its A record at the server before starting
+# this, or the certificate request fails and Caddy retries with a backoff.
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Static files are served straight off the volume `collectstatic` filled,
+	# so Django is never woken to hand over a stylesheet. WhiteNoise stays in
+	# the stack as the fallback for anything not found here.
+	handle_path /static/* {
+		root * /srv/static
+		file_server
+		# Hashed by the manifest storage, so the name changes when the
+		# content does and a year is safe.
+		header Cache-Control "public, max-age=31536000, immutable"
+	}
+
+	reverse_proxy web:8000 {
+		# prod.py reads this through SECURE_PROXY_SSL_HEADER. Without it
+		# every request looks like plain HTTP to Django, SECURE_SSL_REDIRECT
+		# fires, and the browser loops.
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	# Uploaded photographs are never served from here. They live in the
+	# object store and are reached through /media/<uuid>/, which runs the
+	# permission check first and then signs a short-lived URL — RFP §4.4,
+	# §21.10. There is deliberately no file_server for them.
+
+	log {
+		output file /data/access.log {
+			roll_size 20mb
+			roll_keep 5
+		}
+	}
+}

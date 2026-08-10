@@ -158,7 +158,7 @@ end to end.
 | 12 | Search & filtering — name, group, school year, active/archived | ✅ done | §11's full list, incl. school year, date interval, domain and level — `test_observations.py`, `test_views_authorization.py` |
 | 13 | Basic PDF export — child info, photo, portfolio, observations, assessments | ✅ done | `apps/reports/`, `test_reports.py`; §549 queue, §10.3 A4 + Cyrillic verified by parsing the output |
 | 14 | Backend — REST API, PostgreSQL, migrations, auth, ownership, upload, logging, env | ⚠️ partial | Everything except the REST API. **See decision D2** |
-| 15 | Deployment — production, HTTPS, prod database, backup, health check | ⚠️ partial | `/healthz`, `prod.py` passing `check --deploy`, a static build, and backup/restore scripts exercised against a real database — everything except a server. Target chosen (D3): Hetzner Singapore + Cloudflare R2 |
+| 15 | Deployment — production, HTTPS, prod database, backup, health check | ⚠️ partial | `/healthz`, `prod.py` passing `check --deploy`, `docker-compose.prod.yml`, `Caddyfile`, `scripts/deploy.sh` with its refusals exercised, backup/restore rehearsed. Target chosen (D3): Hetzner Singapore + Cloudflare R2. **Everything except a server** |
 | 16 | Basic security — hashing, RBAC, ownership, no cross-child access, secure files, HTTPS, validation, injection/XSS, cookies | ✅ done | 40+ authorization tests; HTTPS and file access land with 15 and 4 |
 | 17 | Responsive web — desktop, tablet, mobile browser | ⚠️ partial | Mobile-first CSS written; not tested on real devices |
 
@@ -341,7 +341,16 @@ run with `DEBUG` off).
 
 **Target: Hetzner Cloud, Singapore region, with Cloudflare R2 for files**
 (decision D3, 2026-08-11 — chosen on measured latency from Ulaanbaatar).
-The procedure is in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+The procedure is in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md), and
+`docker-compose.prod.yml`, `Caddyfile` and `scripts/deploy.sh` are written
+and their refusals exercised. What is missing is a server.
+
+> **Not a serverless platform.** Asked about Vercel on 2026-08-11. It cannot
+> host this: RFP §549 requires PDF rendering in a worker outside the request,
+> and a serverless runtime has no persistent worker; WeasyPrint needs
+> `libcairo` and `libpango`, and §684's MIME sniffing needs `libmagic`, none
+> of which install on a managed Python runtime. There is also no separate
+> front end to host — every screen is a Django template.
 
 > ⚠️ **Still not deployed.** Everything on this side is ready — production
 > settings pass Django's checklist, the static build runs, backup and restore

@@ -1,0 +1,131 @@
+# Production stack — RFP §14, §15. Decision D3: Hetzner Singapore + Cloudflare R2.
+#
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Deliberately a separate file rather than an override of docker-compose.yml.
+# An override inherits what it does not mention, and the development file
+# mounts the source directory, publishes PostgreSQL on 5432 and runs
+# `runserver` — three things that must not reach a server by being forgotten.
+# Read as one file, this says exactly what production runs.
+#
+# Differences from development, and why each one matters:
+#   · gunicorn, not runserver     — runserver is single-threaded and explicitly
+#                                   not for production
+#   · no source bind mount        — the image is the deployment; a mount means
+#                                   the running code is whatever is on disk
+#   · no published database port  — PostgreSQL is reachable only inside the
+#                                   compose network
+#   · no MinIO                    — files live in Cloudflare R2 (RFP §4.4: the
+#                                   bucket is private)
+#   · restart policies            — a worker that dies at 03:00 comes back
+#   · Caddy in front              — terminates HTTPS and sets the forwarded
+#                                   header prod.py reads
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    # Celery's broker. `--save ""` because everything in here is a queued job
+    # or a cached figure: losing it costs one dashboard refresh, and the
+    # snapshotting is disk churn for nothing.
+    command: redis-server --save "" --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 10
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      args:
+        REQUIREMENTS: requirements/base.txt
+    command: >
+      gunicorn config.wsgi:application
+      --bind 0.0.0.0:8000
+      --workers 3
+      --timeout 60
+      --access-logfile -
+      --error-logfile -
+    env_file: .env
+    expose:
+      - "8000"
+    volumes:
+      - static:/app/staticfiles
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # RFP §549 — PDF rendering never happens inside a request. Without this
+  # container the site serves every page and silently never finishes a report.
+  worker:
+    build:
+      context: .
+      args:
+        REQUIREMENTS: requirements/base.txt
+    command: celery -A config worker -l info --concurrency 2
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # §12.2's cached figures every 15 minutes, and expired reports hourly.
+  beat:
+    build:
+      context: .
+      args:
+        REQUIREMENTS: requirements/base.txt
+    command: >
+      celery -A config beat -l info
+      --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # HTTPS, and the X-Forwarded-Proto header prod.py's SECURE_PROXY_SSL_HEADER
+  # reads. Without that header every request looks like plain HTTP and
+  # SECURE_SSL_REDIRECT sends the browser round in a loop.
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - static:/srv/static:ro
+      - caddydata:/data
+      - caddyconfig:/config
+    depends_on:
+      - web
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  static:
+  caddydata:      # certificates — losing this means re-issuing them
+  caddyconfig:

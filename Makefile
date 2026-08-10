@@ -1,4 +1,4 @@
-.PHONY: up down build sh test lint fix migrate migrations superuser storage seed pdf-spike logs backup restore check-deploy
+.PHONY: up down build sh test lint fix migrate migrations superuser storage seed pdf-spike logs backup restore check-deploy deploy prod-logs
 
 up:            ## Start the stack
 	docker compose up
@@ -54,3 +54,9 @@ restore:       ## Restore a dump — DESTRUCTIVE. make restore FILE=backups/x.du
 check-deploy:  ## Django's production checklist against config.settings.prod
 	docker compose run --rm -e DJANGO_SETTINGS_MODULE=config.settings.prod \
 		web python manage.py check --deploy
+
+deploy:        ## Deploy or update production — refuses on a bad .env (docs/DEPLOYMENT.md)
+	./scripts/deploy.sh
+
+prod-logs:
+	docker compose -f docker-compose.prod.yml logs -f web worker beat
