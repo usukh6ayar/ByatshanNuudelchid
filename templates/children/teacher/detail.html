@@ -118,6 +118,14 @@
     <a class="btn" href="{% url 'portfolio:overview' child.pk %}">
       Хувийн хавтас үзэх
     </a>
+    {% comment %} Staff only — RFP §2.2. This template also renders for a
+       guardian, and a link that answers 404 teaches the reader that the page
+       exists and that they are being refused. Showing nothing says less. {% endcomment %}
+    {% if can_record %}
+      <a class="btn btn--ghost" href="{% url 'children:edit' child.pk %}">
+        Мэдээлэл засах
+      </a>
+    {% endif %}
     <a class="btn btn--ghost" href="{% url 'observations:list' child.pk %}">
       Ажиглалт
     </a>

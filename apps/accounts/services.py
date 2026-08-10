@@ -8,13 +8,22 @@ import secrets
 
 from django.conf import settings
 from django.contrib.auth import authenticate
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
 from apps.core.models import AuditAction
 from apps.core.services import audit, client_ip
 
-from .models import Invitation, LoginAttempt, Membership, PasswordResetToken, Role, User
+from .models import (
+    Invitation,
+    LoginAttempt,
+    Membership,
+    PasswordResetToken,
+    Role,
+    TeacherProfile,
+    User,
+)
 
 TOKEN_TTL_HOURS = 2
 
@@ -108,6 +117,78 @@ def attempt_login(*, request, identifier: str, password: str) -> LoginResult:
 
 def record_logout(*, request, user):
     audit(action=AuditAction.LOGOUT, request=request, actor=user)
+
+
+# ---------------------------------------------------------------- own profile
+
+# Everything a person may change about themselves. Written as an allow-list
+# rather than an exclude-list because the failure modes are not symmetric:
+# forgetting to add a field here means someone cannot edit their bio, while
+# forgetting to exclude one on a model that grows a field later could mean
+# `is_active`, `is_superuser` or `password` are writable from a form the user
+# controls entirely. §2.1 puts roles and account state with the administrator.
+EDITABLE_USER_FIELDS = frozenset({"last_name", "first_name", "email", "phone"})
+EDITABLE_TEACHER_FIELDS = frozenset(
+    {"specialization", "years_of_service", "education", "bio"}
+)
+
+
+@transaction.atomic
+def update_own_profile(*, user, request=None, **fields):
+    """RFP §3.3 — a teacher maintains their own professional details.
+
+    The actor and the subject are the same person by construction: there is
+    no ``actor``/``user`` pair to get the wrong way round, and no id comes
+    from the request. A caller that wants to edit somebody else is using the
+    wrong function.
+
+    The ``TeacherProfile`` row is created on first save. Accounts are made by
+    invitation (``invite_teacher``), which deliberately writes no profile —
+    an empty row for every invited teacher would say "this person filled
+    nothing in", which is not the same as "this person has not been here yet".
+
+    Teacher fields are ignored for anyone who is not a teacher, rather than
+    refused: the form does not offer them, so a guardian posting them is
+    either noise or an attempt, and neither deserves a row.
+    """
+    unknown = set(fields) - EDITABLE_USER_FIELDS - EDITABLE_TEACHER_FIELDS
+    if unknown:
+        raise ValidationError(
+            f"Засах боломжгүй талбар: {', '.join(sorted(unknown))}"
+        )
+
+    for name in EDITABLE_USER_FIELDS & set(fields):
+        value = fields[name]
+        if name in ("email", "phone"):
+            # unique=True with null=True: two users may both have no email,
+            # but not both have "". Empty means absent, and absent is NULL.
+            value = (value or "").strip() or None
+        setattr(user, name, value)
+
+    user.full_clean(
+        exclude=[f.name for f in user._meta.fields
+                 if f.name not in EDITABLE_USER_FIELDS]
+    )
+    user.save(update_fields=sorted(EDITABLE_USER_FIELDS))
+
+    profile = None
+    teacher_fields = EDITABLE_TEACHER_FIELDS & set(fields)
+    if teacher_fields and _is_teacher(user):
+        profile, _ = TeacherProfile.objects.get_or_create(user=user)
+        for name in teacher_fields:
+            setattr(profile, name, fields[name])
+        profile.full_clean(
+            exclude=[f.name for f in profile._meta.fields
+                     if f.name not in EDITABLE_TEACHER_FIELDS]
+        )
+        profile.save()
+
+    audit(action=AuditAction.UPDATE, request=request, actor=user, obj=user)
+    return user, profile
+
+
+def _is_teacher(user) -> bool:
+    return user.memberships.filter(is_active=True, role=Role.TEACHER).exists()
 
 
 # ---------------------------------------------------------------- password reset

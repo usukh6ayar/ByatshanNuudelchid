@@ -35,6 +35,8 @@
           <span class="badge badge--warn">{{ unread_announcements }}</span>
         {% endif %}
       </a>
+      <a href="{% url 'accounts:profile' %}"
+         {% if nav == 'profile' %}aria-current="page"{% endif %}>Миний бүртгэл</a>
       <a href="{% url 'accounts:logout' %}">Гарах</a>
     </nav>
   </aside>

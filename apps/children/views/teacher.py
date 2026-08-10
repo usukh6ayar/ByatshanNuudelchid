@@ -18,6 +18,7 @@ from django.shortcuts import redirect, render
 from apps.children import selectors, services
 from apps.children.models import Child, Guardianship
 from apps.core.models import AuditAction
+from apps.core.permissions import assert_can_record_for_child, can_record_for_child
 from apps.core.services import audit
 from apps.tenants.selectors import assignable_groups, school_years_for
 
@@ -94,6 +95,11 @@ def child_detail(request, child_id):
         "enrollment": services.current_enrollment(child),
         "history": selectors.enrollment_history(child),
         "guardianships": child.guardianships.all(),
+        # Decides which actions the page offers. Not the authorization —
+        # that is the edit view's own `assert_can_record_for_child`. A
+        # template that hides a link is a courtesy; a view that checks is
+        # the rule (CLAUDE.md §1.1).
+        "can_record": can_record_for_child(request.user, child),
     })
 
 
@@ -136,6 +142,66 @@ def child_create(request):
         return redirect("children:detail", child_id=child.pk)
 
     return render(request, "children/teacher/form.html", context)
+
+
+@login_required
+def child_edit(request, child_id):
+    """RFP §2.2 — "хүүхдийн мэдээлэл засах".
+
+    The gate is ``can_record_for_child``, not the ``_get_child_or_404`` used
+    by the read views. A guardian passes the read check — the record is her
+    child's — but the national id, the enrollment date and the health notes
+    are the kindergarten's record, and §2.3 gives a guardian the portfolio,
+    not that. Both verbs go through it: gating GET alone leaves a view that
+    still writes.
+
+    The group is deliberately absent from the form. Moving a child is
+    ``transfer_child``, which writes the Enrollment row that
+    ``child_kindergarten_history`` reads for authorization (CLAUDE.md §1.2);
+    reassigning it here would move the child with no history behind it.
+    ``update_child`` would refuse the field anyway — this keeps the refusal
+    from ever being the user's first sign of it.
+    """
+    child = _get_child_or_404(request, child_id)
+    assert_can_record_for_child(request.user, child)
+
+    context: dict = {
+        "child": child,
+        "sexes": Child.Sex.choices,
+        "statuses": Child.Status.choices,
+        "form": {
+            "last_name": child.last_name,
+            "first_name": child.first_name,
+            "national_id": child.national_id,
+            "sex": child.sex,
+            "date_of_birth": child.date_of_birth.isoformat(),
+            "health_notes": child.health_notes,
+        },
+    }
+
+    if request.method == "POST":
+        context["form"] = request.POST
+
+        try:
+            services.update_child(
+                actor=request.user,
+                child=child,
+                last_name=request.POST.get("last_name", ""),
+                first_name=request.POST.get("first_name", ""),
+                national_id=request.POST.get("national_id", ""),
+                sex=request.POST.get("sex", ""),
+                date_of_birth=_parse_date(request.POST.get("date_of_birth")),
+                health_notes=request.POST.get("health_notes", ""),
+                request=request,
+            )
+        except (ValidationError, ValueError) as exc:
+            context["error"] = _message(exc)
+            return render(request, "children/teacher/edit_form.html", context)
+
+        messages.success(request, f"{child.full_name} хадгалагдлаа.")
+        return redirect("children:detail", child_id=child.pk)
+
+    return render(request, "children/teacher/edit_form.html", context)
 
 
 @login_required

@@ -1,0 +1,78 @@
+{% extends base_template %}
+
+{% comment %} RFP §3.3, §13. Rendered inside whichever shell the user already
+   sees, so a guardian editing their phone number stays in the parent layout.
+
+   The teacher block is hidden for non-teachers as a courtesy only. The POST
+   body belongs to whoever sends it, so the rule that matters is in
+   `update_own_profile`, which ignores those fields for anyone without a
+   teacher membership. {% endcomment %}
+
+{% block title %}Миний бүртгэл{% endblock %}
+{% block heading %}Миний бүртгэл{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width:720px">
+    {% if error %}<p class="msg msg--error" role="alert">{{ error }}</p>{% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="grid grid--2" style="gap:0 16px">
+        <div>
+          <label for="id_last_name">Овог</label>
+          <input type="text" name="last_name" id="id_last_name"
+                 value="{{ form.last_name|default:'' }}">
+        </div>
+        <div>
+          <label for="id_first_name">Нэр</label>
+          <input type="text" name="first_name" id="id_first_name"
+                 value="{{ form.first_name|default:'' }}">
+        </div>
+      </div>
+
+      <div class="grid grid--2" style="gap:0 16px">
+        <div>
+          <label for="id_email">И-мэйл</label>
+          <input type="email" name="email" id="id_email"
+                 value="{{ form.email|default:'' }}">
+        </div>
+        <div>
+          <label for="id_phone">Утас</label>
+          <input type="tel" name="phone" id="id_phone"
+                 value="{{ form.phone|default:'' }}">
+        </div>
+      </div>
+
+      {% if is_teacher %}
+        <h2 style="font-size:1.05rem; margin:26px 0 0">Мэргэжлийн мэдээлэл</h2>
+
+        <label for="id_specialization">Мэргэжил</label>
+        <input type="text" name="specialization" id="id_specialization"
+               value="{{ form.specialization|default:'' }}">
+
+        <label for="id_years_of_service">Ажилласан жил</label>
+        <input type="number" name="years_of_service" id="id_years_of_service"
+               min="0" max="70" value="{{ form.years_of_service|default:'' }}">
+
+        <label for="id_education">Боловсрол</label>
+        <textarea name="education" id="id_education"
+                  rows="2">{{ form.education|default:'' }}</textarea>
+
+        <label for="id_bio">Өөрийн тухай</label>
+        <textarea name="bio" id="id_bio"
+                  rows="3">{{ form.bio|default:'' }}</textarea>
+      {% endif %}
+
+      <p class="muted" style="margin-top:18px">
+        Нууц үг солих бол
+        <a href="{% url 'accounts:password_reset' %}">нууц үг сэргээх</a>
+        хуудсыг ашиглана уу.
+      </p>
+
+      <div class="btn-row">
+        <button type="submit" class="btn">Хадгалах</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}

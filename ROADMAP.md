@@ -144,8 +144,8 @@ end to end.
 |---|---|---|---|
 | 1 | Authentication — admin/teacher/parent login, RBAC, hashing, logout, password reset | ✅ done | `apps/accounts/`, `test_login.py`, `test_password_reset.py` |
 | 2 | Kindergarten & group management — CRUD, school year, teacher assignment | ✅ done | `apps/tenants/`, `/udirdlaga/`, `test_admin.py` |
-| 3 | Teacher management — profile, assigned kindergarten/group/children | ⚠️ partial | Model + assignment done; no self-service profile edit screen |
-| 4 | Child management — create, edit, view, photo, group, year, guardian link, active/archived | ⚠️ partial | Create/view/archive/photo done; **no edit view** |
+| 3 | Teacher management — profile, assigned kindergarten/group/children | ✅ done | Model + assignment from Day 2; self-service profile at `/miniy-buurtgel/` — `test_profile.py` |
+| 4 | Child management — create, edit, view, photo, group, year, guardian link, active/archived | ✅ done | Edit view added Day 10 — `test_child_edit.py` |
 | 5 | Parent management — account, parent↔child, access only to own children | ✅ done | `register_guardian`, `test_views_authorization.py` |
 | 6 | Digital child portfolio — About Me, birthday, ages 2–5, basic photos | ✅ done | `apps/portfolio/`, `test_portfolio.py`; profile photo via `apps/media/` |
 | 7 | Teacher observation — full entry form with photo and parent visibility | ✅ done | `apps/observations/`, `test_observations.py`; attachments in `test_media.py` |
@@ -160,7 +160,7 @@ end to end.
 | 16 | Basic security — hashing, RBAC, ownership, no cross-child access, secure files, HTTPS, validation, injection/XSS, cookies | ✅ done | 40+ authorization tests; HTTPS and file access land with 15 and 4 |
 | 17 | Responsive web — desktop, tablet, mobile browser | ⚠️ partial | Mobile-first CSS written; not tested on real devices |
 
-**12 done · 5 partial · 0 not started.**
+**14 done · 3 partial · 0 not started.**
 
 > This line has now been wrong twice. Day 5 read "8 done · 4 partial ·
 > 5 not started"; Day 8 corrected it to "13 done · 2 partial · 2 not started"
@@ -227,13 +227,16 @@ QPay/SocialPay.
 | 7 | Parent observation, notifications, media upload | ✅ done |
 | 8 | Dashboards, search, filters, basic PDF | ✅ done |
 | 9 | Security, responsive fixes, deployment, backup, error handling | ✅ mostly (deployment blocked on D3, responsive untested on devices) |
-| 10 | Integration, bug fixes, production build, documentation, handover | ⬜ **next** — child edit view, deployment, device testing |
+| 10 | Integration, bug fixes, production build, documentation, handover | ⚠️ child edit and the teacher profile done; **deployment and device testing outstanding** |
 
 > The Day 8 version of this table still showed Day 7 as "next" and Day 8 as
 > not started, both contradicted by the progress log immediately below it.
 > The log is written at the end of each day; this table was not.
 
-**Position: end of Day 9.** Days 1–9 also produced work not on the original
+**Position: end of Day 10.** Two things stand between here and handover, and
+neither is code this side can write alone: the application has never been
+deployed, because the hosting decision (D3) is the client's; and the layout
+has never been opened on a real phone. Days 1–10 also produced work not on the original
 plan — the invitation system, the audit log, the administrator workspace and
 the Cyrillic PDF spike — which is why the remaining days are tight rather than
 comfortable. Full record in section 21.
@@ -350,7 +353,7 @@ Formal QA is the client's. Before handover we still verify:
 | Application runs, no obvious runtime errors | ✅ |
 | Authentication and logout | ✅ 20 tests |
 | Role permissions and ownership | ✅ 40+ tests, plus live HTTP verification |
-| CRUD operations | ⚠️ child edit missing |
+| CRUD operations | ✅ child create, view, edit, archive; teacher and guardian profiles |
 | File upload | ✅ 34 tests, incl. MIME spoofing and EXIF GPS |
 | Responsive layout on real devices | ⬜ |
 | Chrome, Safari, Edge, Android browser | ⬜ |
@@ -358,7 +361,7 @@ Formal QA is the client's. Before handover we still verify:
 | Backup and restore | ✅ `scripts/backup.sh` verified against the live database, archive restored into a scratch database and row counts compared table by table |
 | PDF with Cyrillic and images | ⚠️ renders and parses back correctly, and no longer carries the template's own commentary — but the **printed A4 page has still not been inspected by a human**, which is exactly how that commentary survived eight days |
 
-Current: **505 tests passing**, `ruff` clean.
+Current: **544 tests passing**, `ruff` clean.
 
 ## 17. Definition of done — Phase 1
 
@@ -369,7 +372,7 @@ Current: **505 tests passing**, `ruff` clean.
 | Parent can log in | ✅ |
 | Role permissions work | ✅ |
 | Admin can manage kindergarten / group / teachers | ✅ |
-| Teacher can manage children | ⚠️ edit view missing |
+| Teacher can manage children | ✅ |
 | Parent can be linked to children | ✅ |
 | Parent can only see their own children | ✅ |
 | Child profile works | ✅ |
@@ -760,13 +763,62 @@ does not move until someone holds one. The printed A4 page still has not been
 looked at by a human — more pressing now, not less, since the template that
 produces it changed today.
 
+### Day 10 — 2026-08-10 · the two screens that were never built
+
+Both remaining "partial" rows in the requirement table were the same shape:
+the service existed, the model existed, and nothing reached either from a
+browser. Neither needed new data.
+
+**Child edit (§2.2).** `update_child` has been in `services.py` since Day 3
+with no caller. The gate is `can_record_for_child`, not `can_access_child`,
+and the difference is the whole point: a guardian passes the read check —
+it is her child — but the registration number, the enrollment date and the
+health notes are the kindergarten's record of the child, and §2.3 gives a
+guardian the portfolio, not that. Both verbs go through the check, since a
+view that gates GET and forgets POST is a view that still writes.
+
+The group is deliberately absent from the form. Moving a child is
+`transfer_child`, which writes the Enrollment row that
+`child_kindergarten_history` reads for authorization (CLAUDE.md §1.2); a
+form that quietly reassigned it would move a child with no history behind
+them, and the previous teacher would lose access to observations they wrote
+themselves. Two tests post the field anyway and assert nothing moved.
+
+**A 500 found on the way.** `uniq_child_national_id` is a partial unique
+constraint and nothing checked it before the INSERT, so a teacher who
+mistyped a registration number that already existed met a server error
+rather than a sentence. Registering a new child had the same hole; the
+service test asserted `IntegrityError`, which is to say it asserted the
+500. Both paths now check first. The constraint stays — it is still the
+guarantee, and checking first only decides which outcome is the common one.
+
+**Self-service profile (§3.3).** `TeacherProfile` shipped on Day 2 and a
+teacher had no way to fill in their own specialization, education or years
+of service. No id in the URL: the subject is always `request.user`, which
+is what makes this screen safe and also what makes its risks different.
+The editable fields are an allow-list, not an exclude-list, because the
+failure modes are not symmetric — a forgotten field means somebody cannot
+edit their bio, while a field missed on an exclude-list could mean
+`is_active`, `is_superuser` or `password` are writable from a form the user
+controls entirely. Six tests post exactly those and assert nothing moved.
+Teacher fields are ignored rather than refused for non-teachers: the form
+does not offer them, so a guardian posting them is noise or an attempt.
+
+Guardians get the same screen without the professional block. §3.5 gives
+them a name and a phone number worth correcting, and a page that 404s for a
+whole role is a menu entry that has to be conditional in two layouts.
+
+**Requirement 3 and requirement 4 close.** The table is now 14 done, 3
+partial, 0 not started; the three partials are deployment (D3), responsive
+layout on real devices, and the REST API (D2, deferred by decision).
+
 ### Running totals
 
-| | Day 1 | Day 2 | Day 4 | Day 5 | Day 6 | Day 7 | Day 8 | Day 9 |
-|---|---|---|---|---|---|---|---|---|
-| Tests | 64 | 93 | 156 | 189 | 278 | 346 | 397 | **505** |
-| Models | 14 | 14 | 15 | 18 | 27 | 33 | 34 | **34** |
-| DoD met | — | — | 12/24 | 14/24 | 16/24 | 20/24 | 22/24 | **23/24** |
+| | Day 1 | Day 2 | Day 4 | Day 5 | Day 6 | Day 7 | Day 8 | Day 9 | Day 10 |
+|---|---|---|---|---|---|---|---|---|---|
+| Tests | 64 | 93 | 156 | 189 | 278 | 346 | 397 | 505 | **544** |
+| Models | 14 | 14 | 15 | 18 | 27 | 33 | 34 | 34 | **34** |
+| DoD met | — | — | 12/24 | 14/24 | 16/24 | 20/24 | 22/24 | 23/24 | **23/24** |
 
 Models excludes the three `django-simple-history` mirrors.
 
@@ -774,6 +826,10 @@ Day 9 adds no models and no features. Of its 108 new tests, 99 are the
 template guard — two assertions run against every template — and 9 are the
 error pages. A jump in the test count that buys no new behaviour is what
 finding a defect looks like.
+
+Day 10 adds no models either: both screens are views over services that
+already existed. The DoD figure does not move because the only item left is
+deployment, which needs a provider rather than more code.
 
 ---
 

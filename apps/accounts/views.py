@@ -9,12 +9,15 @@ and the lockout would never engage (CLAUDE.md §6.2).
 """
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.password_validation import (
     ValidationError,
     validate_password,
 )
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -240,3 +243,100 @@ def activate_by_code(request):
 
 def activate_done(request):
     return render(request, "accounts/activate_done.html")
+
+
+@login_required
+def profile(request):
+    """RFP §3.3 — a person maintains their own details.
+
+    No id anywhere: the subject is `request.user`, which is why this needs
+    only `login_required` and none of the child-data machinery. The teacher
+    fields are rendered for teachers and ignored for everyone else — the
+    service decides that, not the template, since a POST body is written by
+    whoever sends it.
+    """
+    user = request.user
+    is_teacher = user.memberships.filter(
+        is_active=True, role=services.Role.TEACHER
+    ).exists()
+    teacher_profile = getattr(user, "teacher_profile", None)
+
+    context: dict = {
+        "is_teacher": is_teacher,
+        "base_template": _layout_for(user),
+        "form": {
+            "last_name": user.last_name,
+            "first_name": user.first_name,
+            "email": user.email or "",
+            "phone": user.phone or "",
+            "specialization": getattr(teacher_profile, "specialization", ""),
+            "years_of_service": getattr(teacher_profile, "years_of_service", "") or "",
+            "education": getattr(teacher_profile, "education", ""),
+            "bio": getattr(teacher_profile, "bio", ""),
+        },
+    }
+
+    if request.method == "POST":
+        context["form"] = request.POST
+
+        try:
+            fields = {
+                "last_name": request.POST.get("last_name", "").strip(),
+                "first_name": request.POST.get("first_name", "").strip(),
+                "email": request.POST.get("email", ""),
+                "phone": request.POST.get("phone", ""),
+            }
+            if is_teacher:
+                fields.update(
+                    specialization=request.POST.get("specialization", "").strip(),
+                    education=request.POST.get("education", "").strip(),
+                    bio=request.POST.get("bio", "").strip(),
+                    # Inside the try: parsing the field is as much a source of
+                    # a message to the user as saving it is.
+                    years_of_service=_years_or_none(
+                        request.POST.get("years_of_service")
+                    ),
+                )
+
+            services.update_own_profile(user=user, request=request, **fields)
+        except (DjangoValidationError, ValueError) as exc:
+            context["error"] = _error_message(exc)
+            return render(request, "accounts/profile.html", context)
+
+        messages.success(request, "Мэдээлэл хадгалагдлаа.")
+        return redirect("accounts:profile")
+
+    return render(request, "accounts/profile.html", context)
+
+
+def _years_or_none(value):
+    """An empty field means "not stated"; anything else must be a number."""
+    value = (value or "").strip()
+    if not value:
+        return None
+    if not value.isdigit():
+        raise ValueError("Ажилласан жилийг тоогоор бичнэ үү.")
+    return int(value)
+
+
+def _layout_for(user) -> str:
+    """The profile page belongs to whichever shell the user already sees.
+
+    RFP §13 gives each role its own layout; sending a parent into the teacher
+    chrome to edit their phone number would be the one screen that looks like
+    somebody else's application. Administrators get the staff shell, which is
+    what the rest of the codebase does — their own workspace is the Django
+    admin site at /udirdlaga/ and has no base template here.
+    """
+    staff_roles = {services.Role.TEACHER, services.Role.ADMIN,
+                   services.Role.SUPERADMIN}
+    roles = set(
+        user.memberships.filter(is_active=True).values_list("role", flat=True)
+    )
+    return "base_teacher.html" if roles & staff_roles else "base_parent.html"
+
+
+def _error_message(exc) -> str:
+    if isinstance(exc, DjangoValidationError):
+        return " ".join(exc.messages)
+    return str(exc)

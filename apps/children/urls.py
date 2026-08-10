@@ -9,6 +9,7 @@ urlpatterns = [
     path("bagsh/huuhded/", teacher.child_list, name="list"),
     path("bagsh/huuhded/shine/", teacher.child_create, name="create"),
     path("bagsh/huuhded/<int:child_id>/", teacher.child_detail, name="detail"),
+    path("bagsh/huuhded/<int:child_id>/zasah/", teacher.child_edit, name="edit"),
     path("bagsh/huuhded/<int:child_id>/asran-hamgaalagch/",
          teacher.guardian_add, name="guardian_add"),
 

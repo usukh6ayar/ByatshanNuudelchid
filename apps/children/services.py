@@ -30,6 +30,37 @@ def current_enrollment(child: Child) -> Enrollment | None:
     )
 
 
+def _assert_national_id_is_free(*, kindergarten_id, national_id, exclude_pk=None):
+    """Refuse a registration number already in use — RFP §2.2.
+
+    ``uniq_child_national_id`` is a partial unique constraint, so PostgreSQL
+    catches this either way; it just catches it as an ``IntegrityError`` from
+    inside the INSERT, which reaches the user as a 500. A teacher who mistypes
+    one digit of a registration number has made an ordinary mistake and is
+    owed an ordinary sentence about it.
+
+    Checking before the write is a race in principle — two requests can both
+    pass and one will still hit the constraint. That is the right trade here:
+    the constraint remains the guarantee, and this only decides which of the
+    two outcomes is common. Two teachers registering the same number in the
+    same millisecond is not the case worth optimising for.
+    """
+    if not national_id:
+        return
+
+    clash = Child.objects.filter(
+        kindergarten_id=kindergarten_id, national_id=national_id
+    )
+    if exclude_pk is not None:
+        clash = clash.exclude(pk=exclude_pk)
+
+    if clash.exists():
+        raise ValidationError(
+            f"«{national_id}» регистрийн дугаартай хүүхэд энэ цэцэрлэгт "
+            f"бүртгэлтэй байна."
+        )
+
+
 @transaction.atomic
 def register_child(*, actor, group, last_name, first_name, national_id, sex,
                    date_of_birth, enrolled_on=None, health_notes="",
@@ -41,6 +72,10 @@ def register_child(*, actor, group, last_name, first_name, national_id, sex,
     ``Child.kindergarten_id`` (CLAUDE.md §1.2), so leaving that window open
     across two requests would be a needless edge case.
     """
+    _assert_national_id_is_free(
+        kindergarten_id=group.kindergarten_id, national_id=national_id.strip()
+    )
+
     child = Child(
         kindergarten_id=group.kindergarten_id,
         last_name=last_name.strip(),
@@ -78,6 +113,13 @@ def update_child(*, actor, child, request=None, **fields) -> Child:
     unknown = set(fields) - editable
     if unknown:
         raise ValidationError(f"Засах боломжгүй талбар: {', '.join(sorted(unknown))}")
+
+    if "national_id" in fields:
+        _assert_national_id_is_free(
+            kindergarten_id=child.kindergarten_id,
+            national_id=(fields["national_id"] or "").strip(),
+            exclude_pk=child.pk,          # the child's own number is not a clash
+        )
 
     for name, value in fields.items():
         setattr(child, name, value)

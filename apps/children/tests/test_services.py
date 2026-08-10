@@ -57,13 +57,48 @@ def test_registration_is_audited(world, naran_admin_user):
 
 def test_duplicate_code_in_the_same_kindergarten_is_rejected(world,
                                                              naran_admin_user):
-    from django.db import IntegrityError
+    """A ValidationError, not an IntegrityError.
 
+    Both stop the write; only one can be shown to the person who made the
+    mistake. This test used to assert the IntegrityError, which is to say it
+    asserted that a mistyped registration number reached the teacher as a
+    500 — the constraint firing from inside the INSERT leaves nothing a view
+    can catch and phrase. The constraint is still there and still the
+    guarantee; the service now checks first so the common case is a sentence.
+    """
     register(world, naran_admin_user, national_id="AA12345678")
 
-    with pytest.raises(IntegrityError):
+    with pytest.raises(ValidationError):
         register(world, naran_admin_user, national_id="AA12345678",
                  first_name="Хоёрдугаар")
+
+
+def test_the_same_code_at_another_kindergarten_is_fine(world, make_admin):
+    """The constraint is per kindergarten — two schools share no numbering."""
+    naran_admin = make_admin(world["naran"], username="naran_dir")
+    och_admin = make_admin(world["och"], username="och_dir")
+
+    register(world, naran_admin, national_id="AA12345678")
+
+    child = services.register_child(
+        actor=och_admin, group=world["petal"],
+        last_name="Овог", first_name="Хоёрдугаар",
+        national_id="AA12345678", sex=Child.Sex.MALE,
+        date_of_birth=dt.date(2021, 5, 5),
+    )
+
+    assert child.pk is not None
+
+
+def test_a_child_keeps_their_own_code_on_update(world, naran_admin_user):
+    """Excluding the row itself — otherwise no child could ever be saved twice."""
+    child = register(world, naran_admin_user, national_id="AA12345678")
+
+    services.update_child(actor=naran_admin_user, child=child,
+                          national_id="AA12345678", first_name="Шинэ")
+
+    child.refresh_from_db()
+    assert child.first_name == "Шинэ"
 
 
 def test_update_rejects_fields_it_does_not_own(world, naran_admin_user):

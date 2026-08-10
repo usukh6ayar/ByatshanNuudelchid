@@ -29,6 +29,8 @@
          {% if nav == 'review' %}aria-current="page"{% endif %}>Хянах ажиглалт</a>
       <a href="{% url 'comms:list' %}"
          {% if nav == 'announcements' %}aria-current="page"{% endif %}>Мэдэгдэл</a>
+      <a href="{% url 'accounts:profile' %}"
+         {% if nav == 'profile' %}aria-current="page"{% endif %}>Миний бүртгэл</a>
       <a href="{% url 'accounts:logout' %}">Гарах</a>
     </nav>
   </aside>
