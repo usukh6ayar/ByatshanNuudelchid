@@ -17,11 +17,11 @@ so a dashboard tile can never become a way to count other people's children.
 import datetime as dt
 
 from django.core.cache import cache
-from django.db.models import Avg, Count, Q
+from django.db.models import Avg, Count, Max, Q
 from django.utils import timezone
 
 from apps.accounts.models import Role, User
-from apps.assessment.models import Assessment
+from apps.assessment.models import Assessment, AssessmentLevel
 from apps.assessment.selectors import current_term, domains_for
 from apps.children.models import Child, Enrollment
 from apps.comms.models import Announcement
@@ -46,7 +46,12 @@ RECENT_LIMIT = 8
 def teacher_dashboard(user, *, today: dt.date | None = None) -> dict:
     """Everything on the teacher's screen — RFP §12.1."""
     today = today or timezone.localdate()
-    children = visible_children(user)
+    # `photo` is selected here because the §12.1 screen shows a child's
+    # picture beside their name in both the birthday strip and the missing-
+    # assessment list. Without it each name costs its own query, which is
+    # exactly the N+1 CLAUDE.md §3.5 forbids — and on a dashboard it would be
+    # twenty-five of them.
+    children = visible_children(user).select_related("photo")
     child_ids = list(children.values_list("pk", flat=True))
 
     groups = list(assignable_groups(user))
@@ -194,11 +199,26 @@ def _domain_averages(child_ids, term):
         .annotate(average=Avg("level__value"), counted=Count("id"))
         .order_by("domain__order", "domain__name")
     )
+    # The mockups draw each domain as a filled bar, which needs a proportion
+    # rather than a mean. The top of the scale is whatever the administrator
+    # configured (§6.2) — assuming 4 here would silently mis-draw every bar
+    # for a kindergarten that renamed its scale to three levels or five.
+    scale_ids = set(
+        Assessment.objects.filter(child_id__in=child_ids, term=term)
+        .values_list("level__scale_id", flat=True)
+    )
+    top = AssessmentLevel.objects.filter(scale_id__in=scale_ids).aggregate(
+        top=Max("value")
+    )["top"] or 0
+
     return [
         {
             "name": row["domain__name"],
             "color": row["domain__color"],
             "average": round(row["average"], 1) if row["average"] else 0,
+            "percent": (
+                round(row["average"] / top * 100) if row["average"] and top else 0
+            ),
             "count": row["counted"],
         }
         for row in rows

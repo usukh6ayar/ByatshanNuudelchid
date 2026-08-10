@@ -1,65 +1,113 @@
 {% extends "base_teacher.html" %}
-{% comment %} RFP §12.1, tile for tile. Ordered by what a teacher acts on first:
-   the things waiting for them, then today, then the term's progress. {% endcomment %}
+{% comment %} RFP §12.1, tile for tile, laid out as
+   `docs/design/screens/teacher-dashboard.jpeg` draws it: a row of tinted
+   statistics, then panels whose titles carry a link to the full screen.
+
+   Ordered by what a teacher acts on first — the things waiting for them,
+   then today, then the term's progress. The mockup also draws attendance,
+   meals, growth and surveys; those are Phase 2 and 3 and are not faked
+   here. {% endcomment %}
 
 {% block title %}Хяналтын самбар{% endblock %}
-{% block heading %}Хяналтын самбар{% endblock %}
+{% block heading %}Хяналтын самбар 👋{% endblock %}
+{% block lede %}
+  <p class="lede">Өнөөдрийн үйл ажиллагаа, хүүхдийн хөгжил, бүлгийн мэдээлэл нэг дор.</p>
+{% endblock %}
 
 {% block content %}
   <div class="grid grid--tiles">
-    <div class="tile">
-      <div class="tile__label">Хариуцсан хүүхэд</div>
-      <div class="tile__value">{{ child_count }}</div>
+    <div class="tile tile--blue">
+      <span class="tile__icon"><svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg></span>
+      <div>
+        <div class="tile__label">Хариуцсан хүүхэд</div>
+        <div class="tile__value">{{ child_count }}</div>
+      </div>
     </div>
-    <div class="tile">
-      <div class="tile__label">Өнөөдөр төрсөн өдөртэй</div>
-      <div class="tile__value">{{ birthdays_today|length }}</div>
+    <div class="tile tile--pink">
+      <span class="tile__icon"><svg class="ic" aria-hidden="true"><use href="#i-cake"></use></svg></span>
+      <div>
+        <div class="tile__label">Өнөөдөр төрсөн өдөртэй</div>
+        <div class="tile__value">{{ birthdays_today|length }}</div>
+      </div>
     </div>
-    <div class="tile">
-      <div class="tile__label">Хянах ажиглалт</div>
-      <div class="tile__value">{{ pending_reviews }}</div>
+    <div class="tile tile--amber">
+      <span class="tile__icon"><svg class="ic" aria-hidden="true"><use href="#i-review"></use></svg></span>
+      <div>
+        <div class="tile__label">Хянах ажиглалт</div>
+        <div class="tile__value">{{ pending_reviews }}</div>
+      </div>
     </div>
-    <div class="tile">
-      <div class="tile__label">Үнэлгээ дутуу</div>
-      <div class="tile__value">{{ missing_assessments|length }}</div>
+    <div class="tile tile--teal">
+      <span class="tile__icon"><svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg></span>
+      <div>
+        <div class="tile__label">Үнэлгээ дутуу</div>
+        <div class="tile__value">{{ missing_assessments|length }}</div>
+      </div>
     </div>
   </div>
 
   {% if birthdays_today %}
-    <div class="card">
-      <h2>🎂 Өнөөдрийн төрсөн өдөр</h2>
-      <p>
+    <div class="card" style="margin-top:16px">
+      <div class="card__head">
+        <h2>🎂 Өнөөдрийн төрсөн өдөр</h2>
+      </div>
+      <div class="switcher" style="margin-bottom:0">
         {% for child in birthdays_today %}
-          <a href="{% url 'children:detail' child.pk %}">{{ child.full_name }}</a>{% if not forloop.last %}, {% endif %}
+          <a href="{% url 'children:detail' child.pk %}">
+            {% if child.photo %}
+              <img class="avatar avatar--sm"
+                   src="{% url 'media:serve' child.photo.public_id 'full' %}"
+                   alt="{{ child.full_name }}">
+            {% else %}
+              <span class="avatar avatar--sm" aria-hidden="true">{{ child.first_name|first }}</span>
+            {% endif %}
+            <span>{{ child.full_name }}</span>
+          </a>
         {% endfor %}
-      </p>
+      </div>
     </div>
   {% endif %}
 
-  <div class="grid grid--2">
-    {# §12.1 — "тухайн улирлын үнэлгээний явц" #}
+  <div class="grid grid--2" style="margin-top:16px">
+    {% comment %} §12.1 — "тухайн улирлын үнэлгээний явц" {% endcomment %}
     <div class="card">
-      <h2>Улирлын үнэлгээний явц</h2>
+      <div class="card__head">
+        <h2>Улирлын үнэлгээний явц</h2>
+        {% if term %}<span class="badge badge--muted">{{ term.name }}</span>{% endif %}
+      </div>
+
       {% if term %}
-        <p class="brand__sub" style="margin-top:-8px">{{ term.name }}</p>
-        <p>
-          <strong style="font-size:1.6rem">{{ assessment_progress.percent }}%</strong>
-          <span class="brand__sub">
-            — {{ assessment_progress.done }} / {{ assessment_progress.expected }}
-          </span>
-        </p>
+        <div class="meter">
+          <div class="meter__top">
+            <span class="meter__name">{{ assessment_progress.done }} / {{ assessment_progress.expected }} үнэлгээ</span>
+            <span class="meter__value">{{ assessment_progress.percent }}%</span>
+          </div>
+          <div class="meter__track">
+            <div class="meter__fill" style="width:{{ assessment_progress.percent }}%"></div>
+          </div>
+        </div>
 
         {% if missing_assessments %}
-          <h3 style="font-size:.95rem">Үнэлгээ дутуу хүүхдүүд</h3>
-          <ul style="margin:6px 0 0; padding-left:18px">
+          <h3 style="font-size:.9rem; margin:18px 0 8px">Үнэлгээ дутуу хүүхдүүд</h3>
+          <div class="feed">
             {% for child in missing_assessments %}
-              <li>
-                <a href="{% url 'assessment:child' child.pk %}">{{ child.full_name }}</a>
-              </li>
+              <a class="feed__item" href="{% url 'assessment:child' child.pk %}">
+                {% if child.photo %}
+                  <img class="avatar avatar--sm"
+                       src="{% url 'media:serve' child.photo.public_id 'full' %}"
+                       alt="{{ child.full_name }}">
+                {% else %}
+                  <span class="avatar avatar--sm" aria-hidden="true">{{ child.first_name|first }}</span>
+                {% endif %}
+                <div class="feed__body">
+                  <div class="feed__title">{{ child.full_name }}</div>
+                  <div class="feed__meta">Үнэлгээ хийгдээгүй</div>
+                </div>
+              </a>
             {% endfor %}
-          </ul>
+          </div>
         {% else %}
-          <p class="brand__sub">Бүх хүүхэд үнэлэгдсэн.</p>
+          <p class="brand__sub" style="margin-top:14px">Бүх хүүхэд үнэлэгдсэн.</p>
         {% endif %}
       {% else %}
         <p class="empty">
@@ -69,29 +117,27 @@
       {% endif %}
     </div>
 
-    {# §12.1, §12.3 — "хөгжлийн чиглэл тус бүрийн дундаж" #}
+    {% comment %} §12.1, §12.3 — "хөгжлийн чиглэл тус бүрийн дундаж". The
+       mockup draws this as a donut; a bar per domain says the same thing,
+       reads at a glance on a phone, and needs no chart library. {% endcomment %}
     <div class="card">
-      <h2>Хөгжлийн чиглэлийн дундаж</h2>
+      <div class="card__head">
+        <h2>Хөгжлийн чиглэлийн дундаж</h2>
+      </div>
       {% if domain_averages %}
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Чиглэл</th><th>Дундаж</th><th>Тоо</th></tr>
-            </thead>
-            <tbody>
-              {% for row in domain_averages %}
-                <tr>
-                  <td>
-                    <span class="badge" style="background:{{ row.color }}1a; color:{{ row.color }}">
-                      {{ row.name }}
-                    </span>
-                  </td>
-                  <td><strong>{{ row.average }}</strong></td>
-                  <td>{{ row.count }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+        <div class="meter-list">
+          {% for row in domain_averages %}
+            <div class="meter">
+              <div class="meter__top">
+                <span class="meter__name">{{ row.name }}</span>
+                <span class="meter__value">{{ row.average }}</span>
+              </div>
+              <div class="meter__track">
+                <div class="meter__fill"
+                     style="width:{{ row.percent }}%; background:{{ row.color }}"></div>
+              </div>
+            </div>
+          {% endfor %}
         </div>
       {% else %}
         <p class="empty">Энэ улиралд үнэлгээ бүртгэгдээгүй байна.</p>
@@ -99,65 +145,104 @@
     </div>
   </div>
 
-  <div class="grid grid--2">
-    {# §12.1 — "сүүлийн ажиглалтууд" #}
+  <div class="grid grid--2" style="margin-top:16px">
+    {% comment %} §12.1 — "сүүлийн ажиглалтууд" {% endcomment %}
     <div class="card">
-      <h2>Сүүлийн ажиглалт</h2>
-      {% for observation in recent_observations %}
-        <p style="margin-bottom:10px">
-          <a href="{% url 'observations:detail' observation.child.pk observation.pk %}">
-            {{ observation.summary }}
-          </a><br>
-          <span class="brand__sub">
-            {{ observation.child.full_name }} ·
-            {{ observation.observed_on|date:"Y.m.d" }} ·
-            {{ observation.get_source_display }}
-          </span>
-        </p>
-      {% empty %}
-        <p class="empty">Ажиглалт бүртгэгдээгүй байна.</p>
-      {% endfor %}
+      <div class="card__head">
+        <h2>Сүүлийн ажиглалт</h2>
+        <a href="{% url 'children:list' %}">Бүгдийг харах</a>
+      </div>
+      <div class="feed">
+        {% for observation in recent_observations %}
+          <a class="feed__item"
+             href="{% url 'observations:detail' observation.child.pk observation.pk %}">
+            <span class="avatar avatar--sm" aria-hidden="true">
+              {{ observation.child.first_name|first }}
+            </span>
+            <div class="feed__body">
+              <div class="feed__title">{{ observation.summary }}</div>
+              <div class="feed__meta">
+                {{ observation.child.full_name }} ·
+                {{ observation.observed_on|date:"Y.m.d" }} ·
+                {{ observation.get_source_display }}
+              </div>
+            </div>
+          </a>
+        {% empty %}
+          <p class="empty">
+            <svg class="ic" aria-hidden="true"><use href="#i-observation"></use></svg>
+            Ажиглалт бүртгэгдээгүй байна.
+          </p>
+        {% endfor %}
+      </div>
     </div>
 
-    {# §12.1 — "сүүлийн үеийн эцэг эхийн оруулсан мэдээлэл" #}
+    {% comment %} §12.1 — "сүүлийн үеийн эцэг эхийн оруулсан мэдээлэл" {% endcomment %}
     <div class="card">
-      <h2>
-        Эцэг эхийн ажиглалт
-        {% if pending_reviews %}
-          <span class="badge badge--warn">{{ pending_reviews }} хянах</span>
-        {% endif %}
-      </h2>
-      {% for observation in recent_parent_notes %}
-        <p style="margin-bottom:10px">
-          <a href="{% url 'observations:detail' observation.child.pk observation.pk %}">
-            {{ observation.summary }}
-          </a><br>
-          <span class="brand__sub">
-            {{ observation.child.full_name }} ·
-            {{ observation.get_review_status_display }}
-          </span>
-        </p>
-      {% empty %}
-        <p class="empty">Эцэг эхийн ажиглалт байхгүй байна.</p>
-      {% endfor %}
+      <div class="card__head">
+        <h2>
+          Эцэг эхийн ажиглалт
+          {% if pending_reviews %}
+            <span class="badge badge--warn">{{ pending_reviews }} хянах</span>
+          {% endif %}
+        </h2>
+        <a href="{% url 'observations:review_queue' %}">Хянах</a>
+      </div>
+      <div class="feed">
+        {% for observation in recent_parent_notes %}
+          <a class="feed__item"
+             href="{% url 'observations:detail' observation.child.pk observation.pk %}">
+            <span class="avatar avatar--sm" aria-hidden="true">
+              {{ observation.child.first_name|first }}
+            </span>
+            <div class="feed__body">
+              <div class="feed__title">{{ observation.summary }}</div>
+              <div class="feed__meta">
+                {{ observation.child.full_name }} ·
+                {{ observation.get_review_status_display }}
+              </div>
+            </div>
+          </a>
+        {% empty %}
+          <p class="empty">
+            <svg class="ic" aria-hidden="true"><use href="#i-review"></use></svg>
+            Эцэг эхийн ажиглалт байхгүй байна.
+          </p>
+        {% endfor %}
+      </div>
     </div>
   </div>
 
-  {# §12.1 — "шинэ мэдэгдэл" #}
-  <div class="card">
-    <h2>Сүүлийн мэдэгдэл</h2>
-    {% for announcement in new_announcements %}
-      <p style="margin-bottom:8px">
-        <a href="{% url 'comms:detail' announcement.pk %}">{{ announcement.title }}</a>
-        {% if announcement.is_important %}
-          <span class="badge badge--warn">Чухал</span>
-        {% endif %}
-        <span class="brand__sub">
-          {{ announcement.published_at|date:"Y.m.d"|default:"ноорог" }}
-        </span>
-      </p>
-    {% empty %}
-      <p class="empty">Мэдэгдэл байхгүй байна.</p>
-    {% endfor %}
+  {% comment %} §12.1 — "шинэ мэдэгдэл" {% endcomment %}
+  <div class="card" style="margin-top:16px">
+    <div class="card__head">
+      <h2>Сүүлийн мэдэгдэл</h2>
+      <a href="{% url 'comms:list' %}">Бүгдийг харах</a>
+    </div>
+    <div class="feed">
+      {% for announcement in new_announcements %}
+        <a class="feed__item" href="{% url 'comms:detail' announcement.pk %}">
+          <span class="tile__icon" style="width:34px; height:34px; border-radius:10px">
+            <svg class="ic ic--sm" aria-hidden="true"><use href="#i-bell"></use></svg>
+          </span>
+          <div class="feed__body">
+            <div class="feed__title">
+              {{ announcement.title }}
+              {% if announcement.is_important %}
+                <span class="badge badge--warn">Чухал</span>
+              {% endif %}
+            </div>
+            <div class="feed__meta">
+              {{ announcement.published_at|date:"Y.m.d"|default:"ноорог" }}
+            </div>
+          </div>
+        </a>
+      {% empty %}
+        <p class="empty">
+          <svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg>
+          Мэдэгдэл байхгүй байна.
+        </p>
+      {% endfor %}
+    </div>
   </div>
 {% endblock %}

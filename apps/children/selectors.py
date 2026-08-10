@@ -53,7 +53,11 @@ def child_list(user, *, search="", group=None, school_year=None, status=None,
     CLAUDE.md §3.5: the prefetches below are not optional. Without them the
     list issues a query per row for the group and again for the guardians.
     """
-    qs = visible_children(user).prefetch_related(
+    # `photo` joins here because the list shows each child's picture beside
+    # their name, as the mockup draws it. Left to the template it would be a
+    # query per row — the N+1 CLAUDE.md §3.5 forbids, on the screen a teacher
+    # opens most.
+    qs = visible_children(user).select_related("photo").prefetch_related(
         _active_enrollments(), _guardianships()
     )
 

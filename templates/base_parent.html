@@ -1,10 +1,19 @@
 {% load static %}<!doctype html>
 {% comment %} Guardian layout — RFP §13 asks for clarity over density.
 
+   Built from `docs/design/screens/parent-home.jpeg`: white sidebar with an
+   icon per entry, the unread count as a pill on Мэдэгдэл, the signed-in
+   guardian at top right.
+
    The kindergarten name follows the selected child rather than sitting fixed
    in the chrome: spec section 4.2 allows children at two kindergartens and
-   resolves the tenant from the child. With one kindergarten this looks
-   exactly like the mockup. {% endcomment %}
+   resolves the tenant from the child. With one kindergarten — the common
+   case — this looks exactly like the mockup.
+
+   The mockup's sidebar also lists Ирц & Эрүүл мэнд, Хоол & Цэс, Мессеж,
+   Судалгаа and Төлбөр. Those are Phase 2 and 3 and are not drawn here; a
+   parent following a menu entry to a page that does not exist learns not to
+   trust the rest of it. {% endcomment %}
 <html lang="mn">
 <head>
   <meta charset="utf-8">
@@ -13,6 +22,7 @@
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body>
+{% include "_icons.html" %}
 <div class="shell">
   <aside class="sidebar">
     <div class="brand">
@@ -27,26 +37,44 @@
 
     <nav class="nav" aria-label="Үндсэн цэс">
       <a href="{% url 'children:parent_home' %}"
-         {% if nav == 'home' %}aria-current="page"{% endif %}>Нүүр хуудас</a>
+         {% if nav == 'home' %}aria-current="page"{% endif %}>
+        <svg class="ic" aria-hidden="true"><use href="#i-home"></use></svg>
+        Нүүр хуудас
+      </a>
       <a href="{% url 'comms:list' %}"
          {% if nav == 'announcements' %}aria-current="page"{% endif %}>
+        <svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg>
         Мэдэгдэл
         {% if unread_announcements %}
-          <span class="badge badge--warn">{{ unread_announcements }}</span>
+          <span class="count">{{ unread_announcements }}</span>
         {% endif %}
       </a>
       <a href="{% url 'accounts:profile' %}"
-         {% if nav == 'profile' %}aria-current="page"{% endif %}>Миний бүртгэл</a>
-      <a href="{% url 'accounts:logout' %}">Гарах</a>
+         {% if nav == 'profile' %}aria-current="page"{% endif %}>
+        <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
+        Миний бүртгэл
+      </a>
+      <a href="{% url 'accounts:logout' %}">
+        <svg class="ic" aria-hidden="true"><use href="#i-logout"></use></svg>
+        Гарах
+      </a>
     </nav>
   </aside>
 
   <main class="main">
     <div class="topbar">
-      <h1>{% block heading %}{% endblock %}</h1>
+      <div>
+        <h1>{% block heading %}{% endblock %}</h1>
+        {% block lede %}{% endblock %}
+      </div>
       <div class="who">
-        {{ request.user }}<br>
-        <span class="brand__sub">Эцэг эх</span>
+        <span class="avatar avatar--sm" aria-hidden="true">
+          {{ request.user.first_name|first|default:"·" }}
+        </span>
+        <span>
+          <span class="who__name">{{ request.user }}</span><br>
+          <span class="brand__sub">Эцэг эх</span>
+        </span>
       </div>
     </div>
 

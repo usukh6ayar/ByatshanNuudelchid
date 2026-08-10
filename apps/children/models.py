@@ -1,5 +1,7 @@
 """Children, guardianships and enrollments — spec section 6.1."""
 
+import datetime as dt
+
 from django.conf import settings
 from django.db import models
 from simple_history.models import HistoricalRecords
@@ -82,6 +84,22 @@ class Child(TenantScopedModel):
     @property
     def full_name(self) -> str:
         return f"{self.last_name} {self.first_name}"
+
+    @property
+    def age(self) -> int:
+        """Completed years, today — RFP §11, and a column on every list.
+
+        The arithmetic is repeated from ``portfolio.zodiac.age_on`` rather
+        than imported: that module belongs to an app which already imports
+        this one, and a property on a model is not worth a circular import.
+        ``age_on`` keeps the date-parameterised form the birthday table needs
+        (§4.2); this is the "how old are they now" that a list asks for.
+        """
+        today = dt.date.today()
+        born = self.date_of_birth
+        return today.year - born.year - (
+            (today.month, today.day) < (born.month, born.day)
+        )
 
 
 class Guardianship(TenantScopedModel):

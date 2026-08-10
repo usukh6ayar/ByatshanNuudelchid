@@ -4,8 +4,21 @@
 
 {% block title %}Хүүхдийн жагсаалт{% endblock %}
 {% block heading %}Хүүхдийн жагсаалт{% endblock %}
+{% block lede %}
+  <p class="lede">Нийт {{ page.paginator.count }} хүүхэд</p>
+{% endblock %}
 
 {% block content %}
+  {% comment %} The mockup puts the primary action beside the page title
+     rather than above the table, so it stays in the same place on every
+     screen that has one. {% endcomment %}
+  <div class="page-actions" style="margin:-8px 0 16px">
+    <a class="btn" href="{% url 'children:create' %}">
+      <svg class="ic ic--sm" aria-hidden="true"><use href="#i-children"></use></svg>
+      Шинэ хүүхэд нэмэх
+    </a>
+  </div>
+
   <div class="card">
     <form method="get" class="filters">
       <div>
@@ -92,10 +105,6 @@
   </div>
 
   <div class="card">
-    <div class="btn-row" style="margin:0 0 16px">
-      <a class="btn" href="{% url 'children:create' %}">Шинэ хүүхэд нэмэх</a>
-    </div>
-
     {% if page.object_list %}
       <div class="table-wrap">
         <table>
@@ -106,22 +115,39 @@
               <th scope="col">Код</th>
               <th scope="col">Хүйс</th>
               <th scope="col">Төрсөн огноо</th>
+              <th scope="col">Нас</th>
               <th scope="col">Бүлэг</th>
               <th scope="col">Эцэг эх</th>
               <th scope="col">Төлөв</th>
+              <th scope="col"><span class="sr-only">Үйлдэл</span></th>
             </tr>
           </thead>
           <tbody>
             {% for child in page.object_list %}
               <tr>
+                {% comment %} Name and picture in one cell, as drawn. The
+                   photo goes through /media/<uuid>/ like every other file,
+                   so the permission check runs before the bytes do
+                   (CLAUDE.md §1.4). {% endcomment %}
                 <td>
-                  <a class="name" href="{% url 'children:detail' child.pk %}">
-                    {{ child.full_name }}
+                  <a class="person" href="{% url 'children:detail' child.pk %}"
+                     style="text-decoration:none; color:inherit">
+                    {% if child.photo %}
+                      <img class="avatar avatar--sm"
+                           src="{% url 'media:serve' child.photo.public_id 'full' %}"
+                           alt="{{ child.full_name }}">
+                    {% else %}
+                      <span class="avatar avatar--sm" aria-hidden="true">
+                        {{ child.first_name|first }}
+                      </span>
+                    {% endif %}
+                    <span class="person__name">{{ child.full_name }}</span>
                   </a>
                 </td>
                 <td>{{ child.national_id }}</td>
                 <td>{{ child.get_sex_display }}</td>
                 <td>{{ child.date_of_birth|date:"Y.m.d" }}</td>
+                <td>{{ child.age }} нас</td>
                 <td>
                   {% for enrollment in child.active_enrollments %}
                     {{ enrollment.group.name }}
@@ -141,6 +167,12 @@
                     {{ child.get_status_display }}
                   </span>
                 </td>
+                <td style="white-space:nowrap">
+                  <a class="btn btn--ghost btn--sm"
+                     href="{% url 'children:detail' child.pk %}">Үзэх</a>
+                  <a class="btn btn--ghost btn--sm"
+                     href="{% url 'children:edit' child.pk %}">Засах</a>
+                </td>
               </tr>
             {% endfor %}
           </tbody>
@@ -158,7 +190,10 @@
         {% endif %}
       </div>
     {% else %}
-      <p class="empty">Хүүхэд олдсонгүй.</p>
+      <p class="empty">
+        <svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg>
+        Хүүхэд олдсонгүй.
+      </p>
     {% endif %}
   </div>
 {% endblock %}

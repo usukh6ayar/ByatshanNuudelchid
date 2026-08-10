@@ -1,7 +1,15 @@
 {% load static %}<!doctype html>
-{% comment %} Teacher layout — RFP §13 wants fast data entry, so the nav is flat and the
-   content column is wide. Only the sections that exist are listed: a menu
-   entry that goes nowhere teaches users the system is broken. {% endcomment %}
+{% comment %} Teacher layout — RFP §13 wants fast data entry, so the nav is flat
+   and the content column is wide.
+
+   Built from `docs/design/screens/teacher-dashboard.jpeg`: white sidebar, an
+   icon beside every entry, the signed-in person in a pill at top right.
+
+   The mockup's sidebar lists twelve entries — Ирц, Эрүүл мэнд, Судалгаа,
+   Хоол, Санхүү — which belong to Phases 2 and 3. Only the sections that
+   exist are listed here: a menu entry that goes nowhere teaches users the
+   system is broken, and it is one line to add when the screen behind it
+   ships. {% endcomment %}
 <html lang="mn">
 <head>
   <meta charset="utf-8">
@@ -10,6 +18,7 @@
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body>
+{% include "_icons.html" %}
 <div class="shell">
   <aside class="sidebar">
     <div class="brand">
@@ -22,25 +31,53 @@
 
     <nav class="nav" aria-label="Үндсэн цэс">
       <a href="{% url 'dashboard:teacher' %}"
-         {% if nav == 'home' %}aria-current="page"{% endif %}>Хяналтын самбар</a>
+         {% if nav == 'home' %}aria-current="page"{% endif %}>
+        <svg class="ic" aria-hidden="true"><use href="#i-dashboard"></use></svg>
+        Хяналтын самбар
+      </a>
       <a href="{% url 'children:list' %}"
-         {% if nav == 'children' %}aria-current="page"{% endif %}>Хүүхдүүд</a>
+         {% if nav == 'children' %}aria-current="page"{% endif %}>
+        <svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg>
+        Хүүхдүүд
+      </a>
       <a href="{% url 'observations:review_queue' %}"
-         {% if nav == 'review' %}aria-current="page"{% endif %}>Хянах ажиглалт</a>
+         {% if nav == 'review' %}aria-current="page"{% endif %}>
+        <svg class="ic" aria-hidden="true"><use href="#i-review"></use></svg>
+        Хянах ажиглалт
+      </a>
       <a href="{% url 'comms:list' %}"
-         {% if nav == 'announcements' %}aria-current="page"{% endif %}>Мэдэгдэл</a>
+         {% if nav == 'announcements' %}aria-current="page"{% endif %}>
+        <svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg>
+        Мэдэгдэл
+      </a>
       <a href="{% url 'accounts:profile' %}"
-         {% if nav == 'profile' %}aria-current="page"{% endif %}>Миний бүртгэл</a>
-      <a href="{% url 'accounts:logout' %}">Гарах</a>
+         {% if nav == 'profile' %}aria-current="page"{% endif %}>
+        <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
+        Миний бүртгэл
+      </a>
+      <a href="{% url 'accounts:logout' %}">
+        <svg class="ic" aria-hidden="true"><use href="#i-logout"></use></svg>
+        Гарах
+      </a>
     </nav>
+
+    {% block sidebar_foot %}{% endblock %}
   </aside>
 
   <main class="main">
     <div class="topbar">
-      <h1>{% block heading %}{% endblock %}</h1>
+      <div>
+        <h1>{% block heading %}{% endblock %}</h1>
+        {% block lede %}{% endblock %}
+      </div>
       <div class="who">
-        {{ request.user }}<br>
-        <span class="brand__sub">Багш</span>
+        <span class="avatar avatar--sm" aria-hidden="true">
+          {{ request.user.first_name|first|default:"·" }}
+        </span>
+        <span>
+          <span class="who__name">{{ request.user }}</span><br>
+          <span class="brand__sub">Багш</span>
+        </span>
       </div>
     </div>
 
