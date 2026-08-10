@@ -358,7 +358,7 @@ Formal QA is the client's. Before handover we still verify:
 | Responsive layout on real devices | ⬜ |
 | Chrome, Safari, Edge, Android browser | ⬜ |
 | Production build | ✅ `check --deploy` clean under `config.settings.prod`, `collectstatic` post-processes 640 files through the manifest storage |
-| Backup and restore | ✅ `scripts/backup.sh` verified against the live database, archive restored into a scratch database and row counts compared table by table |
+| Backup and restore | ✅ `scripts/backup.sh` verified against the live database; `scripts/restore.sh` itself run end to end against a scratch database, twice, with row counts compared table by table |
 | PDF with Cyrillic and images | ⚠️ renders and parses back correctly, and no longer carries the template's own commentary — but the **printed A4 page has still not been inspected by a human**, which is exactly how that commentary survived eight days |
 
 Current: **544 tests passing**, `ruff` clean.
@@ -749,9 +749,21 @@ version that wrote the data, then reads the archive back with
 `pg_restore --list`: a dump nobody has parsed is a file, not a backup. It
 refused nothing on the first run — 352 KB, 53 tables. The restore was
 exercised into a scratch database rather than over the development one, and
-every table's row count compared. `restore.sh` refuses unless the database
-name from `.env` is repeated on the command line, because the confirmation
-that cannot be given by accident is the only kind worth having.
+every table's row count compared. `restore.sh` refuses unless the name of the
+database it is about to overwrite is repeated on the command line, because
+the confirmation that cannot be given by accident is the only kind worth
+having.
+
+**Correction, made on Day 10.** That verification did not run `restore.sh`.
+It ran `pg_restore` by hand with the same flags, which tested PostgreSQL and
+left the script — the argument parsing, the guard, the flags as actually
+written — unexecuted. The script now takes `TARGET_DB` so the procedure can
+be rehearsed against a scratch database without touching the live one, and
+it has been: run against a fresh database, then again over the populated
+result to exercise the `--clean` path, with row counts compared each time,
+and the guard re-checked against the drill target. Writing a restore script
+and then verifying something adjacent to it is the same mistake as verifying
+the PDF by parsing it instead of reading it.
 
 **Production build.** `check --deploy` under `config.settings.prod` reports
 one warning, the placeholder `SECRET_KEY` from the development `.env`.

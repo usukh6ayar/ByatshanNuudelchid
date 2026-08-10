@@ -41,10 +41,17 @@ fi
 
 DATABASE_URL="$(grep -E '^DATABASE_URL=' .env | tail -1 | cut -d= -f2-)"
 db_user="$(sed -E 's|^[^:]+://([^:]+):.*|\1|' <<<"${DATABASE_URL}")"
-db_name="$(sed -E 's|.*/([^/?]+)(\?.*)?$|\1|' <<<"${DATABASE_URL}")"
+
+# TARGET_DB exists so the procedure can be rehearsed against a scratch
+# database — the only way to find out whether the restore below actually
+# works is to run it, and running it against the live database to find out
+# is not a drill. It does not weaken the confirmation: the name typed on the
+# command line must match whatever is about to be destroyed, which is the
+# invariant that matters. Defaults to the database in .env.
+db_name="${TARGET_DB:-$(sed -E 's|.*/([^/?]+)(\?.*)?$|\1|' <<<"${DATABASE_URL}")}"
 
 if [ "${confirm_db}" != "${db_name}" ]; then
-    echo "restore: refusing — .env points at '${db_name}', you typed '${confirm_db}'" >&2
+    echo "restore: refusing — target is '${db_name}', you typed '${confirm_db}'" >&2
     exit 1
 fi
 

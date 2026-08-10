@@ -70,8 +70,23 @@ make restore FILE=backups/kinder-20260810T090000Z.dump DB=kinder
 ```
 
 Restoring **replaces every row** in the target database, so `restore.sh`
-refuses to run unless the database name from `.env` is repeated on the command
-line. Run `make migrate` afterwards: the code may be newer than the dump.
+refuses to run unless the name of the database it is about to overwrite is
+repeated on the command line. Run `make migrate` afterwards: the code may be
+newer than the dump.
+
+**Rehearse it against a scratch database, not the live one.** `TARGET_DB`
+points the restore somewhere else; the confirmation still has to match
+whatever is about to be destroyed:
+
+```bash
+docker compose exec -T db psql -U kinder -d postgres -c "CREATE DATABASE drill;"
+TARGET_DB=drill ./scripts/restore.sh backups/kinder-20260810T090000Z.dump drill
+# compare row counts against the live database, then:
+docker compose exec -T db psql -U kinder -d postgres -c "DROP DATABASE drill;"
+```
+
+A restore procedure nobody has executed is a paragraph, not a procedure. Do
+this before the first deployment and after any change to either script.
 
 On a server, run the backup from cron and copy the archives off the machine —
 a backup on the same disk as the database survives nothing that matters.
