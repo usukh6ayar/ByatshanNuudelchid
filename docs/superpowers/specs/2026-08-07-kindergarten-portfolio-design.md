@@ -675,11 +675,11 @@ mapping between this document's sections and that schedule.
 | 2 | Kindergarten, SchoolYear, Group, GroupTeacher, admin screens | 3.3, 6.1 | ✅ done |
 | 3 | Child, Enrollment, teacher screens | 6.1, 10 | ✅ done |
 | 4 | Guardianship, invitations, guardian home | 6.1, 4.2 | ✅ done |
-| 5 | AboutMe, BirthdayNote, ChildAgeProfile (ages 2–5) | 6.2 | ⬜ next |
-| 6 | ObservationType, Observation, assessment config, Assessment | 6.3, 6.4 | ⬜ |
-| 7 | Parent observation, Announcement, MediaFile upload | 6.3, 6.7, 7 | ⬜ |
-| 8 | Dashboards, remaining filters, ReportJob and the simple child PDF | 8, 10.3 | ⬜ |
-| 9 | Security review, responsive fixes, deployment, backup | 11, 12, 13 | ⬜ |
+| 5 | AboutMe, BirthdayNote, ChildAgeProfile (ages 2–5) | 6.2 | ✅ done |
+| 6 | ObservationType, Observation, assessment config, Assessment | 6.3, 6.4 | ✅ done |
+| 7 | Parent observation, Announcement, MediaFile upload | 6.3, 6.7, 7 | ✅ done |
+| 8 | Dashboards, remaining filters, ReportJob and the simple child PDF | 8, 10.3 | ✅ done |
+| 9 | Security review, responsive fixes, deployment, backup | 11, 12, 13 | ⬜ next |
 | 10 | Integration, bug fixes, production build, documentation, handover | — | ⬜ |
 
 Phase 2 and Phase 3 work — growth, documents, full reporting, albums,
@@ -691,9 +691,9 @@ milestones, consent, WebP — is scheduled in `ROADMAP.md`, not here.
 
 | Question | Needed by |
 |---|---|
-| **Hosting and object storage** — VPS + Docker, or managed PaaS? Cloudflare R2 in section 2 is a **suggestion**, not a decision. Blocks both upload and deployment | **Day 7** |
+| **Hosting and object storage** — VPS + Docker, or managed PaaS? Cloudflare R2 in section 2 is a **suggestion**, not a decision. No longer blocks upload: the code runs against any S3-compatible bucket and MinIO stands in locally. Still blocks **deployment** | **Day 9** |
 | Domain name, SSL certificate, server location | Day 9 |
 | Where do backups live and who can access them? | Day 9 |
-| Are the nine development domains in §6.1 system defaults, or does each kindergarten define its own? | Day 6 |
+| ~~Are the nine development domains in §6.1 system defaults, or does each kindergarten define its own?~~ **Resolved 2026-08-09: system-wide defaults (`kindergarten = NULL`), with each kindergarten free to add its own rows. Same shape for the §6.2 scale and the §5.2 observation types.** | Day 6 |
 | After a transfer, how long do the previous kindergarten's staff retain access? (Section 4.2 sets no time limit. Should the §16 retention policy bound it?) | Phase 2 |
 | Which growth reference standard — WHO or a national one? | Phase 2 (growth tracking) |

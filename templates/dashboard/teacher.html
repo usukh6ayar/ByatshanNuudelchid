@@ -1,0 +1,163 @@
+{% extends "base_teacher.html" %}
+{# RFP §12.1, tile for tile. Ordered by what a teacher acts on first:
+   the things waiting for them, then today, then the term's progress. #}
+
+{% block title %}Хяналтын самбар{% endblock %}
+{% block heading %}Хяналтын самбар{% endblock %}
+
+{% block content %}
+  <div class="grid grid--tiles">
+    <div class="tile">
+      <div class="tile__label">Хариуцсан хүүхэд</div>
+      <div class="tile__value">{{ child_count }}</div>
+    </div>
+    <div class="tile">
+      <div class="tile__label">Өнөөдөр төрсөн өдөртэй</div>
+      <div class="tile__value">{{ birthdays_today|length }}</div>
+    </div>
+    <div class="tile">
+      <div class="tile__label">Хянах ажиглалт</div>
+      <div class="tile__value">{{ pending_reviews }}</div>
+    </div>
+    <div class="tile">
+      <div class="tile__label">Үнэлгээ дутуу</div>
+      <div class="tile__value">{{ missing_assessments|length }}</div>
+    </div>
+  </div>
+
+  {% if birthdays_today %}
+    <div class="card">
+      <h2>🎂 Өнөөдрийн төрсөн өдөр</h2>
+      <p>
+        {% for child in birthdays_today %}
+          <a href="{% url 'children:detail' child.pk %}">{{ child.full_name }}</a>{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+      </p>
+    </div>
+  {% endif %}
+
+  <div class="grid grid--2">
+    {# §12.1 — "тухайн улирлын үнэлгээний явц" #}
+    <div class="card">
+      <h2>Улирлын үнэлгээний явц</h2>
+      {% if term %}
+        <p class="brand__sub" style="margin-top:-8px">{{ term.name }}</p>
+        <p>
+          <strong style="font-size:1.6rem">{{ assessment_progress.percent }}%</strong>
+          <span class="brand__sub">
+            — {{ assessment_progress.done }} / {{ assessment_progress.expected }}
+          </span>
+        </p>
+
+        {% if missing_assessments %}
+          <h3 style="font-size:.95rem">Үнэлгээ дутуу хүүхдүүд</h3>
+          <ul style="margin:6px 0 0; padding-left:18px">
+            {% for child in missing_assessments %}
+              <li>
+                <a href="{% url 'assessment:child' child.pk %}">{{ child.full_name }}</a>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="brand__sub">Бүх хүүхэд үнэлэгдсэн.</p>
+        {% endif %}
+      {% else %}
+        <p class="empty">
+          Хичээлийн жилд улирал тохируулаагүй байна.
+          Администратор улирлыг үүсгэсний дараа үнэлгээ хийнэ.
+        </p>
+      {% endif %}
+    </div>
+
+    {# §12.1, §12.3 — "хөгжлийн чиглэл тус бүрийн дундаж" #}
+    <div class="card">
+      <h2>Хөгжлийн чиглэлийн дундаж</h2>
+      {% if domain_averages %}
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Чиглэл</th><th>Дундаж</th><th>Тоо</th></tr>
+            </thead>
+            <tbody>
+              {% for row in domain_averages %}
+                <tr>
+                  <td>
+                    <span class="badge" style="background:{{ row.color }}1a; color:{{ row.color }}">
+                      {{ row.name }}
+                    </span>
+                  </td>
+                  <td><strong>{{ row.average }}</strong></td>
+                  <td>{{ row.count }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="empty">Энэ улиралд үнэлгээ бүртгэгдээгүй байна.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="grid grid--2">
+    {# §12.1 — "сүүлийн ажиглалтууд" #}
+    <div class="card">
+      <h2>Сүүлийн ажиглалт</h2>
+      {% for observation in recent_observations %}
+        <p style="margin-bottom:10px">
+          <a href="{% url 'observations:detail' observation.child.pk observation.pk %}">
+            {{ observation.summary }}
+          </a><br>
+          <span class="brand__sub">
+            {{ observation.child.full_name }} ·
+            {{ observation.observed_on|date:"Y.m.d" }} ·
+            {{ observation.get_source_display }}
+          </span>
+        </p>
+      {% empty %}
+        <p class="empty">Ажиглалт бүртгэгдээгүй байна.</p>
+      {% endfor %}
+    </div>
+
+    {# §12.1 — "сүүлийн үеийн эцэг эхийн оруулсан мэдээлэл" #}
+    <div class="card">
+      <h2>
+        Эцэг эхийн ажиглалт
+        {% if pending_reviews %}
+          <span class="badge badge--warn">{{ pending_reviews }} хянах</span>
+        {% endif %}
+      </h2>
+      {% for observation in recent_parent_notes %}
+        <p style="margin-bottom:10px">
+          <a href="{% url 'observations:detail' observation.child.pk observation.pk %}">
+            {{ observation.summary }}
+          </a><br>
+          <span class="brand__sub">
+            {{ observation.child.full_name }} ·
+            {{ observation.get_review_status_display }}
+          </span>
+        </p>
+      {% empty %}
+        <p class="empty">Эцэг эхийн ажиглалт байхгүй байна.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# §12.1 — "шинэ мэдэгдэл" #}
+  <div class="card">
+    <h2>Сүүлийн мэдэгдэл</h2>
+    {% for announcement in new_announcements %}
+      <p style="margin-bottom:8px">
+        <a href="{% url 'comms:detail' announcement.pk %}">{{ announcement.title }}</a>
+        {% if announcement.is_important %}
+          <span class="badge badge--warn">Чухал</span>
+        {% endif %}
+        <span class="brand__sub">
+          {{ announcement.published_at|date:"Y.m.d"|default:"ноорог" }}
+        </span>
+      </p>
+    {% empty %}
+      <p class="empty">Мэдэгдэл байхгүй байна.</p>
+    {% endfor %}
+  </div>
+{% endblock %}

@@ -1,0 +1,158 @@
+{% extends base_template %}
+{# RFP §5.1, §5.4. The review panel appears only for what a parent submitted
+   and only to staff — a teacher's own observation has nobody to approve it. #}
+
+{% block title %}Ажиглалт{% endblock %}
+{% block heading %}{{ observation.summary }}{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <dl class="facts">
+      <dt>Хүүхэд</dt><dd>{{ child.full_name }}</dd>
+      <dt>Огноо</dt><dd>{{ observation.observed_on|date:"Y.m.d" }}</dd>
+      <dt>Төрөл</dt><dd>{{ observation.type.name }}</dd>
+      <dt>Оруулсан</dt>
+      <dd>
+        {{ observation.get_source_display }}
+        {% if observation.created_by %} — {{ observation.created_by }}{% endif %}
+      </dd>
+      {% if observation.enrollment.group %}
+        <dt>Бүлэг</dt><dd>{{ observation.enrollment.group.name }}</dd>
+      {% endif %}
+      {% if observation.source == 'parent' %}
+        <dt>Төлөв</dt>
+        <dd>
+          <span class="badge {% if observation.review_status == 'approved' %}badge--ok{% else %}badge--muted{% endif %}">
+            {{ observation.get_review_status_display }}
+          </span>
+        </dd>
+      {% endif %}
+    </dl>
+
+    {% if observation.domain_links.all %}
+      <p style="margin-top:14px">
+        {% for link in observation.domain_links.all %}
+          <span class="badge" style="background:{{ link.domain.color }}1a; color:{{ link.domain.color }}">
+            {{ link.domain.name }}{% if link.level %} · {{ link.level.label }}{% endif %}
+          </span>
+        {% endfor %}
+      </p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <dl class="facts">
+      {% if observation.activity_name %}
+        <dt>Үйл ажиллагаа</dt><dd>{{ observation.activity_name }}</dd>
+      {% endif %}
+      {% if observation.situation %}
+        <dt>Нөхцөл байдал</dt><dd>{{ observation.situation|linebreaksbr }}</dd>
+      {% endif %}
+      {% if observation.child_did %}
+        <dt>Хийсэн үйлдэл</dt><dd>{{ observation.child_did|linebreaksbr }}</dd>
+      {% endif %}
+      {% if observation.child_said %}
+        <dt>Хэлсэн үг</dt><dd>{{ observation.child_said|linebreaksbr }}</dd>
+      {% endif %}
+      {% if observation.teacher_comment %}
+        <dt>Багшийн тайлбар</dt><dd>{{ observation.teacher_comment|linebreaksbr }}</dd>
+      {% endif %}
+      {% if observation.next_steps %}
+        <dt>Дараагийн дэмжлэг</dt><dd>{{ observation.next_steps|linebreaksbr }}</dd>
+      {% endif %}
+    </dl>
+  </div>
+
+  {# RFP §5.1 — "нотлох зураг". Each image goes through the permission
+     check at /media/<uuid>/full/, never a direct link. #}
+  {% if observation.media_links.all or can_record %}
+    <div class="card">
+      <h2>Зураг</h2>
+
+      {% if observation.media_links.all %}
+        <div class="grid grid--tiles">
+          {% for link in observation.media_links.all %}
+            <figure style="margin:0">
+              <img src="{% url 'media:serve' link.media_file.public_id 'full' %}"
+                   alt="{{ link.caption|default:'Ажиглалтын зураг' }}"
+                   style="width:100%; border-radius:12px">
+              {% if link.caption %}
+                <figcaption class="brand__sub">{{ link.caption }}</figcaption>
+              {% endif %}
+            </figure>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="brand__sub">Зураг хавсаргаагүй байна.</p>
+      {% endif %}
+
+      {% if can_record %}
+        <div class="btn-row">
+          <a class="btn btn--ghost"
+             href="{% url 'media:observation_attach' child.pk observation.pk %}">
+            Зураг хавсаргах
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% if can_record and observation.source == 'parent' %}
+    {# §5.4 — "шаардлагатай бол засвар санал болгох",
+       "нэгдсэн тайланд оруулах эсэхийг шийдэх" #}
+    <div class="card">
+      <h2>Хяналт</h2>
+      {% if observation.review_note %}
+        <p class="msg msg--ok">{{ observation.review_note }}</p>
+      {% endif %}
+
+      <form method="post" action="{% url 'observations:review' child.pk observation.pk %}">
+        {% csrf_token %}
+        <label for="id_review_status">Төлөв</label>
+        <select name="review_status" id="id_review_status">
+          <option value="approved"
+            {% if observation.review_status == 'approved' %}selected{% endif %}>
+            Батлах
+          </option>
+          <option value="revision_requested"
+            {% if observation.review_status == 'revision_requested' %}selected{% endif %}>
+            Засвар хүсэх
+          </option>
+          <option value="pending"
+            {% if observation.review_status == 'pending' %}selected{% endif %}>
+            Хүлээгдэж буй
+          </option>
+        </select>
+
+        <label for="id_review_note">Тэмдэглэл</label>
+        <textarea name="review_note" id="id_review_note">{{ observation.review_note }}</textarea>
+
+        <div style="display:flex; gap:10px; align-items:center; margin-top:10px">
+          <input type="checkbox" name="include_in_report" id="id_report"
+                 style="width:auto"
+                 {% if observation.include_in_report %}checked{% endif %}>
+          <label for="id_report" style="margin:0">Нэгдсэн тайланд оруулна</label>
+        </div>
+
+        <div class="btn-row">
+          <button type="submit" class="btn">Хадгалах</button>
+        </div>
+      </form>
+    </div>
+  {% endif %}
+
+  <div class="btn-row">
+    <a class="btn btn--ghost" href="{% url 'observations:list' child.pk %}">
+      Жагсаалт руу
+    </a>
+    {% if can_record %}
+      <a class="btn" href="{% url 'observations:edit' child.pk observation.pk %}">
+        Засах
+      </a>
+      <a class="btn btn--ghost"
+         href="{% url 'observations:delete' child.pk observation.pk %}">
+        Архивлах
+      </a>
+    {% endif %}
+  </div>
+{% endblock %}

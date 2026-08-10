@@ -27,6 +27,20 @@
         </select>
       </div>
 
+      {# RFP §11 — "хичээлийн жилээр шүүх" #}
+      <div>
+        <label for="id_school_year">Хичээлийн жил</label>
+        <select name="school_year" id="id_school_year">
+          <option value="">Бүгд</option>
+          {% for year in school_years %}
+            <option value="{{ year.pk }}"
+              {% if filters.school_year == year.pk|stringformat:"s" %}selected{% endif %}>
+              {{ year.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
       <div>
         <label for="id_status">Төлөв</label>
         <select name="status" id="id_status">

@@ -2,8 +2,8 @@
 
 Children's Development Digital Portfolio System.
 
-**Status as of 2026-08-09: Phase 1 in progress — 8 of 17 requirement groups
-complete, 4 partial, 5 not started.** Detail in section 7.
+**Status as of 2026-08-10: Phase 1 in progress — 13 of 17 requirement groups
+complete, 2 partial, 2 not started.** Detail in section 7.
 
 This file is kept in sync with the codebase. Every "done" below names the file
 or test that proves it.
@@ -70,13 +70,13 @@ children at two kindergartens.
 |---|---|---|
 | Backend | Django 5.2 (Python 3.13) | ✅ in place |
 | Database | PostgreSQL 17 | ✅ in place |
-| Queue | Celery + Redis | ✅ configured, not yet used |
+| Queue | Celery + Redis | ✅ in use — report rendering, dashboard refresh, retention |
 | Frontend | Django templates + HTMX + Alpine | ✅ templates in place |
 | PDF | WeasyPrint | ✅ proven (Cyrillic spike) |
-| Object storage | S3-compatible (MinIO in dev) | ⚠️ configured, no upload yet |
+| Object storage | S3-compatible (MinIO in dev) | ✅ upload, signed URLs, `make storage` |
 | Runtime | Docker + docker-compose | ✅ in place |
 | Row history | django-simple-history | ✅ on `Child`, `AboutMe`, `ChildAgeProfile` |
-| Lint / test | ruff, pytest | ✅ 189 tests passing |
+| Lint / test | ruff, pytest | ✅ 397 tests passing |
 
 ## 5. Architecture overview
 
@@ -95,12 +95,22 @@ apps/accounts/   User, Membership, profiles, login, invitations
 apps/tenants/    Kindergarten, SchoolYear, Group, GroupTeacher
 apps/children/   Child, Guardianship, Enrollment
 apps/portfolio/  AboutMe, ChildAgeProfile, BirthdayNote
+apps/observations/
+                 ObservationType, Observation, ObservationDomain
+apps/assessment/ DevelopmentDomain, AssessmentScale, AssessmentLevel,
+                 Term, Assessment
+apps/media/      MediaFile, ObservationMedia — upload and signed serving
+apps/comms/      Announcement, AnnouncementTarget, AnnouncementRead
+apps/reports/    ReportJob — the §549 render queue
+apps/dashboard/  no models; §12.1 and §12.2 figures
 ```
 
 Three URL zones with three layouts: `/bagsh/` (teacher), `/etseg-eh/`
-(guardian), `/udirdlaga/` (administrator). `/hawtas/` is shared: the portfolio
-is one artifact both a teacher and a guardian write to, so it has one set of
-views and picks its layout per request.
+(guardian), `/udirdlaga/` (administrator). `/hawtas/` is shared: the portfolio,
+the observations and the assessment record are all one artifact that a teacher
+and a guardian both reach, so each has one set of views that picks its layout
+per request. The §6.3 group grid is the exception — it is teacher-only and
+lives under `/bagsh/`.
 
 **The authorization rule that shapes everything:** a child's kindergarten is
 derived from their `Enrollment` history, never from `Child.kindergarten_id`.
@@ -135,22 +145,26 @@ end to end.
 | 1 | Authentication — admin/teacher/parent login, RBAC, hashing, logout, password reset | ✅ done | `apps/accounts/`, `test_login.py`, `test_password_reset.py` |
 | 2 | Kindergarten & group management — CRUD, school year, teacher assignment | ✅ done | `apps/tenants/`, `/udirdlaga/`, `test_admin.py` |
 | 3 | Teacher management — profile, assigned kindergarten/group/children | ⚠️ partial | Model + assignment done; no self-service profile edit screen |
-| 4 | Child management — create, edit, view, photo, group, year, guardian link, active/archived | ⚠️ partial | Create/view/archive done; **no edit view**, **no profile photo** |
+| 4 | Child management — create, edit, view, photo, group, year, guardian link, active/archived | ⚠️ partial | Create/view/archive/photo done; **no edit view** |
 | 5 | Parent management — account, parent↔child, access only to own children | ✅ done | `register_guardian`, `test_views_authorization.py` |
-| 6 | Digital child portfolio — About Me, birthday, ages 2–5, basic photos | ⚠️ partial | `apps/portfolio/`, `test_portfolio.py`. Photos arrive on Day 7 |
-| 7 | Teacher observation — full entry form with photo and parent visibility | ❌ not started | — |
-| 8 | Basic development assessment — areas, levels 1–4, comment, progress | ❌ not started | — |
-| 9 | Basic parent observation — submit, teacher views, visibility | ❌ not started | — |
-| 10 | Notifications — teacher → parent, read/unread | ❌ not started | — |
-| 11 | Basic dashboards — teacher and admin | ❌ not started | — |
-| 12 | Search & filtering — name, group, school year, active/archived | ⚠️ partial | Name/group/status/sex/age/sort live; school-year filter exists in the selector but is not on the form |
-| 13 | Basic PDF export — child info, photo, portfolio, observations, assessments | ❌ not started | Cyrillic rendering proven (`pdf_spike`, `test_pdf.py`); no child PDF |
-| 14 | Backend — REST API, PostgreSQL, migrations, auth, ownership, upload, logging, env | ⚠️ partial | Everything except REST API and file upload. **See decision D2** |
+| 6 | Digital child portfolio — About Me, birthday, ages 2–5, basic photos | ✅ done | `apps/portfolio/`, `test_portfolio.py`; profile photo via `apps/media/` |
+| 7 | Teacher observation — full entry form with photo and parent visibility | ✅ done | `apps/observations/`, `test_observations.py`; attachments in `test_media.py` |
+| 8 | Basic development assessment — areas, levels 1–4, comment, progress | ✅ done | `apps/assessment/`, `test_assessment.py`; §6.3 group grid, §6.4 term matrix |
+| 9 | Basic parent observation — submit, teacher views, visibility | ✅ done | Parent form, teacher review queue, §5.4 flow — `test_observations.py` |
+| 10 | Notifications — teacher → parent, read/unread | ✅ done | `apps/comms/`, `test_announcements.py`; §8.1 targeting, unread badge |
+| 11 | Basic dashboards — teacher and admin | ✅ done | `apps/dashboard/`, `test_dashboard.py`; §12.1 direct, §12.2 cached by Celery beat |
+| 12 | Search & filtering — name, group, school year, active/archived | ✅ done | §11's full list, incl. school year, date interval, domain and level — `test_observations.py`, `test_views_authorization.py` |
+| 13 | Basic PDF export — child info, photo, portfolio, observations, assessments | ✅ done | `apps/reports/`, `test_reports.py`; §549 queue, §10.3 A4 + Cyrillic verified by parsing the output |
+| 14 | Backend — REST API, PostgreSQL, migrations, auth, ownership, upload, logging, env | ⚠️ partial | Everything except the REST API. **See decision D2** |
 | 15 | Deployment — production, HTTPS, prod database, backup, health check | ❌ not started | `/healthz` and `prod.py` exist; never deployed |
 | 16 | Basic security — hashing, RBAC, ownership, no cross-child access, secure files, HTTPS, validation, injection/XSS, cookies | ✅ done | 40+ authorization tests; HTTPS and file access land with 15 and 4 |
 | 17 | Responsive web — desktop, tablet, mobile browser | ⚠️ partial | Mobile-first CSS written; not tested on real devices |
 
-**8 done · 4 partial · 5 not started.**
+**13 done · 2 partial · 2 not started.**
+
+> The Day 5 version of this line read "8 done · 4 partial · 5 not started",
+> which did not match the table above it — the columns were never actually
+> counted. The numbers here are.
 
 ### Delivered ahead of schedule
 
@@ -205,43 +219,46 @@ QPay/SocialPay.
 | 3 | Teacher, child management | ✅ mostly (child edit view outstanding) |
 | 4 | Parent, parent↔child, child profile | ✅ done |
 | 5 | Digital portfolio — About Me, ages 2–5 | ✅ done |
-| 6 | Teacher observations, development assessment | ⬜ **next** |
-| 7 | Parent observation, notifications, media upload | ⬜ |
+| 6 | Teacher observations, development assessment | ✅ done |
+| 7 | Parent observation, notifications, media upload | ⬜ **next** |
 | 8 | Dashboards, search, filters, basic PDF | ⬜ |
 | 9 | Security, responsive fixes, deployment, backup, error handling | ⬜ |
 | 10 | Integration, bug fixes, production build, documentation, handover | ⬜ |
 
-**Position: end of Day 5.** Days 1–5 also produced work not on the original
+**Position: end of Day 8.** Days 1–8 also produced work not on the original
 plan — the invitation system, the audit log, the administrator workspace and
 the Cyrillic PDF spike — which is why the remaining days are tight rather than
 comfortable. Full record in section 21.
 
 ## 11. Database entities
 
-**Built — 18 models, plus 3 history mirrors:**
+**Built — 34 models, plus 3 history mirrors:**
 
 ```
-core       AuditLog
-accounts   User · Membership · TeacherProfile · GuardianProfile ·
-           Invitation · LoginAttempt · PasswordResetToken
-tenants    Kindergarten · SchoolYear · Group · GroupTeacher
-children   Child · Guardianship · Enrollment
-portfolio  AboutMe · ChildAgeProfile · BirthdayNote
-
-history    HistoricalChild · HistoricalAboutMe · HistoricalChildAgeProfile
-```
-
-**Still needed for Phase 1:**
-
-```
-observations ObservationType · Observation · ObservationDomain ·
-             ObservationMedia
-assessment   DevelopmentDomain · AssessmentScale · AssessmentLevel ·
-             Term · Assessment
-media        MediaFile
-comms        Announcement · AnnouncementTarget · AnnouncementRead
+core         AuditLog
+accounts     User · Membership · TeacherProfile · GuardianProfile ·
+             Invitation · LoginAttempt · PasswordResetToken
+tenants      Kindergarten · SchoolYear · Group · GroupTeacher
+children     Child · Guardianship · Enrollment
+portfolio    AboutMe · ChildAgeProfile · BirthdayNote
+observations ObservationType · Observation · ObservationDomain
+assessment   DevelopmentDomain · DevelopmentIndicator · AssessmentScale ·
+             AssessmentLevel · Term · Assessment
+media        MediaFile · ObservationMedia
+comms        Announcement · AnnouncementTarget · AnnouncementRead ·
+             AnnouncementAttachment
 reports      ReportJob
+
+history      HistoricalChild · HistoricalAboutMe · HistoricalChildAgeProfile
 ```
+
+`DevelopmentIndicator` is built but unused: assessment is per domain in
+Phase 1 (§6.4, §6.5 and §12.3 all aggregate that way). The table and the
+nullable `Assessment.indicator` column exist so finer criteria can be added
+later without migrating assessment rows that already exist.
+
+**Nothing further is needed for Phase 1.** The remaining work is
+deployment and hardening, not schema.
 
 Conventions: `kindergarten_id` on every tenant-scoped table, soft delete
 everywhere except `AuditLog`, authorship columns on every row, and
@@ -266,7 +283,7 @@ mobile. **See decision D2.**
 | Role-based authorization | ✅ from `Membership` |
 | Backend ownership checks | ✅ `apps/core/permissions.py`, one place only |
 | No cross-child access by changing an id | ✅ verified end to end: 200 for own, 404 for another |
-| Secure file access | ⬜ arrives with upload — private bucket, signed URL after the check |
+| Secure file access | ✅ private bucket, permission check then signed URL — `apps/media/` |
 | HTTPS | ⬜ arrives with deployment; `prod.py` already sets HSTS and secure cookies |
 | Input validation | ✅ forms and service-level validation |
 | Injection / XSS | ✅ ORM parameterisation, template auto-escaping |
@@ -320,14 +337,14 @@ Formal QA is the client's. Before handover we still verify:
 | Authentication and logout | ✅ 20 tests |
 | Role permissions and ownership | ✅ 40+ tests, plus live HTTP verification |
 | CRUD operations | ⚠️ child edit missing |
-| File upload | ⬜ |
+| File upload | ✅ 34 tests, incl. MIME spoofing and EXIF GPS |
 | Responsive layout on real devices | ⬜ |
 | Chrome, Safari, Edge, Android browser | ⬜ |
 | Production build | ⬜ |
 | Backup and restore | ⬜ |
-| PDF with Cyrillic and images | ⚠️ automated checks pass; **printed A4 page not yet inspected by a human** |
+| PDF with Cyrillic and images | ⚠️ a real child portfolio renders and parses back correctly; **printed A4 page not yet inspected by a human** |
 
-Current: **189 tests passing, ruff clean.**
+Current: **397 tests passing.**
 
 ## 17. Definition of done — Phase 1
 
@@ -344,21 +361,21 @@ Current: **189 tests passing, ruff clean.**
 | Child profile works | ✅ |
 | Digital portfolio works | ✅ |
 | Age 2–5 information works | ✅ |
-| Teacher observation works | ❌ |
-| Basic assessment works | ❌ |
-| Parent observation works | ❌ |
-| Notification works | ❌ |
-| Image upload works | ❌ |
+| Teacher observation works | ✅ |
+| Basic assessment works | ✅ |
+| Parent observation works | ✅ |
+| Notification works | ✅ |
+| Image upload works | ✅ |
 | Search / filter works | ✅ |
-| Basic dashboard works | ❌ |
-| Basic PDF export works | ❌ |
+| Basic dashboard works | ✅ |
+| Basic PDF export works | ✅ |
 | PostgreSQL works | ✅ |
 | Production build works | ❌ |
 | Application is deployed | ❌ |
 | Critical authorization / security issues fixed | ✅ |
 | No known blocking runtime errors | ✅ |
 
-**14 of 24 met.**
+**22 of 24 met.**
 
 ## 18. Out of scope for Phase 1
 
@@ -473,13 +490,183 @@ apart. The two notes are kept apart in the service, not the template.
 in January or February, so January birthdays may be off by one until a lunar
 table is added. Documented in `zodiac.py`.
 
+### Day 6 — 2026-08-09 · Observations and development assessment
+
+`apps/observations` and `apps/assessment`: the §5.1 entry form, the §5.4
+parent-submission and review flow, the §6.4 term matrix on a child's page,
+and the §6.3 grid that assesses a whole group from one screen. The nine
+development domains, the four levels and the four observation types ship as
+system defaults.
+
+**Decisions.** The configuration lists are **system-wide with per-kindergarten
+additions** — `kindergarten = NULL` is the shared default, and a kindergarten
+adds rows rather than editing them. One director renaming "Хэл яриа" must not
+rename it for everyone. The "system OR mine" condition lives in one selector
+per app; copied into each screen it would eventually be forgotten in one, and
+that screen would leak another kindergarten's configuration.
+
+Assessment stays **per domain**, not per indicator: §6.4, §6.5 and §12.3 all
+aggregate that way. `DevelopmentIndicator` and the nullable
+`Assessment.indicator` are built and left empty so finer criteria can arrive
+without migrating existing rows.
+
+A school year now creates its four terms on save. `Assessment.term` is
+required, so a year without terms is one in which nothing can be assessed —
+a state a director would have hit before ever reaching the term screen.
+
+**Authorization widened, deliberately and narrowly.** `can_record_for_child`
+joins `can_access_child` in `permissions.py`. Reading a child's record and
+writing a professional one about them are different rights: a guardian may
+read the portfolio and write their own half of it (§2.3), but observations
+and assessments are the teacher's record. It is defined as
+`can_access_child` *minus the guardian branch* — the first draft was "has
+access and holds a staff role somewhere", and a test caught what that
+allows: a teacher whose own child attends the same kindergarten could file a
+teacher observation about their own child while teaching a different group.
+
+**Bug fixed, and it was ours.** The `django_db(transaction=True)` tests — the
+authentication ones, which need the lockout counter to survive a rollback —
+flush every table at teardown, taking migration-created rows with them. Any
+test collected afterwards found an empty configuration. The system defaults
+now live in `apps/assessment/defaults.py`, called both by the migrations and
+by an autouse fixture in `conftest.py`. A full-suite pass before this fix was
+not evidence of anything; it depended on which database happened to be reused.
+
+**Second security fix, from review.** `can_record_for_child` surviving a
+transfer is correct — but it does not follow that a teacher may write *new*
+records at the kindergarten the child moved to, which is a row inside
+another tenant (§3.2). Every write now also passes `assert_writable`, which
+asks `visible_kindergartens` rather than inventing a second rule. The same
+gate covers editing, archiving, reviewing, and opening a term to the
+guardians: after a transfer a term holds rows from both sides, and each
+kindergarten publishes only its own.
+
+Three smaller ones with it: the observation domain list was validated but
+the *assessment* domain was not, so a crafted request could attach another
+kindergarten's private domain and pollute its §12.3 averages; `assessed_at`
+was `auto_now`, so publishing a term restamped every row as if the children
+had just been reassessed; and the §6.3 grid built a `pk__in` straight from
+attacker-controlled form field names, where a non-numeric key was a 500
+rather than a no-op. `Term` also gained the `kindergarten` column §3.2
+requires on every tenant-scoped table.
+
+**Known limitation.** An observation's evidence photo and attachment (§5.1)
+and the §5.3 side-by-side comparison of a child's work both need `MediaFile`,
+which arrives with upload on Day 7. The parent submission screen is Day 7 as
+well; the service, the review flow and the guardian's read path are done and
+tested.
+
+### Day 7 — 2026-08-09 · Parent observations, media, announcements
+
+Three things that had been waiting on each other. `apps/media` — upload,
+storage and the signed-URL serving path. `apps/comms` — §8.1 announcements
+with targeting and read receipts. And the §5.4 screens that the Day 6
+service layer had no interface for.
+
+**Files are never reachable by URL.** `GET /media/<uuid>/<variant>/` runs
+`can_access_child` and only then produces a link (spec section 7.1). The path
+in the URL is a `public_id` UUID, separate from both the primary key and the
+storage key, so files are neither enumerable nor a map of the bucket layout.
+`storage_key` is a random sharded UUID path; the real filename is display-only
+and never reaches the backend, because it usually contains the child's name.
+
+**EXIF GPS is stripped on every upload**, which the RFP does not ask for. A
+phone embeds the coordinates of wherever the photo was taken, so a leaked
+photo taken at home carries the child's home address. The strip is a
+re-encode through Pillow, which also discards anything else a file might be
+carrying. The test builds a JPEG that really has coordinates in it and reads
+them back afterwards — a test that cannot create the dangerous input proves
+nothing.
+
+**MIME type is read from the content**, never the extension or the browser's
+claim (§684). Three tests push a shell script, a PDF and random bytes through
+as `.jpg`.
+
+**Decisions.** Development points at MinIO through the same S3 backend
+production uses, so the signing path is exercised while building rather than
+discovered on deployment day; `make storage` creates the bucket, because
+MinIO starts with none and the failure otherwise reads as
+`NoSuchBucket` with nothing on screen to explain it. `MEDIA_REDIRECT_SIGNED_URL`
+decides whether the view redirects or streams — production redirects so the
+object store moves the bytes; development streams because MinIO signs for
+`minio:9000`, a hostname only the containers can resolve. Both branches run
+the permission check first, and both are tested.
+
+`file_url` accepts **only absolute URLs**. A local backend answers `url()`
+with a path instead of raising, and redirecting there would 404 today — or,
+if anyone ever set `MEDIA_URL`, hand the file over with no check at all.
+
+The parent's submission form is a separate screen from the teacher's rather
+than the same one with fields hidden. §5.1 asks a teacher for a professional
+judgement — the domains, the support plan, who may see it — and none of that
+is a parent's to give. Opening the teacher's form as a guardian is now a 404
+rather than a form that offers fields the service will refuse.
+
+**Announcement targeting is a table, not a column.** §8.1 allows one notice
+aimed at three groups plus two named children at once. No target rows means
+the whole kindergarten. The reach rule is written once, in
+`comms/selectors.py`, and starts from `visible_children`, so no targeting
+choice can reach a family that is not connected to the child. Unlike the
+§6.3 grid, an unreachable id here is **refused rather than dropped**: a lost
+keystroke is an annoyance, a misdirected message about a child is not.
+
+**Known limitation.** HEIC uploads are refused with a sentence in Mongolian
+rather than converted — the conversion is Phase 2 (spec section 7). Thumbnails,
+WebP and multi-file upload are Phase 2 and Phase 3.
+
+### Day 8 — 2026-08-10 · PDF, dashboards, the rest of the filters
+
+`apps/reports` and `apps/dashboard`, plus the §11 filters that were written
+in a selector on Day 3 and never reached a form.
+
+**The queue finally earns its keep.** A child's portfolio runs to several
+pages with a photograph; §549 says the system must not freeze while it
+renders, so the request creates a `ReportJob` and returns, and a Celery
+worker does the work. The dispatch goes through `transaction.on_commit` —
+`ATOMIC_REQUESTS` wraps the whole request, and a bare `.delay()` can reach a
+worker before the row it needs is committed (CLAUDE.md §6.1). There is a
+test for exactly that, because the failure mode is a worker that
+intermittently finds nothing.
+
+**The PDF is verified by reading it back.** The Day 1 spike proved DejaVu
+Sans covers Ө and Ү; this renders a real portfolio and parses the output
+with `pypdf` to confirm the child's name, the section headings and the page
+counter survived. Page count comes from WeasyPrint's own layout rather than
+from re-parsing the file, so production needs no PDF library for one
+integer.
+
+**A report contains what the requester may see, not what the worker could
+reach.** `builder.py` scopes every queryset to `job.requested_by`: a
+guardian's copy holds approved, visible observations and published
+assessments, a teacher's holds theirs. Rendering everything and hiding the
+rest in the template would be one forgotten `{% if %}` away from handing a
+family another kindergarten's notes. A job also belongs to whoever asked for
+it — a guardian opening a teacher's job id gets 404, not the teacher's copy.
+
+**Decisions.** `CACHES` now points at Redis. §12.2's figures are computed by
+a beat task and read by the web process; Django's default cache is
+per-process memory, so the worker would have filled a cache nobody else
+could see and every page load would have recomputed anyway. The beat
+schedule lives in code, not in the database, so a fresh deployment has it
+without anyone remembering to click. §12.1's teacher dashboard is *not*
+cached: a teacher recording an observation and not seeing the count move is
+worse than the query, and one group is twenty-five children.
+
+Landing after login now goes to the dashboard rather than straight to a list
+of names — §12.1 is a list of what a teacher needs to notice on arriving.
+
+**Known limitation.** `ruff` was not re-run after this day's changes: Docker
+Desktop died mid-session and its cache directory was left corrupted. The
+test suite ran in full afterwards and passed; the lint gate is outstanding
+and is the first thing to run on Day 9.
+
 ### Running totals
 
-| | Day 1 | Day 2 | Day 4 | Day 5 |
-|---|---|---|---|---|
-| Tests | 64 | 93 | 156 | **189** |
-| Models | 14 | 14 | 15 | **18** |
-| DoD met | — | — | 12/24 | **14/24** |
+| | Day 1 | Day 2 | Day 4 | Day 5 | Day 6 | Day 7 | Day 8 |
+|---|---|---|---|---|---|---|---|
+| Tests | 64 | 93 | 156 | 189 | 278 | 346 | **397** |
+| Models | 14 | 14 | 15 | 18 | 27 | 33 | **34** |
+| DoD met | — | — | 12/24 | 14/24 | 16/24 | 20/24 | **22/24** |
 
 Models excludes the three `django-simple-history` mirrors.
 
@@ -519,7 +706,10 @@ and file upload needs a storage target.
 control, matches RFP §19 ownership terms) · managed PaaS (Railway/Render,
 less DevOps, ~$30–60/month) · either one paired with Cloudflare R2 for files.
 
-**Status: needed before Day 7 (upload) and Day 9 (deployment).**
+**Status: no longer blocks upload.** The media layer runs against any
+S3-compatible bucket through Django's storage abstraction, with MinIO
+standing in locally, so the choice of provider is a deployment-time setting
+rather than a code decision. **Still blocks Day 9 deployment.**
 
 ### D4 — Deferred until their own phase
 

@@ -21,10 +21,33 @@ MONGOLIAN_ONLY_CHARS = "ӨөҮү"
 
 def render_pdf(template_name: str, context: dict) -> bytes:
     """Render a template to PDF bytes."""
+    return render_pdf_with_pages(template_name, context)[0]
+
+
+def render_pdf_with_pages(template_name: str, context: dict) -> tuple[bytes, int]:
+    """Render, and report how many pages came out.
+
+    Spec section 8.1 records the page count on the ``ReportJob``. Counting
+    it here costs nothing — WeasyPrint has already laid the document out —
+    whereas parsing the finished file back would mean a PDF library in
+    production for one integer.
+    """
     from weasyprint import HTML
 
     html = render_to_string(template_name, context)
-    return HTML(string=html).write_pdf()
+    document = HTML(string=html).render()
+    return document.write_pdf(), len(document.pages)
+
+
+def data_uri_from_bytes(payload: bytes, mime: str) -> str:
+    """Inline bytes already in memory.
+
+    The counterpart to :func:`data_uri` for a file that lives in object
+    storage rather than on disk. WeasyPrint must not fetch anything while
+    rendering: for a child's photo that would mean a URL reachable without
+    a permission check, which RFP §4.4 forbids outright.
+    """
+    return f"data:{mime};base64,{base64.b64encode(payload).decode()}"
 
 
 def data_uri(path: str | Path) -> str | None:

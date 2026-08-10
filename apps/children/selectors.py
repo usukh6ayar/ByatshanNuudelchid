@@ -114,7 +114,7 @@ def guardian_children(user):
             guardianships__guardian_user=user,
             guardianships__can_view=True,
         )
-        .select_related("kindergarten")
+        .select_related("kindergarten", "photo")
         .prefetch_related(_active_enrollments())
         .distinct()
         .order_by("-date_of_birth")
@@ -130,7 +130,7 @@ def child_detail(user, child_id) -> Child | None:
     """
     return (
         visible_children(user)
-        .select_related("kindergarten")
+        .select_related("kindergarten", "photo")
         .prefetch_related(_active_enrollments(), _guardianships())
         .filter(pk=child_id)
         .first()

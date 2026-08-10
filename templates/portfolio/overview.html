@@ -5,6 +5,28 @@
 {% block heading %}{{ child.full_name }} — хувийн хавтас{% endblock %}
 
 {% block content %}
+  {# RFP §3.4, §4.4. The photo is served through the permission check at
+     /media/<uuid>/full/ — there is no direct link to a child's image. #}
+  <div class="card">
+    <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap">
+      {% if child.photo %}
+        <img class="avatar avatar--lg"
+             src="{% url 'media:serve' child.photo.public_id 'full' %}"
+             alt="{{ child.full_name }}-ийн зураг">
+      {% else %}
+        <span class="avatar avatar--lg" aria-hidden="true">
+          {{ child.first_name|slice:":1" }}
+        </span>
+      {% endif %}
+      <div>
+        <h2 style="margin:0 0 4px">{{ child.full_name }}</h2>
+        <a class="btn btn--ghost" href="{% url 'media:child_photo' child.pk %}">
+          {% if child.photo %}Зураг солих{% else %}Зураг нэмэх{% endif %}
+        </a>
+      </div>
+    </div>
+  </div>
+
   <div class="grid grid--tiles">
     <div class="tile">
       <div class="tile__label">Нас</div>
@@ -149,6 +171,8 @@
   </div>
 
   <div class="btn-row">
+    {# RFP §10.1 — the family's printable copy #}
+    <a class="btn" href="{% url 'reports:request' child.pk %}">PDF тайлан</a>
     {% if is_guardian %}
       <a class="btn btn--ghost"
          href="{% url 'children:parent_child_detail' child.pk %}">← Хүүхдийн хуудас</a>

@@ -1,4 +1,4 @@
-.PHONY: up down build sh test lint fix migrate migrations superuser pdf-spike logs
+.PHONY: up down build sh test lint fix migrate migrations superuser storage seed pdf-spike logs
 
 up:            ## Start the stack
 	docker compose up
@@ -32,6 +32,9 @@ migrate:
 
 superuser:
 	docker compose run --rm web python manage.py createsuperuser
+
+storage:       ## Create the MinIO bucket — needed before the first upload
+	docker compose run --rm web python manage.py init_storage
 
 seed:          ## Demo kindergarten, staff and children (development only, RFP §707)
 	docker compose run --rm web python manage.py seed_demo

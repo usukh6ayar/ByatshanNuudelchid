@@ -1,0 +1,86 @@
+{% extends base_template %}
+{# RFP §549, §626 — the system stays usable while this renders, and the
+   screen says what is happening rather than sitting blank.
+
+   The page polls a small JSON endpoint instead of holding the connection
+   open. It also works with JavaScript switched off: the "Дахин шалгах"
+   button below does the same thing by hand. #}
+
+{% block title %}Тайлан бэлдэж байна{% endblock %}
+{% block heading %}PDF тайлан — {{ child.full_name }}{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width:620px" id="job"
+       data-progress-url="{% url 'reports:progress' child.pk job.pk %}"
+       data-download-url="{% url 'reports:download' child.pk job.pk %}"
+       data-poll="{{ poll_seconds }}">
+
+    <p id="job-status">
+      <strong>{{ job.get_status_display }}</strong>
+    </p>
+
+    {% if job.status == 'failed' %}
+      <p class="msg msg--error" role="alert">
+        Тайлан бэлдэх үед алдаа гарлаа.
+        {% if job.error_message %}<br>{{ job.error_message }}{% endif %}
+      </p>
+      <div class="btn-row">
+        <a class="btn" href="{% url 'reports:request' child.pk %}">Дахин оролдох</a>
+      </div>
+
+    {% elif job.is_downloadable %}
+      <p>
+        {{ job.page_count }} хуудас ·
+        {{ job.file_size|filesizeformat }}
+      </p>
+      <div class="btn-row">
+        <a class="btn" href="{% url 'reports:download' child.pk job.pk %}">
+          PDF татах
+        </a>
+        <a class="btn btn--ghost" href="{% url 'portfolio:overview' child.pk %}">
+          Хавтас руу буцах
+        </a>
+      </div>
+
+    {% elif job.status == 'expired' %}
+      <p>Энэ тайлангийн хугацаа дууссан байна.</p>
+      <div class="btn-row">
+        <a class="btn" href="{% url 'reports:request' child.pk %}">Дахин бэлдэх</a>
+      </div>
+
+    {% else %}
+      <p class="brand__sub">
+        Бэлдэж байна. Энэ хуудсыг хаагаад дараа буцаж орж болно.
+      </p>
+      <div class="btn-row">
+        <a class="btn btn--ghost" href="">Дахин шалгах</a>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if not job.is_finished %}
+    <script>
+      (function () {
+        var box = document.getElementById("job");
+        var every = parseInt(box.dataset.poll, 10) * 1000;
+
+        function check() {
+          fetch(box.dataset.progressUrl, {credentials: "same-origin"})
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+              document.getElementById("job-status").innerHTML =
+                "<strong>" + data.status_display + "</strong>";
+              // Reloading rather than building the result in JavaScript:
+              // the server already renders every state of this screen, and
+              // two renderers would drift.
+              if (data.finished) { window.location.reload(); }
+              else { window.setTimeout(check, every); }
+            })
+            .catch(function () { window.setTimeout(check, every); });
+        }
+
+        window.setTimeout(check, every);
+      })();
+    </script>
+  {% endif %}
+{% endblock %}

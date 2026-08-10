@@ -37,6 +37,12 @@ LOCAL_APPS = [
     "apps.tenants",
     "apps.children",
     "apps.portfolio",
+    "apps.assessment",
+    "apps.observations",
+    "apps.media",
+    "apps.comms",
+    "apps.reports",
+    "apps.dashboard",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -66,6 +72,9 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                # RFP §8.1 — the unread badge lives in the layout, so it
+                # cannot depend on each view remembering to pass it.
+                "apps.comms.context_processors.announcements",
             ],
         },
     },
@@ -128,6 +137,12 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 # RFP §4.4, §15, §21.10
 
 MEDIA_SIGNED_URL_TTL = env.int("MEDIA_SIGNED_URL_TTL", default=300)
+
+# Whether the serving view hands the browser a signed URL and steps out of
+# the way, or streams the bytes itself. Both run the permission check first
+# — this only decides who moves the file. Redirecting is right in
+# production: the object store does the transfer instead of a web worker.
+MEDIA_REDIRECT_SIGNED_URL = env.bool("MEDIA_REDIRECT_SIGNED_URL", default=True)
 MAX_UPLOAD_SIZE_MB = env.int("MAX_UPLOAD_SIZE_MB", default=25)
 REPORT_RETENTION_DAYS = env.int("REPORT_RETENTION_DAYS", default=30)
 
@@ -139,6 +154,33 @@ CELERY_RESULT_BACKEND = env("REDIS_URL")
 CELERY_TASK_ACKS_LATE = True
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+
+# RFP §12.2 — the administrator's figures are computed by a beat task and
+# read by the web process. Django's default cache is per-process memory, so
+# the worker would fill a cache nobody else can see and every page load
+# would recompute. Redis is already here for the queue.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("REDIS_URL"),
+        "KEY_PREFIX": "kinder",
+    },
+}
+
+# Spec section 10.3 and section 8's retention. Schedules live in code rather
+# than in the database so a fresh deployment has them without anyone
+# remembering to click; django-celery-beat still allows an administrator to
+# add more.
+CELERY_BEAT_SCHEDULE = {
+    "refresh-admin-dashboards": {
+        "task": "apps.dashboard.tasks.refresh_admin_dashboards",
+        "schedule": 15 * 60,
+    },
+    "expire-old-reports": {
+        "task": "apps.reports.tasks.expire_reports",
+        "schedule": 60 * 60,
+    },
+}
 
 # ---------------------------------------------------------------- Security
 # RFP §15

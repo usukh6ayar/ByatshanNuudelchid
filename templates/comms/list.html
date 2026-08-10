@@ -1,0 +1,79 @@
+{% extends base_template %}
+{# RFP §8.1. One screen, two audiences: a teacher sees what they published
+   and their own drafts, a family sees what reaches their child. #}
+
+{% block title %}Мэдэгдэл{% endblock %}
+{% block heading %}
+  Мэдэгдэл
+  {% if unread %}<span class="badge badge--warn">{{ unread }} шинэ</span>{% endif %}
+{% endblock %}
+
+{% block content %}
+  {% if is_staff %}
+    <div class="btn-row" style="margin-top:0">
+      <a class="btn" href="{% url 'comms:create' %}">Шинэ мэдэгдэл</a>
+    </div>
+  {% endif %}
+
+  {% for announcement in page %}
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap">
+        <div>
+          <h2 style="margin-bottom:4px">
+            <a href="{% url 'comms:detail' announcement.pk %}">
+              {{ announcement.title }}
+            </a>
+          </h2>
+          <p class="brand__sub" style="margin:0">
+            {% if announcement.published_at %}
+              {{ announcement.published_at|date:"Y.m.d" }}
+            {% else %}
+              Нийтлээгүй
+            {% endif %}
+            {% if announcement.author %} · {{ announcement.author }}{% endif %}
+          </p>
+        </div>
+        <div style="text-align:right">
+          {% if announcement.is_important %}
+            <span class="badge badge--warn">Чухал</span>
+          {% endif %}
+          {% if is_staff %}
+            <span class="badge {% if announcement.status == 'published' %}badge--ok{% else %}badge--muted{% endif %}">
+              {{ announcement.get_status_display }}
+            </span>
+          {% elif not announcement.is_read %}
+            <span class="badge badge--warn">Шинэ</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <p style="margin:10px 0 0">{{ announcement.body|truncatewords:30 }}</p>
+
+      {% if is_staff and announcement.targets.all %}
+        <p class="brand__sub" style="margin:10px 0 0">
+          Хүлээн авагч:
+          {% for target in announcement.targets.all %}
+            {{ target }}{% if not forloop.last %}, {% endif %}
+          {% endfor %}
+        </p>
+      {% endif %}
+    </div>
+  {% empty %}
+    <div class="card">
+      <p class="empty">Мэдэгдэл байхгүй байна.</p>
+    </div>
+  {% endfor %}
+
+  {% if page.has_other_pages %}
+    <div class="pagination">
+      <span>Нийт {{ page.paginator.count }}</span>
+      {% if page.has_previous %}
+        <a href="?page={{ page.previous_page_number }}">← Өмнөх</a>
+      {% endif %}
+      <span>{{ page.number }} / {{ page.paginator.num_pages }}</span>
+      {% if page.has_next %}
+        <a href="?page={{ page.next_page_number }}">Дараах →</a>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends base_template %}
+{# RFP §624 — confirm first. The row is archived, not removed (§3.4). #}
+
+{% block title %}Мэдэгдэл архивлах{% endblock %}
+{% block heading %}Мэдэгдэл архивлах уу?{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width:620px">
+    <p><strong>{{ announcement.title }}</strong></p>
+    <p>
+      Мэдэгдэл эцэг эхэд харагдахаа болино. Мэдээлэл устахгүй —
+      шаардлагатай бол системийн администратор сэргээж чадна.
+    </p>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="btn-row">
+        <button type="submit" class="btn">Архивлах</button>
+        <a class="btn btn--ghost" href="{% url 'comms:detail' announcement.pk %}">
+          Болих
+        </a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

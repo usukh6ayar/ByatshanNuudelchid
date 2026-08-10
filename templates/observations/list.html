@@ -1,0 +1,148 @@
+{% extends base_template %}
+{# RFP §5.1, §5.2. Both roles read this list; the permission layer already
+   decided which rows are in it, so the template does no filtering. #}
+
+{% block title %}Ажиглалт{% endblock %}
+{% block heading %}Ажиглалт — {{ child.full_name }}{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <form method="get" class="filters">
+      <div>
+        <label for="id_type">Ажиглалтын төрөл</label>
+        <select name="type" id="id_type">
+          <option value="">Бүгд</option>
+          {% for type in types %}
+            <option value="{{ type.pk }}"
+              {% if filters.type == type.pk|stringformat:"s" %}selected{% endif %}>
+              {{ type.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="id_source">Оруулсан</label>
+        <select name="source" id="id_source">
+          <option value="">Бүгд</option>
+          {% for value, label in sources %}
+            <option value="{{ value }}"
+              {% if filters.source == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      {# RFP §11 — "хөгжлийн чиглэлээр", "үнэлгээний түвшнээр",
+         "огнооны интервалаар" #}
+      <div>
+        <label for="id_domain">Хөгжлийн чиглэл</label>
+        <select name="domain" id="id_domain">
+          <option value="">Бүгд</option>
+          {% for item in domains %}
+            <option value="{{ item.pk }}"
+              {% if filters.domain == item.pk|stringformat:"s" %}selected{% endif %}>
+              {{ item.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="id_level">Үнэлгээний түвшин</label>
+        <select name="level" id="id_level">
+          <option value="">Бүгд</option>
+          {% for item in levels %}
+            <option value="{{ item.pk }}"
+              {% if filters.level == item.pk|stringformat:"s" %}selected{% endif %}>
+              {{ item.value }}. {{ item.label }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="id_from">Эхлэх огноо</label>
+        <input type="date" name="from" id="id_from" value="{{ filters.from }}">
+      </div>
+      <div>
+        <label for="id_to">Дуусах огноо</label>
+        <input type="date" name="to" id="id_to" value="{{ filters.to }}">
+      </div>
+
+      <button type="submit">Шүүх</button>
+      {% if can_record %}
+        <a class="btn" href="{% url 'observations:create' child.pk %}">
+          Шинэ ажиглалт
+        </a>
+      {% elif is_guardian %}
+        {# §5.4 — the family's own contribution #}
+        <a class="btn" href="{% url 'observations:parent_create' child.pk %}">
+          Миний ажиглалт нэмэх
+        </a>
+      {% endif %}
+    </form>
+  </div>
+
+  {% for observation in page %}
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap">
+        <div>
+          <h2 style="margin-bottom:4px">
+            <a href="{% url 'observations:detail' child.pk observation.pk %}">
+              {{ observation.summary }}
+            </a>
+          </h2>
+          <p class="brand__sub" style="margin:0">
+            {{ observation.observed_on|date:"Y.m.d" }} ·
+            {{ observation.type.name }} ·
+            {{ observation.get_source_display }}
+            {% if observation.created_by %} — {{ observation.created_by }}{% endif %}
+          </p>
+        </div>
+        <div style="text-align:right">
+          {% if observation.source == 'parent' %}
+            <span class="badge {% if observation.review_status == 'approved' %}badge--ok{% else %}badge--muted{% endif %}">
+              {{ observation.get_review_status_display }}
+            </span>
+          {% endif %}
+          {% if not observation.visible_to_parents %}
+            <span class="badge badge--muted">Эцэг эхэд харагдахгүй</span>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if observation.domain_links.all %}
+        <p style="margin:10px 0 0">
+          {% for link in observation.domain_links.all %}
+            <span class="badge" style="background:{{ link.domain.color }}1a; color:{{ link.domain.color }}">
+              {{ link.domain.name }}{% if link.level %} · {{ link.level.label }}{% endif %}
+            </span>
+          {% endfor %}
+        </p>
+      {% endif %}
+    </div>
+  {% empty %}
+    <div class="card">
+      <p>Ажиглалт бүртгэгдээгүй байна.</p>
+      {% if can_record %}
+        <a class="btn" href="{% url 'observations:create' child.pk %}">
+          Эхний ажиглалтаа бүртгэх
+        </a>
+      {% elif is_guardian %}
+        <a class="btn" href="{% url 'observations:parent_create' child.pk %}">
+          Гэрт ажигласнаа бичих
+        </a>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+  {% if page.has_other_pages %}
+    <div class="pagination">
+      <span>Нийт {{ page.paginator.count }} ажиглалт</span>
+      {% if page.has_previous %}
+        <a href="?{{ request.GET.urlencode }}&page={{ page.previous_page_number }}">← Өмнөх</a>
+      {% endif %}
+      <span>{{ page.number }} / {{ page.paginator.num_pages }}</span>
+      {% if page.has_next %}
+        <a href="?{{ request.GET.urlencode }}&page={{ page.next_page_number }}">Дараах →</a>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endblock %}

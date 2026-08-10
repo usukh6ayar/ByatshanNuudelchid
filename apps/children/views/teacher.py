@@ -19,7 +19,7 @@ from apps.children import selectors, services
 from apps.children.models import Child, Guardianship
 from apps.core.models import AuditAction
 from apps.core.services import audit
-from apps.tenants.selectors import assignable_groups
+from apps.tenants.selectors import assignable_groups, school_years_for
 
 
 def _get_child_or_404(request, child_id) -> Child:
@@ -33,15 +33,26 @@ def _get_child_or_404(request, child_id) -> Child:
 def child_list(request):
     """RFP §11 — search, filter, sort, paginate."""
     groups = assignable_groups(request.user)
+    # RFP §11 — "хичээлийн жилээр шүүх". The years offered are the ones the
+    # user's own groups belong to, so the filter cannot reach a year at a
+    # kindergarten they have nothing to do with.
+    school_years = school_years_for(request.user)
 
     group = None
     if request.GET.get("group"):
         group = groups.filter(pk=request.GET["group"]).first()
 
+    school_year = None
+    if request.GET.get("school_year"):
+        school_year = school_years.filter(
+            pk=request.GET["school_year"]
+        ).first()
+
     children = selectors.child_list(
         request.user,
         search=request.GET.get("q", "").strip(),
         group=group,
+        school_year=school_year,
         status=request.GET.get("status") or None,
         sex=request.GET.get("sex") or None,
         age=request.GET.get("age") or None,
@@ -53,12 +64,15 @@ def child_list(request):
     return render(request, "children/teacher/list.html", {
         "page": page,
         "groups": groups,
+        "school_years": school_years,
         "selected_group": group,
+        "selected_school_year": school_year,
         "filters": {
             "q": request.GET.get("q", ""),
             "status": request.GET.get("status", ""),
             "sex": request.GET.get("sex", ""),
             "age": request.GET.get("age", ""),
+            "school_year": request.GET.get("school_year", ""),
             "sort": request.GET.get("sort", selectors.DEFAULT_SORT),
         },
         "statuses": Child.Status.choices,

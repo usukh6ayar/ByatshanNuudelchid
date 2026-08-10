@@ -12,4 +12,10 @@ pypdf==6.1.1
 # Catch N+1 queries — CLAUDE.md §3.5
 django-debug-toolbar==6.0.0
 
+# Build a JPEG that really carries GPS coordinates, and read back that the
+# upload pipeline removed them — spec section 7. Pillow can read EXIF but
+# cannot conveniently write a nested GPS IFD, and a test that cannot create
+# the dangerous input proves nothing. Test-only; never imported by the app.
+piexif==1.1.3
+
 ruff==0.13.1

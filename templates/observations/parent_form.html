@@ -1,0 +1,48 @@
+{% extends "base_parent.html" %}
+{# RFP §5.4 — what a parent saw at home, in their own words.
+
+   Deliberately short. §5.1's form asks a teacher for a professional
+   judgement across ten fields; asking a parent the same questions at the end
+   of a long day is how a feature goes unused. #}
+
+{% block title %}Миний ажиглалт{% endblock %}
+{% block heading %}Миний ажиглалт — {{ child.full_name }}{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width:720px">
+    <p class="brand__sub" style="margin-top:0">
+      Гэртээ ажигласан зүйлээ бичээрэй. Багш уншиж, хүүхдийн хавтсанд
+      нэмэх эсэхийг шийднэ.
+    </p>
+
+    {% if error %}<p class="msg msg--error" role="alert">{{ error }}</p>{% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <label for="id_observed_on">Хэзээ ажигласан бэ?</label>
+      <input type="date" name="observed_on" id="id_observed_on" required
+             max="{{ today|date:'Y-m-d' }}" value="{{ observed_on_value }}">
+
+      <label for="id_situation">Ямар нөхцөлд болсон бэ?</label>
+      <textarea name="situation" id="id_situation"
+                placeholder="Жишээ нь: оройн хоолны дараа, гадаа тоглож байхад"
+      >{{ form.situation|default:'' }}</textarea>
+
+      <label for="id_child_did">Хүүхэд юу хийсэн бэ?</label>
+      <textarea name="child_did" id="id_child_did"
+      >{{ form.child_did|default:'' }}</textarea>
+
+      <label for="id_child_said">Юу гэж хэлсэн бэ?</label>
+      <textarea name="child_said" id="id_child_said"
+      >{{ form.child_said|default:'' }}</textarea>
+
+      <div class="btn-row">
+        <button type="submit" class="btn">Илгээх</button>
+        <a class="btn btn--ghost" href="{% url 'observations:list' child.pk %}">
+          Болих
+        </a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

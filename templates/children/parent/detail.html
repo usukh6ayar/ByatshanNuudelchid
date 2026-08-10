@@ -6,9 +6,15 @@
 {% block content %}
   <div class="card">
     <div style="display:flex; gap:16px; align-items:flex-start">
-      <span class="avatar avatar--lg" aria-hidden="true">
-        {{ child.first_name|slice:":1" }}
-      </span>
+      {% if child.photo %}
+        <img class="avatar avatar--lg"
+             src="{% url 'media:serve' child.photo.public_id 'full' %}"
+             alt="{{ child.full_name }}-ийн зураг">
+      {% else %}
+        <span class="avatar avatar--lg" aria-hidden="true">
+          {{ child.first_name|slice:":1" }}
+        </span>
+      {% endif %}
       <dl class="facts">
         <dt>Цэцэрлэг</dt><dd>{{ child.kindergarten.name }}</dd>
         <dt>Бүлэг</dt>
@@ -54,6 +60,12 @@
   <div class="btn-row">
     <a class="btn" href="{% url 'portfolio:overview' child.pk %}">
       Хувийн хавтас үзэх
+    </a>
+    <a class="btn btn--ghost" href="{% url 'observations:list' child.pk %}">
+      Багшийн ажиглалт
+    </a>
+    <a class="btn btn--ghost" href="{% url 'assessment:child' child.pk %}">
+      Хөгжлийн үнэлгээ
     </a>
     <a class="btn btn--ghost" href="{% url 'children:parent_home' %}">← Нүүр хуудас</a>
   </div>

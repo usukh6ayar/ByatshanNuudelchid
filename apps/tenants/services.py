@@ -38,6 +38,15 @@ def save_school_year(*, actor, obj, created: bool, request=None):
             kindergarten=obj.kindergarten, is_current=True
         ).exclude(pk=obj.pk).update(is_current=False)
 
+    if created:
+        # RFP §6.4 splits the year into four terms, and Assessment.term is
+        # required — a year without terms is a year in which nothing can be
+        # assessed. Imported here rather than at module level: assessment
+        # already imports children and tenants.
+        from apps.assessment.services import ensure_default_terms
+
+        ensure_default_terms(actor=actor, school_year=obj, request=request)
+
     return obj
 
 

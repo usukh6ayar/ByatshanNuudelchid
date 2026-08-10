@@ -45,6 +45,16 @@ class Child(TenantScopedModel):
     status = models.CharField("төлөв", max_length=20,
                               choices=Status.choices, default=Status.ACTIVE)
 
+    # RFP §3.4. A pointer, never a file: the image itself lives behind
+    # ``/media/<uuid>/<variant>/`` and a permission check (spec section 7.1).
+    # Replacing the photo leaves the old row in place, so the portfolio keeps
+    # the picture that was current in each year.
+    photo = models.ForeignKey(
+        "media.MediaFile", null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="+",
+        verbose_name="хүүхдийн зураг",
+    )
+
     history = HistoricalRecords()   # RFP §4.1
 
     class Meta:

@@ -1,0 +1,91 @@
+{% extends base_template %}
+{# RFP §8.1. For a teacher this screen answers "who has read it"; opening it
+   as a parent is itself the acknowledgement. #}
+
+{% block title %}{{ announcement.title }}{% endblock %}
+{% block heading %}{{ announcement.title }}{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <p class="brand__sub" style="margin-top:0">
+      {% if announcement.published_at %}
+        {{ announcement.published_at|date:"Y.m.d H:i" }}
+      {% else %}
+        Нийтлээгүй ноорог
+      {% endif %}
+      {% if announcement.author %} · {{ announcement.author }}{% endif %}
+      {% if announcement.is_important %}
+        <span class="badge badge--warn">Чухал</span>
+      {% endif %}
+    </p>
+
+    <p>{{ announcement.body|linebreaksbr }}</p>
+
+    {% if announcement.starts_on or announcement.ends_on %}
+      <dl class="facts" style="margin-top:16px">
+        {% if announcement.starts_on %}
+          <dt>Эхлэх</dt><dd>{{ announcement.starts_on|date:"Y.m.d" }}</dd>
+        {% endif %}
+        {% if announcement.ends_on %}
+          <dt>Дуусах</dt><dd>{{ announcement.ends_on|date:"Y.m.d" }}</dd>
+        {% endif %}
+      </dl>
+    {% endif %}
+
+    {% if announcement.attachments.all %}
+      <div class="grid grid--tiles" style="margin-top:16px">
+        {% for attachment in announcement.attachments.all %}
+          <img src="{% url 'media:serve' attachment.media_file.public_id 'full' %}"
+               alt="{{ announcement.title }} — хавсралт"
+               style="width:100%; border-radius:12px">
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+  {% if is_staff %}
+    {# §8.1 — "уншсан хэрэглэгчдийн тоог харах", "хэн уншсаныг харах" #}
+    <div class="card">
+      <h2>Уншсан — {{ readers|length }}</h2>
+      {% if readers %}
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Хэрэглэгч</th><th>Уншсан огноо</th></tr>
+            </thead>
+            <tbody>
+              {% for entry in readers %}
+                <tr>
+                  <td class="name">{{ entry.user }}</td>
+                  <td>{{ entry.read_at|date:"Y.m.d H:i" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="empty">Хэн ч уншаагүй байна.</p>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div class="btn-row">
+    <a class="btn btn--ghost" href="{% url 'comms:list' %}">← Жагсаалт руу</a>
+
+    {% if can_edit %}
+      <a class="btn" href="{% url 'comms:edit' announcement.pk %}">Засах</a>
+
+      {% if announcement.status == 'draft' %}
+        <form method="post" action="{% url 'comms:publish' announcement.pk %}"
+              style="display:inline">
+          {% csrf_token %}
+          <button type="submit" class="btn">Нийтлэх</button>
+        </form>
+      {% endif %}
+
+      <a class="btn btn--ghost" href="{% url 'comms:delete' announcement.pk %}">
+        Архивлах
+      </a>
+    {% endif %}
+  </div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "base_teacher.html" %}
+{# RFP §5.4 — every parent submission still waiting on a teacher, across all
+   of their children. #}
+
+{% block title %}Хянах ажиглалт{% endblock %}
+{% block heading %}Эцэг эхийн ажиглалт — хянах{% endblock %}
+
+{% block content %}
+  {% if page.paginator.count %}
+    <div class="card">
+      <p>Хянагдаагүй <strong>{{ page.paginator.count }}</strong> ажиглалт байна.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Хүүхэд</th>
+              <th>Огноо</th>
+              <th>Оруулсан</th>
+              <th>Товч</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for observation in page %}
+              <tr>
+                <td class="name">
+                  <a href="{% url 'observations:detail' observation.child.pk observation.pk %}">
+                    {{ observation.child.full_name }}
+                  </a>
+                </td>
+                <td>{{ observation.observed_on|date:"Y.m.d" }}</td>
+                <td>{{ observation.created_by|default:"—" }}</td>
+                <td>{{ observation.summary }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if page.has_other_pages %}
+        <div class="pagination">
+          {% if page.has_previous %}
+            <a href="?page={{ page.previous_page_number }}">← Өмнөх</a>
+          {% endif %}
+          <span>{{ page.number }} / {{ page.paginator.num_pages }}</span>
+          {% if page.has_next %}
+            <a href="?page={{ page.next_page_number }}">Дараах →</a>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="card">
+      <p class="empty">Хянах шаардлагатай ажиглалт байхгүй байна.</p>
+    </div>
+  {% endif %}
+{% endblock %}

@@ -23,9 +23,12 @@ def home(request):
     )
 
     if roles & {Role.SUPERADMIN, Role.ADMIN}:
-        return redirect("/udirdlaga/")
+        # RFP §12.2 — the figures first, the management screens from there.
+        return redirect("dashboard:admin")
     if Role.TEACHER in roles:
-        return redirect("children:list")
+        # RFP §12.1 lists what a teacher needs to notice on arriving; a
+        # list of names is not that.
+        return redirect("dashboard:teacher")
     if Role.GUARDIAN in roles:
         return redirect("children:parent_home")
 

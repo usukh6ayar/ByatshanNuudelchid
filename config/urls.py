@@ -16,6 +16,12 @@ urlpatterns = [
     path("", include("apps.accounts.urls")),
     path("", include("apps.children.urls")),
     path("", include("apps.portfolio.urls")),
+    path("", include("apps.observations.urls")),
+    path("", include("apps.assessment.urls")),
+    path("", include("apps.media.urls")),
+    path("", include("apps.comms.urls")),
+    path("", include("apps.reports.urls")),
+    path("", include("apps.dashboard.urls")),
 ]
 
 if settings.DEBUG:

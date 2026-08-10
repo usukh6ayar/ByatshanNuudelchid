@@ -14,6 +14,7 @@ from apps.children.models import Enrollment
 from apps.core.permissions import (
     assert_can_access_child,
     can_access_child,
+    can_record_for_child,
     child_kindergarten_history,
     visible_kindergartens,
 )
@@ -209,3 +210,86 @@ def test_visible_children_agrees_with_can_access_child(
                 f"{user} vs {child}: list says {child.pk in listed}, "
                 f"detail says {can_access_child(user, child)}"
             )
+
+
+# ------------------------------------------------------------- staff writes
+# can_record_for_child: reading a child's record and writing a professional
+# one about them are different permissions (RFP §5.1, §5.4, §6.3).
+
+def test_a_teacher_may_record(world):
+    assert can_record_for_child(world["dulmaa"], world["bataa"])
+
+
+def test_an_admin_may_record(world, make_admin):
+    admin = make_admin(world["naran"], username="recording_admin")
+
+    assert can_record_for_child(admin, world["bataa"])
+
+
+def test_a_guardian_may_read_but_not_record(world):
+    """The guardian's own contribution goes in as source=parent (§5.4)."""
+    assert can_access_child(world["bataa_mother"], world["bataa"])
+    assert not can_record_for_child(world["bataa_mother"], world["bataa"])
+
+
+def test_a_teacher_at_another_kindergarten_may_not_record(world):
+    assert not can_record_for_child(world["oyun"], world["bataa"])
+
+
+def test_a_teacher_may_not_record_about_their_own_child_in_another_group(
+    world, make_group
+):
+    """One person, two memberships — RFP §2.2 and §2.3 both apply.
+
+    A teacher whose own child attends the same kindergarten reaches that
+    child through the guardianship, not through an assignment. Letting the
+    staff role alone carry the write permission would put a parent's words
+    into the portfolio as professional judgement about their own child.
+    """
+    from apps.accounts.models import Membership, Role
+    from apps.tenants.models import GroupTeacher
+
+    parent_who_teaches = world["bataa_mother"]
+    other_group = make_group(world["naran"], world["naran_year"], "Сарнай")
+    membership = Membership.objects.create(
+        user=parent_who_teaches, kindergarten=world["naran"], role=Role.TEACHER
+    )
+    GroupTeacher.objects.create(
+        kindergarten=world["naran"], group=other_group,
+        teacher_membership=membership,
+    )
+
+    # They may read their own child's record — the guardianship says so.
+    assert can_access_child(parent_who_teaches, world["bataa"])
+    # But they teach a different group, so they may not write a staff one.
+    assert not can_record_for_child(parent_who_teaches, world["bataa"])
+    # And a child they neither guard nor teach is out of reach entirely.
+    assert not can_record_for_child(parent_who_teaches, world["saraa"])
+
+
+def test_the_same_teacher_may_record_once_assigned_to_the_group(world):
+    """The mirror of the test above: the assignment is what grants it."""
+    from apps.accounts.models import Membership, Role
+    from apps.tenants.models import GroupTeacher
+
+    parent_who_teaches = world["bataa_mother"]
+    membership = Membership.objects.create(
+        user=parent_who_teaches, kindergarten=world["naran"], role=Role.TEACHER
+    )
+    GroupTeacher.objects.create(
+        kindergarten=world["naran"], group=world["sunflower"],
+        teacher_membership=membership,
+    )
+
+    assert can_record_for_child(parent_who_teaches, world["bataa"])
+
+
+def test_a_previous_teacher_may_still_record_after_a_transfer(transferred):
+    """They keep the record they own — spec section 4.2."""
+    assert can_record_for_child(transferred["dulmaa"], transferred["bataa"])
+
+
+def test_an_anonymous_user_may_not_record(world):
+    from django.contrib.auth.models import AnonymousUser
+
+    assert not can_record_for_child(AnonymousUser(), world["bataa"])

@@ -28,6 +28,13 @@
     <nav class="nav" aria-label="Үндсэн цэс">
       <a href="{% url 'children:parent_home' %}"
          {% if nav == 'home' %}aria-current="page"{% endif %}>Нүүр хуудас</a>
+      <a href="{% url 'comms:list' %}"
+         {% if nav == 'announcements' %}aria-current="page"{% endif %}>
+        Мэдэгдэл
+        {% if unread_announcements %}
+          <span class="badge badge--warn">{{ unread_announcements }}</span>
+        {% endif %}
+      </a>
       <a href="{% url 'accounts:logout' %}">Гарах</a>
     </nav>
   </aside>

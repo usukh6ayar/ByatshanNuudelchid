@@ -2,7 +2,7 @@
 
 from apps.accounts.models import Role
 
-from .models import Group
+from .models import Group, SchoolYear
 
 
 def assignable_groups(user):
@@ -37,4 +37,31 @@ def assignable_groups(user):
         .select_related("school_year", "kindergarten")
         .distinct()
         .order_by("-school_year__starts_on", "name")
+    )
+
+
+def school_years_for(user):
+    """The school years a user may filter by — RFP §11.
+
+    Derived from the kindergartens their groups belong to rather than from
+    ``Membership`` directly: a teacher assigned to one group at a
+    kindergarten should see that kindergarten's years, and nobody should be
+    offered a year belonging to a tenant they have no groups in.
+    """
+    if user is None or not user.is_authenticated or not user.is_active:
+        return SchoolYear.objects.none()
+
+    if user.memberships.filter(is_active=True, role=Role.SUPERADMIN).exists():
+        return SchoolYear.objects.select_related("kindergarten").order_by(
+            "-starts_on"
+        )
+
+    kindergarten_ids = set(
+        assignable_groups(user).values_list("kindergarten_id", flat=True)
+    ) | user.kindergarten_ids
+
+    return (
+        SchoolYear.objects.filter(kindergarten_id__in=kindergarten_ids)
+        .select_related("kindergarten")
+        .order_by("-starts_on")
     )

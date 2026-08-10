@@ -1,0 +1,118 @@
+{% extends "base_teacher.html" %}
+{# RFP §6.3 — "багш бүлгийн бүх хүүхдийг нэг дэлгэц дээрээс хурдан үнэлэх".
+   One form, one save, one transaction: a teacher who changes their mind
+   half way down the list has not already written five rows. #}
+
+{% block title %}Түргэн үнэлгээ{% endblock %}
+{% block heading %}Түргэн үнэлгээ — {{ group.name }}{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <form method="get" class="filters">
+      <div>
+        <label for="id_domain">Хөгжлийн чиглэл</label>
+        <select name="domain" id="id_domain">
+          {% for item in domains %}
+            <option value="{{ item.pk }}"
+              {% if domain.pk == item.pk %}selected{% endif %}>{{ item.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="id_term">Улирал</label>
+        <select name="term" id="id_term">
+          {% for item in terms %}
+            <option value="{{ item.pk }}"
+              {% if term.pk == item.pk %}selected{% endif %}>{{ item.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn">Харах</button>
+    </form>
+  </div>
+
+  {% if not term %}
+    <div class="card">
+      <p class="empty">
+        {{ group.school_year.name }} хичээлийн жилд улирал тохируулаагүй байна.
+        Администратор улирлыг үүсгэсний дараа үнэлгээ хийнэ.
+      </p>
+    </div>
+  {% elif not domain %}
+    <div class="card">
+      <p class="empty">Хөгжлийн чиглэл тохируулаагүй байна.</p>
+    </div>
+  {% else %}
+    <div class="card">
+      <p>
+        <strong>{{ domain.name }}</strong> · {{ term.name }} ·
+        {# §6.3 — "хийгдээгүй үнэлгээг ялгаж харуулах" #}
+        {% if missing %}
+          <span class="badge badge--warn">{{ missing }} хүүхэд үнэлэгдээгүй</span>
+        {% else %}
+          <span class="badge badge--ok">Бүгд үнэлэгдсэн</span>
+        {% endif %}
+      </p>
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Хүүхэд</th>
+                <th>Өмнөх улирал</th>
+                <th>Үнэлгээ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+                <tr>
+                  <td class="name">
+                    <a href="{% url 'assessment:child' row.child.pk %}">
+                      {{ row.child.full_name }}
+                    </a>
+                  </td>
+                  <td>
+                    {% if row.previous %}
+                      <span class="brand__sub">
+                        {{ row.previous.value }}. {{ row.previous.label }}
+                      </span>
+                    {% else %}
+                      <span class="brand__sub">—</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <label class="sr-only"
+                           for="id_level_{{ row.enrollment.pk }}">
+                      {{ row.child.full_name }} — үнэлгээ
+                    </label>
+                    <select name="level_{{ row.enrollment.pk }}"
+                            id="id_level_{{ row.enrollment.pk }}">
+                      <option value="">— сонгоогүй —</option>
+                      {% for level in levels %}
+                        <option value="{{ level.pk }}"
+                          {% if row.assessment.level_id == level.pk %}selected{% endif %}>
+                          {{ level.value }}. {{ level.label }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="3" class="empty">Бүлэгт хүүхэд бүртгэлгүй байна.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        {% if rows %}
+          <div class="btn-row">
+            <button type="submit" class="btn">Бүгдийг хадгалах</button>
+          </div>
+        {% endif %}
+      </form>
+    </div>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends base_template %}
+{# RFP §624 — confirm before deleting. Nothing is actually removed: the
+   service archives the row (RFP §3.4, CLAUDE.md §3.3). #}
+
+{% block title %}Ажиглалт архивлах{% endblock %}
+{% block heading %}Ажиглалт архивлах уу?{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width:620px">
+    <p>
+      <strong>{{ observation.summary }}</strong><br>
+      <span class="brand__sub">
+        {{ child.full_name }} · {{ observation.observed_on|date:"Y.m.d" }}
+      </span>
+    </p>
+
+    <p>
+      Ажиглалт архивлагдаж, жагсаалтад харагдахаа болино. Мэдээлэл устахгүй —
+      шаардлагатай бол системийн администратор сэргээж чадна.
+    </p>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="btn-row">
+        <button type="submit" class="btn">Архивлах</button>
+        <a class="btn btn--ghost"
+           href="{% url 'observations:detail' child.pk observation.pk %}">
+          Болих
+        </a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

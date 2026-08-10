@@ -1,0 +1,94 @@
+{% extends base_template %}
+{# RFP §8.1, field for field. Leaving both target lists empty addresses the
+   whole kindergarten, which is the common case and needs no extra control. #}
+
+{% block title %}{% if announcement %}Мэдэгдэл засах{% else %}Шинэ мэдэгдэл{% endif %}{% endblock %}
+{% block heading %}
+  {% if announcement %}Мэдэгдэл засах{% else %}Шинэ мэдэгдэл{% endif %}
+{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width:820px">
+    {% if error %}<p class="msg msg--error" role="alert">{{ error }}</p>{% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <label for="id_title">Гарчиг</label>
+      <input type="text" name="title" id="id_title" required maxlength="200"
+             value="{{ form.title|default:'' }}">
+
+      <label for="id_body">Үндсэн текст</label>
+      <textarea name="body" id="id_body" required
+                style="min-height:160px">{{ form.body|default:'' }}</textarea>
+
+      <div class="grid grid--2" style="gap:0 16px">
+        <div>
+          <label for="id_starts_on">Эхлэх огноо</label>
+          <input type="date" name="starts_on" id="id_starts_on"
+                 value="{{ form.starts_on|date:'Y-m-d'|default:'' }}">
+        </div>
+        <div>
+          <label for="id_ends_on">Дуусах огноо</label>
+          <input type="date" name="ends_on" id="id_ends_on"
+                 value="{{ form.ends_on|date:'Y-m-d'|default:'' }}">
+        </div>
+      </div>
+
+      <h2 style="margin-top:26px">Хүлээн авагч</h2>
+      <p class="brand__sub" style="margin-top:-8px">
+        Юу ч сонгохгүй бол цэцэрлэгийн бүх эцэг эхэд очно.
+      </p>
+
+      <h3 style="font-size:.95rem; margin-top:16px">Бүлэг</h3>
+      {% for group in groups %}
+        <div style="display:flex; gap:10px; align-items:center; margin-top:8px">
+          <input type="checkbox" name="groups" value="{{ group.pk }}"
+                 id="id_group_{{ group.pk }}" style="width:auto"
+                 {% if group.pk in selected_groups %}checked{% endif %}>
+          <label for="id_group_{{ group.pk }}" style="margin:0">
+            {{ group.name }} · {{ group.school_year.name }}
+          </label>
+        </div>
+      {% empty %}
+        <p class="brand__sub">Хуваарилагдсан бүлэг байхгүй.</p>
+      {% endfor %}
+
+      <h3 style="font-size:.95rem; margin-top:16px">Тодорхой хүүхэд</h3>
+      <div style="max-height:220px; overflow-y:auto">
+        {% for child in children %}
+          <div style="display:flex; gap:10px; align-items:center; margin-top:8px">
+            <input type="checkbox" name="children" value="{{ child.pk }}"
+                   id="id_child_{{ child.pk }}" style="width:auto"
+                   {% if child.pk in selected_children %}checked{% endif %}>
+            <label for="id_child_{{ child.pk }}" style="margin:0">
+              {{ child.full_name }}
+            </label>
+          </div>
+        {% empty %}
+          <p class="brand__sub">Хүүхэд байхгүй.</p>
+        {% endfor %}
+      </div>
+
+      <div style="display:flex; gap:10px; align-items:center; margin-top:22px">
+        <input type="checkbox" name="is_important" id="id_important"
+               style="width:auto"
+               {% if form.is_important %}checked{% endif %}>
+        <label for="id_important" style="margin:0">Чухал мэдэгдэл</label>
+      </div>
+
+      <div style="display:flex; gap:10px; align-items:center; margin-top:10px">
+        <input type="checkbox" name="publish" id="id_publish" style="width:auto"
+               {% if announcement.status == 'published' %}checked{% endif %}>
+        <label for="id_publish" style="margin:0">
+          Шууд нийтлэх (сонгохгүй бол ноорог хэвээр хадгална)
+        </label>
+      </div>
+
+      <div class="btn-row">
+        <button type="submit" class="btn">Хадгалах</button>
+        <a class="btn btn--ghost" href="{% url 'comms:list' %}">Болих</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

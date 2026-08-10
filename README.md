@@ -31,9 +31,15 @@ app starts (RFP §20-IV); the service layer is structured for it already.
 cp .env.example .env        # then set DJANGO_SECRET_KEY
 make build
 make migrate
+make storage                # create the MinIO bucket — uploads fail without it
 make superuser
 make up                     # http://localhost:8000
 ```
+
+Photos are stored in MinIO, which starts empty, so `make storage` is not
+optional: without a bucket the first upload fails with `NoSuchBucket` and
+nothing on screen explains why. In production the bucket is provisioned with
+the account and **must be private** — RFP §4.4, §21.10.
 
 ## Everyday commands
 
@@ -42,6 +48,8 @@ make test          # full suite
 make test-perms    # authorization tests only (RFP §21.2-21.4)
 make lint          # ruff
 make migrations    # generate — then read the output file
+make seed          # demo kindergarten, staff, children, observations
+make storage       # create the media bucket if it is missing
 make pdf-spike     # render the Cyrillic sample PDF
 ```
 

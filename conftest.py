@@ -15,8 +15,69 @@ import datetime as dt
 import pytest
 
 from apps.accounts.models import Membership, Role, User
+from apps.assessment.defaults import install as install_system_defaults
 from apps.children.models import Child, Enrollment, Guardianship
 from apps.tenants.models import Group, GroupTeacher, Kindergarten, SchoolYear
+
+
+@pytest.fixture(autouse=True)
+def local_cache(settings):
+    """Keep the test suite out of the shared Redis.
+
+    Production caches the §12.2 dashboard in Redis so the beat worker and
+    the web process share it. Tests do not need that, and pointing them at
+    a real Redis would let one test's cached figures leak into the next —
+    which is exactly the bug a dashboard test is looking for.
+    """
+    settings.CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "test",
+        },
+    }
+    from django.core.cache import cache
+
+    cache.clear()
+
+
+@pytest.fixture(autouse=True)
+def in_memory_storage(settings):
+    """Keep uploads out of MinIO and out of the developer's disk.
+
+    Development points ``default_storage`` at the MinIO container so the
+    signed-URL path is exercised for real (``config/settings/dev.py``). A
+    test suite that did the same would need the container running, would
+    leave objects behind, and would be slow for no gain — the thing worth
+    testing here is the pipeline, not S3's API.
+
+    ``InMemoryStorage`` cannot sign a URL, which is deliberate: it puts the
+    serving view down its streaming branch, so both halves of spec section
+    7.1 are covered by the suite rather than only the one production uses.
+    """
+    settings.STORAGES = {
+        "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        },
+    }
+
+
+@pytest.fixture(autouse=True)
+def system_defaults(db):
+    """Reinstall the §5.2, §6.1 and §6.2 configuration before every test.
+
+    The data migrations create these rows, but a test marked
+    ``django_db(transaction=True)`` — the authentication tests are, because
+    the §3.1 lockout has to survive a rollback — flushes every table at
+    teardown and takes migration-created data with it. Every test collected
+    after one of those would then find an empty configuration and fail for a
+    reason that has nothing to do with what it is testing.
+
+    Autouse rather than opt-in: which tests need it is not obvious from
+    reading them, and a fixture you have to remember is a fixture that gets
+    forgotten.
+    """
+    install_system_defaults()
 
 
 @pytest.fixture

@@ -182,3 +182,34 @@ def test_kindergarten_admin_can_open_the_child(client, world, make_admin):
     response = client.get(reverse("children:detail", args=[world["bataa"].pk]))
 
     assert response.status_code == 200
+
+
+def test_the_school_year_filter_is_on_the_form(client, world):
+    """RFP §11 — "хичээлийн жилээр шүүх".
+
+    The selector supported it from Day 3; until Day 8 the form did not
+    render it, so the filter existed and nobody could use it.
+    """
+    assert client.login(username="dulmaa", password="test-password-1234")
+
+    response = client.get(reverse("children:list"))
+
+    assert response.status_code == 200
+    assert world["naran_year"] in list(response.context["school_years"])
+    assert world["och_year"] not in list(response.context["school_years"])
+
+
+def test_filtering_by_school_year_narrows_the_list(client, world):
+    assert client.login(username="dulmaa", password="test-password-1234")
+
+    response = client.get(
+        reverse("children:list") + f"?school_year={world['naran_year'].pk}"
+    )
+    assert response.context["page"].paginator.count == 2
+
+    response = client.get(
+        reverse("children:list") + f"?school_year={world['och_year'].pk}"
+    )
+    # Not their year: the option is not offered, so it selects nothing and
+    # the filter is skipped rather than silently applied.
+    assert response.context["selected_school_year"] is None

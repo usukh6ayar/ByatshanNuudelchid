@@ -1,0 +1,330 @@
+{# The child's portfolio as a printable document — RFP §10.1, §10.3.
+
+   Every §10.3 requirement is met by something in this file:
+   · Cyrillic          — DejaVu Sans, installed in the image, named in CSS
+   · A4                — @page size
+   · page numbers      — @bottom-center counters
+   · logo and name     — the header, repeated as a running title
+   · child photo       — inlined as a data URI, never fetched
+   · no distortion     — object-fit: contain on every image
+   · reasonable size   — one photograph, no decoration
+
+   The sections come from §10.1 and appear only when asked for. The template
+   never decides what a reader may see: builder.py scoped every queryset to
+   the person who requested the report. #}
+<style>
+  @page {
+    size: A4;
+    margin: 20mm 16mm 18mm 16mm;
+    @top-right {
+      content: "{{ kindergarten.name }}";
+      font-family: "DejaVu Sans", sans-serif;
+      font-size: 8pt;
+      color: #8a8a8a;
+    }
+    @bottom-center {
+      content: "Хуудас " counter(page) " / " counter(pages);
+      font-family: "DejaVu Sans", sans-serif;
+      font-size: 9pt;
+      color: #666;
+    }
+  }
+  /* The cover carries the title, so it does not need the running header. */
+  @page :first { @top-right { content: ""; } }
+
+  body {
+    font-family: "DejaVu Sans", sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.5;
+    color: #1a1a1a;
+  }
+
+  h1 { font-size: 20pt; margin: 0 0 2mm; }
+  h2 { font-size: 13pt; margin: 0 0 4mm; color: #2f5d45;
+       border-bottom: 1.5pt solid #cfe0d6; padding-bottom: 2mm; }
+  h3 { font-size: 11pt; margin: 5mm 0 2mm; }
+  p  { margin: 0 0 3mm; }
+
+  .cover { text-align: center; padding-top: 30mm; }
+  .cover .photo {
+    width: 55mm; height: 55mm; object-fit: contain;
+    border: 1pt solid #ddd; border-radius: 3mm; margin-bottom: 8mm;
+  }
+  .cover .sub { color: #666; font-size: 11pt; }
+  .cover .stamp { margin-top: 25mm; color: #8a8a8a; font-size: 9pt; }
+
+  /* Each §10.1 section starts on its own page: the document is printed,
+     punched and kept, and a section split across a fold is unreadable. */
+  section { page-break-before: always; }
+
+  table { width: 100%; border-collapse: collapse; margin-bottom: 5mm; }
+  th, td { border: 0.5pt solid #d8d8d8; padding: 2.2mm 3mm;
+           text-align: left; font-size: 9.5pt; vertical-align: top; }
+  th { background: #f4f7f5; font-weight: 600; }
+
+  dl.facts { margin: 0; }
+  dl.facts dt { font-weight: 600; float: left; width: 45mm; clear: left; }
+  dl.facts dd { margin: 0 0 2mm 45mm; }
+
+  .entry { margin-bottom: 5mm; page-break-inside: avoid; }
+  .entry .meta { color: #666; font-size: 9pt; margin-bottom: 1mm; }
+  .muted { color: #8a8a8a; }
+</style>
+
+{# ------------------------------------------------------------- cover #}
+<div class="cover">
+  {% if photo_data_uri %}
+    <img class="photo" src="{{ photo_data_uri }}"
+         alt="{{ child.full_name }}-ийн зураг">
+  {% endif %}
+
+  <h1>{{ child.full_name }}</h1>
+  <p class="sub">Хүүхдийн хөгжлийн цахим хувийн хавтас</p>
+  <p class="sub">{{ kindergarten.name }}</p>
+  {% if enrollment %}
+    <p class="sub">{{ enrollment.group.name }} · {{ enrollment.school_year.name }}</p>
+  {% endif %}
+
+  <p class="stamp">
+    Үүсгэсэн: {% now "Y.m.d" %}
+    {% if generated_for %} · {{ generated_for }}{% endif %}
+  </p>
+</div>
+
+{# --------------------------------------------------------- §10.1 basic #}
+{% if "basic" in sections %}
+  <section>
+    <h2>Үндсэн мэдээлэл</h2>
+    <dl class="facts">
+      <dt>Овог, нэр</dt><dd>{{ child.full_name }}</dd>
+      <dt>Төрсөн огноо</dt><dd>{{ child.date_of_birth|date:"Y.m.d" }}</dd>
+      <dt>Хүйс</dt><dd>{{ child.get_sex_display }}</dd>
+      <dt>Бүртгэлийн дугаар</dt><dd>{{ child.national_id }}</dd>
+      <dt>Элссэн огноо</dt>
+      <dd>{{ child.enrolled_on|date:"Y.m.d"|default:"—" }}</dd>
+      <dt>Төлөв</dt><dd>{{ child.get_status_display }}</dd>
+    </dl>
+
+    {% if guardianships %}
+      <h3>Эцэг эх, асран хамгаалагч</h3>
+      <table>
+        <thead><tr><th>Хамаарал</th><th>Нэр</th><th>Утас</th></tr></thead>
+        <tbody>
+          {% for link in guardianships %}
+            <tr>
+              <td>{{ link.get_relation_display }}</td>
+              <td>{{ link.guardian_user }}</td>
+              <td>{{ link.guardian_user.phone|default:"—" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+
+    {% if enrollment_history %}
+      <h3>Бүртгэлийн түүх</h3>
+      <table>
+        <thead>
+          <tr><th>Хичээлийн жил</th><th>Цэцэрлэг</th><th>Бүлэг</th>
+              <th>Эхэлсэн</th></tr>
+        </thead>
+        <tbody>
+          {% for row in enrollment_history %}
+            <tr>
+              <td>{{ row.school_year.name }}</td>
+              <td>{{ row.kindergarten.name }}</td>
+              <td>{{ row.group.name }}</td>
+              <td>{{ row.started_on|date:"Y.m.d" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </section>
+{% endif %}
+
+{# ------------------------------------------------------------ §4.1 #}
+{% if "about_me" in sections %}
+  <section>
+    <h2>Миний тухай</h2>
+    {% if about %}
+      <dl class="facts">
+        {% if about.introduction %}
+          <dt>Танилцуулга</dt><dd>{{ about.introduction|linebreaksbr }}</dd>
+        {% endif %}
+        {% if about.name_meaning %}
+          <dt>Нэрний утга</dt><dd>{{ about.name_meaning|linebreaksbr }}</dd>
+        {% endif %}
+        {% if about.memorable_sayings %}
+          <dt>Сонирхолтой үг</dt>
+          <dd>{{ about.memorable_sayings|linebreaksbr }}</dd>
+        {% endif %}
+        {% if about.dream %}
+          <dt>Миний мөрөөдөл</dt><dd>{{ about.dream|linebreaksbr }}</dd>
+        {% endif %}
+        {% if about.distinguishing_traits %}
+          <dt>Миний онцлог</dt>
+          <dd>{{ about.distinguishing_traits|linebreaksbr }}</dd>
+        {% endif %}
+        {% if about.height_cm %}<dt>Өндөр</dt><dd>{{ about.height_cm }} см</dd>{% endif %}
+        {% if about.weight_kg %}<dt>Жин</dt><dd>{{ about.weight_kg }} кг</dd>{% endif %}
+      </dl>
+    {% else %}
+      <p class="muted">Бөглөгдөөгүй байна.</p>
+    {% endif %}
+  </section>
+{% endif %}
+
+{# ------------------------------------------------------------ §4.2 #}
+{% if "birthdays" in sections %}
+  <section>
+    <h2>Төрсөн өдөр</h2>
+    <dl class="facts">
+      <dt>Төрсөн огноо</dt><dd>{{ birth.date_of_birth|date:"Y.m.d" }}</dd>
+      <dt>Одоогийн нас</dt><dd>{{ birth.age }}</dd>
+      <dt>Өрнийн орд</dt><dd>{{ birth.zodiac_sign }}</dd>
+      <dt>Монгол жил</dt><dd>{{ birth.year_animal }}</dd>
+    </dl>
+
+    {% if birthdays %}
+      <table>
+        <thead><tr><th>Нас</th><th>Огноо</th><th>Тэмдэглэл</th></tr></thead>
+        <tbody>
+          {% for entry in birthdays %}
+            <tr>
+              <td>{{ entry.age }}</td>
+              <td>{{ entry.date|date:"Y.m.d" }}</td>
+              <td>{{ entry.note.note|default:"—" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </section>
+{% endif %}
+
+{# ------------------------------------------------------------ §4.3 #}
+{% if "age_profiles" in sections %}
+  <section>
+    <h2>Нас тус бүрийн мэдээлэл</h2>
+    {% for age, profile in age_profiles %}
+      <h3>{{ age }} нас</h3>
+      <dl class="facts">
+        {% if profile.favorite_color %}
+          <dt>Дуртай өнгө</dt><dd>{{ profile.favorite_color }}</dd>
+        {% endif %}
+        {% if profile.favorite_food %}
+          <dt>Дуртай хоол</dt><dd>{{ profile.favorite_food }}</dd>
+        {% endif %}
+        {% if profile.favorite_toy %}
+          <dt>Дуртай тоглоом</dt><dd>{{ profile.favorite_toy }}</dd>
+        {% endif %}
+        {% if profile.favorite_activity %}
+          <dt>Дуртай үйл ажиллагаа</dt><dd>{{ profile.favorite_activity }}</dd>
+        {% endif %}
+        {% if profile.personality %}
+          <dt>Зан чанар</dt><dd>{{ profile.personality|linebreaksbr }}</dd>
+        {% endif %}
+        {% if profile.new_skills %}
+          <dt>Шинэ чадвар</dt><dd>{{ profile.new_skills|linebreaksbr }}</dd>
+        {% endif %}
+        {% if profile.teacher_note %}
+          <dt>Багшийн тэмдэглэл</dt><dd>{{ profile.teacher_note|linebreaksbr }}</dd>
+        {% endif %}
+        {% if profile.parent_note %}
+          <dt>Эцэг эхийн тэмдэглэл</dt><dd>{{ profile.parent_note|linebreaksbr }}</dd>
+        {% endif %}
+      </dl>
+    {% empty %}
+      <p class="muted">Бөглөгдөөгүй байна.</p>
+    {% endfor %}
+  </section>
+{% endif %}
+
+{# ------------------------------------------------------------ §5.1 #}
+{% if "observations" in sections %}
+  <section>
+    <h2>Багшийн ажиглалт</h2>
+    {% for observation in observations %}
+      <div class="entry">
+        <p class="meta">
+          {{ observation.observed_on|date:"Y.m.d" }} ·
+          {{ observation.type.name }}
+          {% if observation.created_by %} · {{ observation.created_by }}{% endif %}
+        </p>
+        {% if observation.activity_name %}
+          <p><strong>{{ observation.activity_name }}</strong></p>
+        {% endif %}
+        {% if observation.situation %}<p>{{ observation.situation }}</p>{% endif %}
+        {% if observation.child_did %}<p>{{ observation.child_did }}</p>{% endif %}
+        {% if observation.child_said %}
+          <p>«{{ observation.child_said }}»</p>
+        {% endif %}
+        {% if observation.teacher_comment %}
+          <p>{{ observation.teacher_comment }}</p>
+        {% endif %}
+        {% if observation.next_steps %}
+          <p><em>Дараагийн дэмжлэг:</em> {{ observation.next_steps }}</p>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p class="muted">Ажиглалт бүртгэгдээгүй байна.</p>
+    {% endfor %}
+  </section>
+{% endif %}
+
+{# ------------------------------------------------------------ §5.4 #}
+{% if "parent_observations" in sections %}
+  <section>
+    <h2>Эцэг эхийн ажиглалт</h2>
+    {% for observation in parent_observations %}
+      <div class="entry">
+        <p class="meta">
+          {{ observation.observed_on|date:"Y.m.d" }}
+          {% if observation.created_by %} · {{ observation.created_by }}{% endif %}
+        </p>
+        {% if observation.situation %}<p>{{ observation.situation }}</p>{% endif %}
+        {% if observation.child_did %}<p>{{ observation.child_did }}</p>{% endif %}
+        {% if observation.child_said %}
+          <p>«{{ observation.child_said }}»</p>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p class="muted">Эцэг эхийн ажиглалт байхгүй байна.</p>
+    {% endfor %}
+  </section>
+{% endif %}
+
+{# ------------------------------------------------------------ §6.4 #}
+{% if "assessments" in sections %}
+  <section>
+    <h2>Хөгжлийн үнэлгээ</h2>
+    {% if assessment_matrix %}
+      <table>
+        <thead>
+          <tr>
+            <th>Хөгжлийн чиглэл</th>
+            {% for term in assessment_matrix.terms %}<th>{{ term.name }}</th>{% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in assessment_matrix.rows %}
+            <tr>
+              <td>{{ row.domain.name }}</td>
+              {% for cell in row.cells %}
+                <td>
+                  {% if cell %}
+                    {{ cell.level.value }}. {{ cell.level.label }}
+                    {% if cell.comment %}<br><span class="muted">{{ cell.comment }}</span>{% endif %}
+                  {% else %}—{% endif %}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="muted">Үнэлгээ бүртгэгдээгүй байна.</p>
+    {% endif %}
+  </section>
+{% endif %}

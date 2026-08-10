@@ -180,6 +180,13 @@ dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px;
 dl.facts dt { color: var(--muted); }
 dl.facts dd { margin: 0; }
 
+/* Visible to a screen reader only. The §6.3 grid has one select per child;
+   the column header alone does not say whose row it is (RFP §629–635). */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --ink: #e9ebf0; --muted: #9aa1ad; --faint: #6b7280;

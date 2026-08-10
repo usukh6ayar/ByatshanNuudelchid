@@ -21,8 +21,14 @@
     </div>
 
     <nav class="nav" aria-label="Үндсэн цэс">
+      <a href="{% url 'dashboard:teacher' %}"
+         {% if nav == 'home' %}aria-current="page"{% endif %}>Хяналтын самбар</a>
       <a href="{% url 'children:list' %}"
          {% if nav == 'children' %}aria-current="page"{% endif %}>Хүүхдүүд</a>
+      <a href="{% url 'observations:review_queue' %}"
+         {% if nav == 'review' %}aria-current="page"{% endif %}>Хянах ажиглалт</a>
+      <a href="{% url 'comms:list' %}"
+         {% if nav == 'announcements' %}aria-current="page"{% endif %}>Мэдэгдэл</a>
       <a href="{% url 'accounts:logout' %}">Гарах</a>
     </nav>
   </aside>

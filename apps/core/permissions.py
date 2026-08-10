@@ -24,7 +24,9 @@ __all__ = [
     "child_kindergarten_history",
     "is_guardian_of",
     "can_access_child",
+    "can_record_for_child",
     "assert_can_access_child",
+    "assert_can_record_for_child",
     "visible_kindergartens",
     "visible_children",
 ]
@@ -92,6 +94,37 @@ def can_access_child(user, child) -> bool:
     )
 
 
+def can_record_for_child(user, child) -> bool:
+    """May this user write a *staff* record about this child?
+
+    Reading and writing are not the same permission. A guardian passes
+    ``can_access_child`` — they may read the portfolio and write their own
+    half of it (§2.3) — but observations and assessments are the teacher's
+    professional record (§5.1, §6.3). A guardian's own contribution goes in
+    as ``source=parent`` and is reviewed by a teacher (§5.4); it never
+    enters through this door.
+
+    This is deliberately ``can_access_child`` *minus the guardian branch*,
+    not "has access, and holds a staff role somewhere". The difference
+    matters for a teacher whose own child attends the same kindergarten: the
+    weaker rule would let them file a teacher observation about their own
+    child while teaching a different group, and that record then reads as
+    professional judgement in the portfolio the family receives. The
+    authorization has to come from the working relationship with the child,
+    which is what §2.2 means by "өөрийн хариуцсан бүлэг".
+    """
+    if user is None or not user.is_authenticated or not user.is_active:
+        return False
+
+    if _is_assigned_teacher(user, child):
+        return True
+
+    return user.has_membership_in(
+        child_kindergarten_history(child),
+        roles=[Role.ADMIN, Role.SUPERADMIN],
+    )
+
+
 def assert_can_access_child(user, child) -> None:
     """Raise 404 when access is denied.
 
@@ -99,6 +132,12 @@ def assert_can_access_child(user, child) -> None:
     is itself a disclosure. RFP §21.4.
     """
     if not can_access_child(user, child):
+        raise Http404
+
+
+def assert_can_record_for_child(user, child) -> None:
+    """Raise 404 when this user may not write a staff record — RFP §21.4."""
+    if not can_record_for_child(user, child):
         raise Http404
 
 
