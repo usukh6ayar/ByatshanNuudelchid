@@ -4,8 +4,8 @@ Children's Development Digital Portfolio System.
 
 **Status as of 2026-08-11: Phase 1 in progress — 14 of 17 requirement groups
 complete, 3 partial, 0 not started.** Detail in section 7. The three partials
-are deployment (blocked on decision D3), responsive layout on real devices,
-and the REST API (deferred by decision D2).
+are deployment (provider chosen — D3 — but never run against a server),
+responsive layout on real devices, and the REST API (deferred by decision D2).
 
 This file is kept in sync with the codebase. Every "done" below names the file
 or test that proves it.
@@ -158,7 +158,7 @@ end to end.
 | 12 | Search & filtering — name, group, school year, active/archived | ✅ done | §11's full list, incl. school year, date interval, domain and level — `test_observations.py`, `test_views_authorization.py` |
 | 13 | Basic PDF export — child info, photo, portfolio, observations, assessments | ✅ done | `apps/reports/`, `test_reports.py`; §549 queue, §10.3 A4 + Cyrillic verified by parsing the output |
 | 14 | Backend — REST API, PostgreSQL, migrations, auth, ownership, upload, logging, env | ⚠️ partial | Everything except the REST API. **See decision D2** |
-| 15 | Deployment — production, HTTPS, prod database, backup, health check | ⚠️ partial | `/healthz`, `prod.py` passing `check --deploy`, a static build, and backup/restore scripts exercised against a real database — everything except a server. **Blocked on D3** |
+| 15 | Deployment — production, HTTPS, prod database, backup, health check | ⚠️ partial | `/healthz`, `prod.py` passing `check --deploy`, a static build, and backup/restore scripts exercised against a real database — everything except a server. Target chosen (D3): Hetzner Singapore + Cloudflare R2 |
 | 16 | Basic security — hashing, RBAC, ownership, no cross-child access, secure files, HTTPS, validation, injection/XSS, cookies | ✅ done | 40+ authorization tests; HTTPS and file access land with 15 and 4 |
 | 17 | Responsive web — desktop, tablet, mobile browser | ⚠️ partial | Mobile-first CSS written; not tested on real devices |
 
@@ -339,13 +339,14 @@ a backup on the database's own disk survives nothing that matters), and no produ
 data or real child photos in development (RFP §707 — `seed_demo` refuses to
 run with `DEBUG` off).
 
-> ⚠️ **Blocking unknown.** Hosting and object storage are still undecided —
-> deferred again on Day 9 at the client's request. `.env.example` ships MinIO
-> defaults as a placeholder. Everything deployment needs on this side is now
-> ready: the production settings pass Django's own checklist, the static build
-> runs, and backup and restore are scripted and exercised. What is left is a
-> provider. Deployment therefore moves to Day 10 and stays the one Phase 1
-> Definition-of-Done item nobody here can close alone.
+**Target: Hetzner Cloud, Singapore region, with Cloudflare R2 for files**
+(decision D3, 2026-08-11 — chosen on measured latency from Ulaanbaatar).
+The procedure is in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+
+> ⚠️ **Still not deployed.** Everything on this side is ready — production
+> settings pass Django's checklist, the static build runs, backup and restore
+> are scripted and rehearsed — but the application has never served a real
+> request. That is the last open Definition-of-Done item.
 
 ## 16. Testing checklist
 
@@ -952,7 +953,9 @@ running before believing them.
 ## Decisions
 
 Recorded rather than left implicit, per the original brief's instruction to
-surface ambiguity. **D3 is still open and now blocking.**
+surface ambiguity. **All five are now resolved.** One open risk survives
+inside D3 and is a legal question rather than a technical one: whether
+Mongolian law permits children's records to be held outside the country.
 
 ### D1 — MVP scope: growth tracking and document library ✅ resolved 2026-08-09
 
@@ -974,25 +977,66 @@ later, which the service layer does.
 Revisit if a third party needs to integrate before the mobile client exists;
 adding DRF on top of the existing services is roughly two days.
 
-### D3 — Hosting and object storage
+### D3 — Hosting and object storage ✅ resolved 2026-08-11
 
-Undecided, and now blocking. Deployment is a Phase 1 Definition-of-Done item
-and file upload needs a storage target.
+**Decision: Hetzner Cloud, Singapore region, with Cloudflare R2 for files.**
+Roughly €12–15/month for the server plus R2 at $0.015/GB stored and no egress
+charge.
 
-**Options:** VPS + Docker Compose (Hetzner/DigitalOcean, ~$20–40/month, full
-control, matches RFP §19 ownership terms) · managed PaaS (Railway/Render,
-less DevOps, ~$30–60/month) · either one paired with Cloudflare R2 for files.
+**Latency decided it, and it was measured rather than assumed.** From a
+connection in Ulaanbaatar, mean round-trip over three pings:
 
-**Status: no longer blocks upload.** The media layer runs against any
-S3-compatible bucket through Django's storage abstraction, with MinIO
-standing in locally, so the choice of provider is a deployment-time setting
-rather than a code decision.
+| Region | RTT |
+|---|---|
+| Hetzner Singapore | **93 ms** |
+| Hetzner Nuremberg | 121 ms |
+| Hetzner Falkenstein | 128 ms |
+| Hetzner Helsinki | 141 ms |
+| Hetzner Ashburn (US) | 256 ms |
 
-**Deferred again on Day 9 at the client's request**, so deployment moves to
-Day 10. Nothing on this side is waiting on it any more: production settings
-pass Django's checklist, the static build runs, and backup and restore are
-scripted and exercised. What remains is a provider and an afternoon. It is
-the only Phase 1 Definition-of-Done item that cannot be closed from here.
+Germany was recommended first, on the strength of price and of a GDPR
+argument that does not survive contact with the facts — see the corrections
+below. Singapore is 30% closer to the people who will actually use this.
+
+**Ownership, RFP §781.** "Source code, сервер, домэйн, database болон cloud
+storage-ийн үндсэн эзэмшигч нь захиалагч байна." On a VPS every one of those
+is an account in the client's name; handover is a set of credentials. A
+managed platform keeps its own internals, which makes that clause harder to
+satisfy honestly.
+
+**Two things stated earlier in this project's discussion were wrong, and are
+corrected here rather than quietly dropped:**
+
+- *"GDPR protects the children's data."* It does not. GDPR governs data
+  about people in the EU, or processing by an entity established there; a
+  Mongolian kindergarten's records are outside its scope wherever the disk
+  happens to sit. The real and much narrower benefit is that **Hetzner** is
+  bound by it as a processor, which is worth having in a contract but is not
+  a protection for the data subjects.
+- *"A VPS is ten minutes a month."* It is not. Security updates, Docker
+  upgrades, disk filling, checking that the backup actually ran, and being
+  the person who gets woken when something stops — call it one to two hours
+  a month, more when something breaks.
+
+**Open risk, not a code question.** Whether Mongolia's 2021 personal data
+protection law restricts holding children's records outside the country has
+not been established. If it does, it overrides everything above and the
+answer becomes a Mongolian data centre. Worth a lawyer's five minutes before
+the first real family is entered.
+
+**Operations.** The developer maintains the server (confirmed 2026-08-11),
+not the kindergarten. That is the arrangement a VPS assumes; an unmaintained
+server is how these get breached.
+
+**Previously considered:** managed PaaS (Railway/Render, ~$30–60/month, less
+operational load, weaker fit with §781) · Mongolian data centre (lowest
+latency, no legal question, higher cost and S3-compatible storage would need
+confirming).
+
+The media layer runs against any S3-compatible bucket through Django's
+storage abstraction, with MinIO standing in locally, so this was never a code
+decision — `docs/DEPLOYMENT.md` needed one paragraph changed once the answer
+arrived. Deferred twice at the client's request before being settled.
 
 ### D4 — Deferred until their own phase
 

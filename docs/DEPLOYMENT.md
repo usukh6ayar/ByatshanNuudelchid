@@ -1,13 +1,18 @@
 # Deployment
 
-A Phase 1 deliverable (`ROADMAP.md` §7). Provider-neutral on purpose: the
-hosting decision is still open (`ROADMAP.md`, D3), and none of the procedure
-below depends on the answer. Everything here has been run locally; what has
-never happened is running it against a server.
+A Phase 1 deliverable (`ROADMAP.md` §7). The steps work on any host that runs
+Docker; where the target matters, this document names the one that was chosen.
+Everything here has been run locally. What has never happened is running it
+against a server.
 
 > **The application has not been deployed.** This document is the procedure,
 > not a record. The Definition-of-Done row "Application is deployed" stays ❌
 > until someone follows it end to end.
+
+**Target** (decision D3, 2026-08-11): **Hetzner Cloud, Singapore region**,
+with **Cloudflare R2** for uploaded files. Singapore was measured at 93 ms
+from Ulaanbaatar against 121 ms for Hetzner's German sites — the users are in
+Mongolia, so the server is as close to Mongolia as this provider gets.
 
 ---
 
@@ -15,10 +20,14 @@ never happened is running it against a server.
 
 | | |
 |---|---|
-| A host | Anything that runs Docker. 2 vCPU / 4 GB is comfortable for one kindergarten |
+| A host | Hetzner CPX21 (3 vCPU / 4 GB, **Singapore**) is comfortable for one kindergarten. Anything running Docker works |
 | A domain | With DNS pointing at the host |
-| TLS | A reverse proxy terminating HTTPS — Caddy, nginx, or the platform's own |
-| An S3-compatible bucket | Cloudflare R2, AWS S3, or MinIO you run yourself |
+| TLS | A reverse proxy terminating HTTPS — Caddy is three lines and renews certificates itself |
+| An S3-compatible bucket | Cloudflare R2. Storage is $0.015/GB and **egress is free**, which matters here because the traffic is photographs being viewed by families |
+
+Create every account in the **client's** name, not the developer's. RFP §781
+makes the client the owner of the server, the domain, the database and the
+cloud storage; handover should be a transfer of credentials, not a migration.
 
 The bucket **must be private**. RFP §4.4 and §21.10 are explicit: children's
 photographs are never reachable by URL alone. The application issues
@@ -41,7 +50,7 @@ Every setting comes from the environment (RFP §690). Copy `.env.example` to
 | `DJANGO_CSRF_TRUSTED_ORIGINS` | `https://your-domain`. Without it, every form POST behind the proxy fails CSRF |
 | `DATABASE_URL` | The production PostgreSQL. **Not SQLite** — RFP §14 forbids it |
 | `REDIS_URL` | Celery's broker and the shared cache |
-| `AWS_*` | Bucket name, endpoint, credentials |
+| `AWS_*` | Bucket name, endpoint, credentials. For R2 the endpoint is `https://<account-id>.r2.cloudflarestorage.com` and `AWS_S3_REGION_NAME=auto` |
 | `MEDIA_REDIRECT_SIGNED_URL` | `true` in production, so the object store moves the bytes rather than Django |
 
 Generate a secret key with:
@@ -164,11 +173,35 @@ Take a backup first. Migrations are reviewed by hand for data-losing
 operations before they are committed (CLAUDE.md §3.4), but review is not the
 same as a restore point.
 
-## 8. Not covered here
+## 8. Running it, month to month
 
-- **Which provider.** Open — `ROADMAP.md`, D3.
-- **Creating the bucket.** Provisioned with the object storage account, and
-  the steps differ per provider. It must be private.
+A VPS is owned, not rented as a service, and that has a cost in attention.
+Budget **one to two hours a month**, more when something breaks:
+
+- security updates on the host (`unattended-upgrades` handles most of it)
+- Docker and base-image upgrades when the Python or PostgreSQL image moves
+- disk usage — PDFs expire after `REPORT_RETENTION_DAYS`, but logs and old
+  images accumulate
+- **confirming the backup actually ran**, which is the one that gets skipped
+  and the one that matters
+- being the person who notices when the site is down
+
+Decision D3 records that the **developer** maintains the server, not the
+kindergarten. If that ever changes, revisit the choice: an unmaintained VPS
+is how systems like this get breached, and a managed platform trades money
+for exactly this work.
+
+Point an uptime check at `/healthz` from outside the host. A server that
+monitors itself reports nothing when it is the thing that failed.
+
+## 9. Not covered here
+
+- **Creating the R2 bucket.** Provisioned with the Cloudflare account. It
+  must be **private** — RFP §4.4, §21.10.
 - **The reverse proxy's own configuration.** Caddy needs three lines, nginx
   rather more; both are well documented upstream. All this application
   requires is that `X-Forwarded-Proto` is set.
+- **Whether Mongolian law permits children's records to be held abroad.**
+  Not established, and not a question this document can answer — see D3. If
+  it does not, the hosting decision changes and the rest of this procedure
+  stays the same.
