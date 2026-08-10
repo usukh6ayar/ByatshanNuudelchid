@@ -78,7 +78,7 @@ children at two kindergartens.
 | Object storage | S3-compatible (MinIO in dev) | ✅ upload, signed URLs, `make storage` |
 | Runtime | Docker + docker-compose | ✅ in place |
 | Row history | django-simple-history | ✅ on `Child`, `AboutMe`, `ChildAgeProfile` |
-| Lint / test | ruff, pytest | ✅ 544 tests passing, ruff clean |
+| Lint / test | ruff, pytest | ✅ 569 tests passing, ruff clean |
 
 ## 5. Architecture overview
 
@@ -181,7 +181,8 @@ retrofitting an audit trail after data exists is painful. No extra cost.
 ### Deliverables
 
 Working web application, source code, migrations, `.env.example`, seed data
-command, test suite, deployment instructions, this roadmap.
+command, test suite, [deployment instructions](docs/DEPLOYMENT.md), this
+roadmap.
 
 ### Explicitly out of scope for Phase 1
 
@@ -357,13 +358,13 @@ Formal QA is the client's. Before handover we still verify:
 | Role permissions and ownership | ✅ 40+ tests, plus live HTTP verification |
 | CRUD operations | ✅ child create, view, edit, archive; teacher and guardian profiles |
 | File upload | ✅ 34 tests, incl. MIME spoofing and EXIF GPS |
-| Responsive layout on real devices | ⬜ |
+| Responsive layout on real devices | ⬜ audited at 375px and five defects fixed (Day 10), but **nobody has held a phone** — that is what this row means |
 | Chrome, Safari, Edge, Android browser | ⬜ |
 | Production build | ✅ `check --deploy` clean under `config.settings.prod`, `collectstatic` post-processes 640 files through the manifest storage |
 | Backup and restore | ✅ `scripts/backup.sh` verified against the live database; `scripts/restore.sh` itself run end to end against a scratch database, twice, with row counts compared table by table |
-| PDF with Cyrillic and images | ⚠️ renders and parses back correctly, and no longer carries the template's own commentary — but the **printed A4 page has still not been inspected by a human**, which is exactly how that commentary survived eight days |
+| PDF with Cyrillic and images | ✅ all 8 pages of a real portfolio rendered to PNG and read. Ө ө Ү ү correct, margins clean, header and page counter on every page, no English. Two defects found and fixed — see the Day 10 log |
 
-Current: **544 tests passing**, `ruff` clean.
+Current: **569 tests passing**, `ruff` clean.
 
 ## 17. Definition of done — Phase 1
 
@@ -826,11 +827,101 @@ whole role is a menu entry that has to be conditional in two layouts.
 partial, 0 not started; the three partials are deployment (D3), responsive
 layout on real devices, and the REST API (D2, deferred by decision).
 
+### Day 10 — somebody finally looked at the PDF
+
+`poppler-utils` goes into the image, a real portfolio is generated through
+`request_child_portfolio` → `generate_report` — not the Day 1 font spike —
+and all eight pages were rendered with `pdftoppm` and read.
+
+**The good news first.** Cyrillic is correct throughout, including Ө, ө, Ү
+and ү in body text, bold headings and table headers. Nothing overflows the
+A4 margins. The running header and the "Хуудас N / 8" counter appear on
+every page. No English, no template commentary. The §6.4 assessment matrix
+and the §10.1 tables are legible and correctly aligned.
+
+**Defect one: `««Би чадаж байна!»»`.** RFP §5.1 asks a teacher to record
+"хүүхдийн хэлсэн үг". The template presents it as a quotation and supplies
+the guillemets — but the teacher filling in that field has no way to know
+that, and quite reasonably quotes it themselves. The seed data does exactly
+this, so every observation in the printed portfolio carried doubled quotation
+marks. Fixed with an `unquoted` filter in `apps/core/templatetags/`, applied
+at the point of presentation rather than on save: the field holds what the
+teacher typed, and a service that quietly rewrote their punctuation would be
+lying about its own contents. The filter strips one surrounding pair only, so
+quotation *inside* a sentence survives.
+
+**The guard caught its author.** The first version of the comment explaining
+that filter was written as `{# ... #}` across two lines — the identical
+mistake from Day 9, made by the same hand, one day later. The Day 9 PDF
+assertion failed immediately and named `{#` as the leak. That is the whole
+argument for artefact-level tests in one incident: the rule was known, the
+reasoning was written down, and it was broken anyway within twenty-four
+hours.
+
+**Defect two, not fixed: five of eight pages are nearly empty.**
+`section { page-break-before: always }` gives every §10.1 section its own
+page, which is right for a document that gets printed and punched. But a
+section with nothing in it still gets a page, so "Миний тухай",
+"Нас тус бүрийн мэдээлэл" and "Эцэг эхийн ажиглалт" each spend a whole A4
+sheet on one grey line reading "Бөглөгдөөгүй байна." For a child whose
+record is new — which is every child in the first weeks — the portfolio is
+mostly blank paper.
+
+Not fixed today because the right answer is a product decision, not a CSS
+change. Three options: omit empty sections from the PDF entirely; keep the
+heading but let empty sections share a page; or leave it, on the grounds
+that a printed placeholder tells a parent the section exists and is waiting
+to be filled. The third has a real argument behind it and the client should
+be the one to make it. **Open — see D5.**
+
+### Day 10 — the mobile audit at 375px
+
+Not the same thing as testing on a phone, and the checklist row stays ⬜
+because of that. What this was: every screen examined at 375px against the
+rules, and the failures that produce no error fixed.
+
+**The one that mattered.** Form controls were `.95rem` — about 15.2px.
+Mobile Safari zooms the viewport whenever a focused input is under 16px and
+does not zoom back out, so a teacher recording an observation on a phone
+would be left panning a form that no longer fits. Every form in the
+application was affected. Now 16px, stated in pixels precisely so it does
+not get tidied back into a rem figure that happens to land under the
+threshold. `base_auth.html` was already `1rem` and was fine.
+
+**Four more, each invisible on a laptop:**
+
+- `.table-wrap` had `overflow-x: auto` but not `min-width: 0`. A flex or
+  grid item defaults to `min-width: auto` — its content's width — so the
+  wrapper grew to fit the §6.3 grid and the *page* scrolled sideways
+  instead of the table. One property; the whole mechanism depended on it.
+- `dl.facts` uses `grid-template-columns: max-content 1fr`, sized to the
+  longest label. On the child detail page that is "Эрүүл мэндийн тэмдэглэл",
+  which pushed the values off the right edge. Stacks below 560px.
+- The activation code, six digits at `2rem` with `.28em` tracking, is about
+  300px wide and overflowed its card. Now `clamp()`, with a `text-indent`
+  to cancel the trailing letter-space that was pulling it off centre.
+- Nav links were about 37px tall against a 44px minimum (§629–635), on a bar
+  that also scrolls horizontally — the combination most likely to produce a
+  mis-tap. 44px on nav links and buttons at mobile width.
+
+`apps/core/tests/test_responsive.py` guards the parts that can be asserted
+without a browser: the viewport meta tag in all four layouts, that no layout
+disables pinch-zoom, the 16px floor, `min-width: 0`, and that every table
+reaching a browser is wrapped. The report templates are excluded — they go
+to A4 through WeasyPrint and never open in one.
+
+**Still outstanding, and not closed by any of this.** Nobody has opened this
+application on a physical phone, and the checklist rows for real devices and
+for Chrome/Safari/Edge/Android stay ⬜ until somebody does. A narrowed
+laptop window shares almost none of what makes mobile hard: touch accuracy,
+the on-screen keyboard covering the field being typed into, Safari's address
+bar resizing the viewport mid-scroll, or a real network.
+
 ### Running totals
 
 | | Day 1 | Day 2 | Day 4 | Day 5 | Day 6 | Day 7 | Day 8 | Day 9 | Day 10 |
 |---|---|---|---|---|---|---|---|---|---|
-| Tests | 64 | 93 | 156 | 189 | 278 | 346 | 397 | 505 | **544** |
+| Tests | 64 | 93 | 156 | 189 | 278 | 346 | 397 | 505 | **569** |
 | Models | 14 | 14 | 15 | 18 | 27 | 33 | 34 | 34 | **34** |
 | DoD met | — | — | 12/24 | 14/24 | 16/24 | 20/24 | 22/24 | 23/24 | **23/24** |
 
@@ -841,9 +932,20 @@ template guard — two assertions run against every template — and 9 are the
 error pages. A jump in the test count that buys no new behaviour is what
 finding a defect looks like.
 
-Day 10 adds no models either: both screens are views over services that
-already existed. The DoD figure does not move because the only item left is
-deployment, which needs a provider rather than more code.
+Day 10 adds no models either: the two screens are views over services that
+already existed, and the rest of the day was spent looking at output rather
+than producing it. Of its 64 new tests, 25 came from the PDF and mobile work
+and buy no new behaviour at all — they are the cost of two defects that
+every existing test had passed straight over. The DoD figure does not move
+because the only item left is deployment, which needs a provider rather than
+more code.
+
+**A note on the test count.** A full run alongside another full run reports
+errors that are not real: `--reuse-db` means both share one database, and
+the second run tears down tables the first is still using. Two overlapping
+runs produced "556 passed, 13 errors" today; a single clean run of the same
+tree produced 569 passed. If the suite reports errors, check nothing else is
+running before believing them.
 
 ---
 
@@ -898,3 +1000,32 @@ Recorded so they are not forgotten: observation tags and the teacher
 confidence rating shown in the mockups, the separate child display code
 (`CHD-0002`) alongside the registration number, and per-kindergarten storage
 quotas. None block Phase 1.
+
+### D5 — Empty sections in the printed portfolio
+
+**Open. Needs the client, not a developer.** Found on Day 10 by rendering a
+real portfolio and looking at it.
+
+`section { page-break-before: always }` gives each §10.1 section its own
+page, which is correct for a document that is printed, punched and kept — a
+section split across a fold is unreadable. The consequence is that an *empty*
+section also gets a page. In the demo portfolio, five of eight pages carry a
+heading and one grey line: "Бөглөгдөөгүй байна." For a newly enrolled child
+that is most of the document.
+
+**Options:**
+
+1. **Omit empty sections.** Shortest document, no wasted paper. A parent
+   cannot tell whether a section is missing or does not exist.
+2. **Let empty sections share a page.** Keeps every heading visible, drops
+   the blank sheets. Slightly weakens the "one section, one page" rule for
+   the sections that do have content after them.
+3. **Leave it.** A printed placeholder tells a family the section exists and
+   is waiting — which for a kindergarten filling in a portfolio over three
+   years is arguably the point.
+
+Option 3 is a real position, not a non-answer, which is why this is being
+asked rather than decided. Ask the client alongside D3.
+
+Whichever is chosen, it is a change to `templates/reports/child_portfolio.html`
+and possibly `builder.py`; roughly an hour either way.

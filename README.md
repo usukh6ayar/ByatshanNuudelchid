@@ -14,6 +14,7 @@ as a printable PDF covering ages 2 through 5.
 | [`ROADMAP.md`](ROADMAP.md) | Phases, current status, the 10-day Phase 1 plan, open decisions |
 | [`docs/superpowers/specs/2026-08-07-kindergarten-portfolio-design.md`](docs/superpowers/specs/2026-08-07-kindergarten-portfolio-design.md) | Architecture and data model |
 | [`docs/design/INDEX.md`](docs/design/INDEX.md) | The client's UI mockups, screen by screen |
+| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Production procedure — configuration, first run, backups. Provider-neutral |
 | [`CLAUDE.md`](CLAUDE.md) | **Mandatory** coding rules. Read before writing code |
 
 Precedence on conflict: RFP > ROADMAP > spec > CLAUDE.md > existing code.
@@ -89,7 +90,9 @@ A restore procedure nobody has executed is a paragraph, not a procedure. Do
 this before the first deployment and after any change to either script.
 
 On a server, run the backup from cron and copy the archives off the machine —
-a backup on the same disk as the database survives nothing that matters.
+a backup on the same disk as the database survives nothing that matters. The
+cron line and the rest of the server procedure are in
+[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 Uploaded photos live in object storage, not in the dump. Their backup is
 bucket versioning and the provider's lifecycle rules, configured when the
