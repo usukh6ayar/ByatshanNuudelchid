@@ -47,7 +47,7 @@
   </div>
 
   {% if birthdays_today %}
-    <div class="card" style="margin-top:16px">
+    <div class="card">
       <div class="card__head">
         <h2>🎂 Өнөөдрийн төрсөн өдөр</h2>
       </div>
@@ -68,7 +68,7 @@
     </div>
   {% endif %}
 
-  <div class="grid grid--2" style="margin-top:16px">
+  <div class="grid grid--2">
     {% comment %} §12.1 — "тухайн улирлын үнэлгээний явц" {% endcomment %}
     <div class="card">
       <div class="card__head">
@@ -145,7 +145,7 @@
     </div>
   </div>
 
-  <div class="grid grid--2" style="margin-top:16px">
+  <div class="grid grid--2">
     {% comment %} §12.1 — "сүүлийн ажиглалтууд" {% endcomment %}
     <div class="card">
       <div class="card__head">
@@ -214,7 +214,7 @@
   </div>
 
   {% comment %} §12.1 — "шинэ мэдэгдэл" {% endcomment %}
-  <div class="card" style="margin-top:16px">
+  <div class="card">
     <div class="card__head">
       <h2>Сүүлийн мэдэгдэл</h2>
       <a href="{% url 'comms:list' %}">Бүгдийг харах</a>

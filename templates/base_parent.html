@@ -20,6 +20,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Эцэг эхийн хэсэг{% endblock %} · Хүүхдийн хөгжлийн хавтас</title>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% include "_theme_head.html" %}
 </head>
 <body>
 {% include "_icons.html" %}
@@ -59,6 +60,8 @@
         Гарах
       </a>
     </nav>
+
+    {% include "_theme.html" %}
   </aside>
 
   <main class="main">

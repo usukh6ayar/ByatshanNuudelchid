@@ -6,82 +6,106 @@
 {% block heading %}{{ child.full_name }}{% endblock %}
 
 {% block content %}
-  <div class="grid grid--2">
-    <div class="card">
-      <div style="display:flex; gap:16px; align-items:flex-start">
-        {% comment %} RFP §3.4. Served through the permission check, never linked
-           directly (spec section 7.1). The initial stands in when there is
-           no photo — an empty box reads as a broken page. {% endcomment %}
-        {% if child.photo %}
-          <img class="avatar avatar--lg"
-               src="{% url 'media:serve' child.photo.public_id 'full' %}"
-               alt="{{ child.full_name }}-ийн зураг">
-        {% else %}
-          <span class="avatar avatar--lg" aria-hidden="true">
-            {{ child.first_name|slice:":1" }}
+  {% comment %} The hero card, full width, as teacher-child-profile-360.jpeg
+     draws it: photograph on the left, the registration facts spread across
+     the whole width rather than squeezed into a half-width column. {% endcomment %}
+  <div class="card">
+    <div class="hero">
+      {% comment %} RFP §3.4. Served through the permission check, never linked
+         directly (spec section 7.1). The initial stands in when there is
+         no photo — an empty box reads as a broken page. {% endcomment %}
+      {% if child.photo %}
+        <img class="hero__photo"
+             src="{% url 'media:serve' child.photo.public_id 'full' %}"
+             alt="{{ child.full_name }}-ийн зураг">
+      {% else %}
+        <span class="avatar hero__photo" aria-hidden="true">
+          {{ child.first_name|slice:":1" }}
+        </span>
+      {% endif %}
+
+      <div class="hero__body">
+        <h2 class="hero__name">
+          {{ child.full_name }}
+          <span class="badge {% if child.status == 'active' %}badge--ok{% else %}badge--muted{% endif %}">
+            {{ child.get_status_display }}
           </span>
-        {% endif %}
-        <div>
-          <h2 style="margin-bottom:6px">{{ child.full_name }}</h2>
-          <p style="margin:0 0 12px">
-            <span class="badge {% if child.status == 'active' %}badge--ok{% else %}badge--muted{% endif %}">
-              {{ child.get_status_display }}
-            </span>
-          </p>
-          <dl class="facts">
-            <dt>Код</dt><dd>{{ child.national_id }}</dd>
-            <dt>Хүйс</dt><dd>{{ child.get_sex_display }}</dd>
-            <dt>Төрсөн огноо</dt><dd>{{ child.date_of_birth|date:"Y.m.d" }}</dd>
-            <dt>Цэцэрлэг</dt><dd>{{ child.kindergarten.name }}</dd>
+        </h2>
+
+        <dl class="facts--cols">
+          <div><dt>Код</dt><dd>{{ child.national_id }}</dd></div>
+          <div><dt>Хүйс</dt><dd>{{ child.get_sex_display }}</dd></div>
+          <div>
+            <dt>Төрсөн огноо</dt>
+            <dd>{{ child.date_of_birth|date:"Y.m.d" }} ({{ child.age }} нас)</dd>
+          </div>
+          <div><dt>Цэцэрлэг</dt><dd>{{ child.kindergarten.name }}</dd></div>
+          <div>
             <dt>Бүлэг</dt>
             <dd>
               {% if enrollment %}
                 {{ enrollment.group.name }} · {{ enrollment.school_year.name }}
               {% else %}—{% endif %}
             </dd>
-            <dt>Элссэн</dt><dd>{{ child.enrolled_on|date:"Y.m.d"|default:"—" }}</dd>
-          </dl>
-        </div>
-      </div>
-
-      {% if child.health_notes %}
-        <p class="msg msg--error" style="margin-top:16px" role="note">
-          <strong>Анхаарах:</strong> {{ child.health_notes }}
-        </p>
-      {% endif %}
-    </div>
-
-    <div class="card">
-      <h2>Эцэг эх, асран хамгаалагч</h2>
-      {% if guardianships %}
-        <dl class="facts">
-          {% for link in guardianships %}
-            <dt>{{ link.get_relation_display }}</dt>
-            <dd>
-              {{ link.guardian_user }}
-              {% if link.is_primary %}<span class="badge badge--ok">Үндсэн</span>{% endif %}
-              <br>
-              <span class="brand__sub">
-                {{ link.guardian_user.phone|default:"" }}
-                {{ link.guardian_user.email|default:"" }}
-              </span>
-            </dd>
-          {% endfor %}
+          </div>
+          <div>
+            <dt>Элссэн огноо</dt>
+            <dd>{{ child.enrolled_on|date:"Y.m.d"|default:"—" }}</dd>
+          </div>
         </dl>
-      {% else %}
-        <p class="empty" style="padding:18px 0">Асран хамгаалагч холбогдоогүй байна.</p>
-      {% endif %}
-
-      <div class="btn-row">
-        <a class="btn" href="{% url 'children:guardian_add' child.pk %}">
-          Асран хамгаалагч нэмэх
-        </a>
       </div>
     </div>
+
+    {% if child.health_notes %}
+      <p class="msg msg--error" style="margin:16px 0 0" role="note">
+        <strong>Анхаарах:</strong> {{ child.health_notes }}
+      </p>
+    {% endif %}
   </div>
 
   <div class="card">
-    <h2>Бүртгэлийн түүх</h2>
+    <div class="card__head">
+      <h2>Эцэг эх, асран хамгаалагч</h2>
+      <a href="{% url 'children:guardian_add' child.pk %}">Нэмэх</a>
+    </div>
+
+    {% if guardianships %}
+      {% comment %} One row per guardian with their contact details, the way
+         the mockup lists them — a name with no telephone number beside it is
+         not much use to a teacher who needs to ring them. {% endcomment %}
+      <div class="feed">
+        {% for link in guardianships %}
+          <div class="feed__item">
+            <span class="avatar avatar--sm" aria-hidden="true">
+              {{ link.guardian_user.first_name|first|default:"·" }}
+            </span>
+            <div class="feed__body">
+              <div class="feed__title">
+                {{ link.guardian_user }}
+                <span class="badge badge--muted">{{ link.get_relation_display }}</span>
+                {% if link.is_primary %}<span class="badge badge--ok">Үндсэн</span>{% endif %}
+              </div>
+              <div class="feed__meta">
+                {{ link.guardian_user.phone|default:"" }}
+                {% if link.guardian_user.phone and link.guardian_user.email %} · {% endif %}
+                {{ link.guardian_user.email|default:"" }}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty" style="padding:18px 0">
+        <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
+        Асран хамгаалагч холбогдоогүй байна.
+      </p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card__head">
+      <h2>Бүртгэлийн түүх</h2>
+    </div>
     <div class="table-wrap">
       <table>
         <thead>

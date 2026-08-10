@@ -1,0 +1,19 @@
+{% comment %} Applies the remembered theme before the page paints.
+
+   This has to be inline in `<head>` and not deferred: anything that runs
+   after first paint shows the light page for a frame and then repaints it
+   dark, which is the flash every themed site is judged on. It is four lines
+   and no request, so it costs nothing against RFP §17.
+
+   Wrapped in try/catch because localStorage throws in Safari's private
+   mode rather than returning null — an exception here would stop the rest
+   of the document's scripts. {% endcomment %}
+<script>
+  (function () {
+    try {
+      if (localStorage.getItem("theme") === "dark") {
+        document.documentElement.dataset.theme = "dark";
+      }
+    } catch (e) { /* storage unavailable — stay light, which is the default */ }
+  })();
+</script>

@@ -1,0 +1,30 @@
+{% comment %} The light/dark switch the mockups draw at the foot of the
+   sidebar ("Гэрэлтэй горим").
+
+   Light is the default and is not tied to the operating system — see the
+   note in app.css. The choice is remembered per browser in localStorage;
+   it is a display preference, not something the server needs to know, and
+   storing it on the user would cost a write and a migration for something
+   that does not follow anyone between devices anyway.
+
+   The `<label>` wraps a real checkbox, so the switch is reachable by
+   keyboard and announces its own state (RFP §629-635). With JavaScript off
+   the page simply stays light, which is the design. {% endcomment %}
+<label class="theme">
+  <svg class="ic" aria-hidden="true"><use href="#i-sun"></use></svg>
+  <span>Харанхуй горим</span>
+  <input type="checkbox" id="theme-switch">
+  <span class="theme__track" aria-hidden="true"></span>
+</label>
+
+<script>
+  (function () {
+    var box = document.getElementById("theme-switch");
+    box.checked = document.documentElement.dataset.theme === "dark";
+    box.addEventListener("change", function () {
+      var mode = box.checked ? "dark" : "light";
+      document.documentElement.dataset.theme = mode;
+      try { localStorage.setItem("theme", mode); } catch (e) { /* private mode */ }
+    });
+  })();
+</script>
