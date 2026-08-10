@@ -1,4 +1,4 @@
-{% comment %} The child's portfolio as a printable document — RFP §10.1, §10.3.
+{% load quoting %}{% comment %} The child's portfolio as a printable document — RFP §10.1, §10.3.
 
    Every §10.3 requirement is met by something in this file:
    · Cyrillic          — DejaVu Sans, installed in the image, named in CSS
@@ -258,7 +258,10 @@
         {% if observation.situation %}<p>{{ observation.situation }}</p>{% endif %}
         {% if observation.child_did %}<p>{{ observation.child_did }}</p>{% endif %}
         {% if observation.child_said %}
-          <p>«{{ observation.child_said }}»</p>
+          {% comment %} The guillemets are the template's. `unquoted` removes
+             any the teacher typed, so a quoted entry does not print as
+             ««…»». {% endcomment %}
+          <p>«{{ observation.child_said|unquoted }}»</p>
         {% endif %}
         {% if observation.teacher_comment %}
           <p>{{ observation.teacher_comment }}</p>
@@ -286,7 +289,10 @@
         {% if observation.situation %}<p>{{ observation.situation }}</p>{% endif %}
         {% if observation.child_did %}<p>{{ observation.child_did }}</p>{% endif %}
         {% if observation.child_said %}
-          <p>«{{ observation.child_said }}»</p>
+          {% comment %} The guillemets are the template's. `unquoted` removes
+             any the teacher typed, so a quoted entry does not print as
+             ««…»». {% endcomment %}
+          <p>«{{ observation.child_said|unquoted }}»</p>
         {% endif %}
       </div>
     {% empty %}

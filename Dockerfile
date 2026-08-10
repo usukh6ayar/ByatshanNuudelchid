@@ -17,7 +17,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         shared-mime-info \
         libmagic1 \
         fonts-dejavu-core \
+        poppler-utils \
     && rm -rf /var/lib/apt/lists/*
+
+# poppler-utils is for reading the output back, not for producing it.
+# `pdftoppm` renders a generated portfolio to images so the printed page can
+# be looked at (RFP §10.3). Parsing a PDF proves the text is there; only
+# looking at it catches what else is — a header comment that was never a
+# comment printed on page one of every portfolio for eight days before
+# anyone rendered one.
 
 # Cyrillic fonts — RFP §10.3, §627.
 # Installed into the image rather than relying on host or system fonts.

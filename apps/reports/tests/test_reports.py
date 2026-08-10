@@ -196,6 +196,14 @@ def test_the_pdf_renders_with_cyrillic_and_page_numbers(world, filled):
     for leak in ("RFP", "{#", "CLAUDE.md", "builder.py"):
         assert leak not in text, f"internal commentary reached the PDF: {leak!r}"
 
+    # The template supplies the guillemets around "хүүхдийн хэлсэн үг"
+    # (§5.1); the fixture, like the seed data and like real teachers, typed
+    # its own. Both together printed ««Чи эхлээд тавь.»» on page six until
+    # someone rendered the page and looked at it.
+    assert "««" not in text
+    assert "»»" not in text
+    assert "«Чи эхлээд тавь.»" in text
+
 
 def test_the_result_is_stored_as_a_protected_file(world, filled):
     job = services.request_child_portfolio(actor=world["dulmaa"],
