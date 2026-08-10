@@ -1,0 +1,62 @@
+{% comment %} Shell for the error pages. RFP §13, §624-635.
+
+   Deliberately self-contained: no static tag, no context processors, no
+   database. A 500 is rendered by Django's own handler with an empty context,
+   and the reason it fired may well be the database or the static manifest —
+   an error page that needs either of those is an error page that fails when
+   it is needed. Inline styles only.
+
+   Deliberately anonymous, too: these pages are shown to teachers, parents
+   and logged-out visitors alike, so they carry no navigation. A 404 raised
+   by can_access_child() (CLAUDE.md §1.1) must look exactly like a mistyped
+   URL — same wording, same page, nothing that hints a record exists. {% endcomment %}
+<!doctype html>
+<html lang="mn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Алдаа{% endblock %} · Хүүхдийн хөгжлийн хавтас</title>
+  <style>
+    :root { --ink:#1a1a1a; --muted:#6b6b6b; --green:#4a7c59; --bg:#faf8f5;
+            --line:#e0ddd8; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; display:grid; place-items:center;
+           padding:24px; background:var(--bg); color:var(--ink);
+           font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+           line-height:1.5; }
+    main { width:100%; max-width:440px; background:#fff; padding:36px 28px;
+           border-radius:14px; border:1px solid var(--line); text-align:center; }
+    .mark { font-size:2.6rem; line-height:1; margin-bottom:14px; }
+    .code { font-size:.8rem; font-weight:600; letter-spacing:.08em;
+            color:var(--muted); margin:0 0 6px; }
+    h1 { font-size:1.35rem; margin:0 0 10px; }
+    p { color:var(--muted); font-size:.95rem; margin:0 0 8px; }
+    .actions { margin-top:26px; display:flex; gap:10px; justify-content:center;
+               flex-wrap:wrap; }
+    a.btn { display:inline-block; padding:12px 20px; font-size:.95rem;
+            font-weight:600; text-decoration:none; border-radius:9px;
+            color:#fff; background:var(--green); }
+    a.btn:hover { background:#3d6849; }
+    a.btn--ghost { color:var(--green); background:#fff;
+                   border:1px solid var(--line); }
+    a.btn--ghost:hover { background:var(--bg); }
+    @media (prefers-color-scheme: dark) {
+      :root { --ink:#ececec; --muted:#a0a0a0; --bg:#1a1a1a; --line:#3a3a3a; }
+      main, a.btn--ghost { background:#242424; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="mark" aria-hidden="true">{% block mark %}🧸{% endblock %}</div>
+    <p class="code">{% block code %}{% endblock %}</p>
+    <h1>{% block heading %}{% endblock %}</h1>
+    {% block body %}{% endblock %}
+    <div class="actions">
+      {% block actions %}
+        <a class="btn" href="{% url 'home' %}">Нүүр хуудас руу буцах</a>
+      {% endblock %}
+    </div>
+  </main>
+</body>
+</html>

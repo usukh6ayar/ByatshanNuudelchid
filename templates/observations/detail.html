@@ -1,6 +1,6 @@
 {% extends base_template %}
-{# RFP §5.1, §5.4. The review panel appears only for what a parent submitted
-   and only to staff — a teacher's own observation has nobody to approve it. #}
+{% comment %} RFP §5.1, §5.4. The review panel appears only for what a parent submitted
+   and only to staff — a teacher's own observation has nobody to approve it. {% endcomment %}
 
 {% block title %}Ажиглалт{% endblock %}
 {% block heading %}{{ observation.summary }}{% endblock %}
@@ -63,8 +63,8 @@
     </dl>
   </div>
 
-  {# RFP §5.1 — "нотлох зураг". Each image goes through the permission
-     check at /media/<uuid>/full/, never a direct link. #}
+  {% comment %} RFP §5.1 — "нотлох зураг". Each image goes through the permission
+     check at /media/<uuid>/full/, never a direct link. {% endcomment %}
   {% if observation.media_links.all or can_record %}
     <div class="card">
       <h2>Зураг</h2>
@@ -98,8 +98,8 @@
   {% endif %}
 
   {% if can_record and observation.source == 'parent' %}
-    {# §5.4 — "шаардлагатай бол засвар санал болгох",
-       "нэгдсэн тайланд оруулах эсэхийг шийдэх" #}
+    {% comment %} §5.4 — "шаардлагатай бол засвар санал болгох",
+       "нэгдсэн тайланд оруулах эсэхийг шийдэх" {% endcomment %}
     <div class="card">
       <h2>Хяналт</h2>
       {% if observation.review_note %}

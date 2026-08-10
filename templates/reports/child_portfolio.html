@@ -1,4 +1,4 @@
-{# The child's portfolio as a printable document — RFP §10.1, §10.3.
+{% comment %} The child's portfolio as a printable document — RFP §10.1, §10.3.
 
    Every §10.3 requirement is met by something in this file:
    · Cyrillic          — DejaVu Sans, installed in the image, named in CSS
@@ -11,7 +11,7 @@
 
    The sections come from §10.1 and appear only when asked for. The template
    never decides what a reader may see: builder.py scoped every queryset to
-   the person who requested the report. #}
+   the person who requested the report. {% endcomment %}
 <style>
   @page {
     size: A4;

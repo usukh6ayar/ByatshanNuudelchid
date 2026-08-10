@@ -1,6 +1,6 @@
 {% extends base_template %}
-{# RFP §5.1 — the full entry form, field for field. The evidence photo and
-   the attachment (§5.1's last two rows) arrive with upload on Day 7. #}
+{% comment %} RFP §5.1 — the full entry form, field for field. The evidence photo and
+   the attachment (§5.1's last two rows) arrive with upload on Day 7. {% endcomment %}
 
 {% block title %}{% if observation %}Ажиглалт засах{% else %}Шинэ ажиглалт{% endif %}{% endblock %}
 {% block heading %}
@@ -53,8 +53,8 @@
       <label for="id_next_steps">Дараагийн дэмжлэг, төлөвлөгөө</label>
       <textarea name="next_steps" id="id_next_steps">{{ form.next_steps|default:'' }}</textarea>
 
-      {# §5.1 — a single observation may belong to several domains, each with
-         its own optional level. #}
+      {% comment %} §5.1 — a single observation may belong to several domains, each with
+         its own optional level. {% endcomment %}
       <h2 style="margin-top:26px">Хөгжлийн чиглэл</h2>
       <p class="brand__sub" style="margin-top:-8px">
         Нэг ажиглалт хэд хэдэн чиглэлд хамаарч болно. Үнэлгээ заавал биш.

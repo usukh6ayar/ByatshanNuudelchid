@@ -1,6 +1,6 @@
 {% extends base_template %}
-{# RFP §4.3. The note field a user may not write is never rendered — the
-   service rejects it as well, so a crafted request gains nothing. #}
+{% comment %} RFP §4.3. The note field a user may not write is never rendered — the
+   service rejects it as well, so a crafted request gains nothing. {% endcomment %}
 
 {% block title %}{{ age }} насны мэдээлэл{% endblock %}
 {% block heading %}{{ age }} насны мэдээлэл — {{ child.full_name }}{% endblock %}

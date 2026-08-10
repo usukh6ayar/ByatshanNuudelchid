@@ -1,7 +1,7 @@
 {% extends base_template %}
-{# RFP §6.4 — the domains down the side, the four terms across the top. The
+{% comment %} RFP §6.4 — the domains down the side, the four terms across the top. The
    guardian sees the same table with only the published terms in it; the
-   filtering happened in the selector, not here. #}
+   filtering happened in the selector, not here. {% endcomment %}
 
 {% block title %}Хөгжлийн үнэлгээ{% endblock %}
 {% block heading %}Хөгжлийн үнэлгээ — {{ child.full_name }}{% endblock %}
@@ -60,8 +60,8 @@
     </div>
 
     {% if can_record %}
-      {# One domain at a time from the child screen; the whole group at once
-         is the §6.3 grid. #}
+      {% comment %} One domain at a time from the child screen; the whole group at once
+         is the §6.3 grid. {% endcomment %}
       <div class="card" style="max-width:820px">
         <h2>Үнэлгээ бүртгэх</h2>
 

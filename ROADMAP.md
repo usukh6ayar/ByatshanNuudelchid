@@ -156,15 +156,19 @@ end to end.
 | 12 | Search & filtering — name, group, school year, active/archived | ✅ done | §11's full list, incl. school year, date interval, domain and level — `test_observations.py`, `test_views_authorization.py` |
 | 13 | Basic PDF export — child info, photo, portfolio, observations, assessments | ✅ done | `apps/reports/`, `test_reports.py`; §549 queue, §10.3 A4 + Cyrillic verified by parsing the output |
 | 14 | Backend — REST API, PostgreSQL, migrations, auth, ownership, upload, logging, env | ⚠️ partial | Everything except the REST API. **See decision D2** |
-| 15 | Deployment — production, HTTPS, prod database, backup, health check | ❌ not started | `/healthz` and `prod.py` exist; never deployed |
+| 15 | Deployment — production, HTTPS, prod database, backup, health check | ⚠️ partial | `/healthz`, `prod.py` passing `check --deploy`, a static build, and backup/restore scripts exercised against a real database — everything except a server. **Blocked on D3** |
 | 16 | Basic security — hashing, RBAC, ownership, no cross-child access, secure files, HTTPS, validation, injection/XSS, cookies | ✅ done | 40+ authorization tests; HTTPS and file access land with 15 and 4 |
 | 17 | Responsive web — desktop, tablet, mobile browser | ⚠️ partial | Mobile-first CSS written; not tested on real devices |
 
-**13 done · 2 partial · 2 not started.**
+**12 done · 5 partial · 0 not started.**
 
-> The Day 5 version of this line read "8 done · 4 partial · 5 not started",
-> which did not match the table above it — the columns were never actually
-> counted. The numbers here are.
+> This line has now been wrong twice. Day 5 read "8 done · 4 partial ·
+> 5 not started"; Day 8 corrected it to "13 done · 2 partial · 2 not started"
+> and claimed the columns had been counted, which they had not — the table
+> said 12 · 4 · 1 at the time. Day 9's figures come from counting the status
+> column with `grep -o … | sort | uniq -c`, and that is how they should be
+> checked from here on. A summary line nobody derives from the table is
+> decoration.
 
 ### Delivered ahead of schedule
 
@@ -220,12 +224,16 @@ QPay/SocialPay.
 | 4 | Parent, parent↔child, child profile | ✅ done |
 | 5 | Digital portfolio — About Me, ages 2–5 | ✅ done |
 | 6 | Teacher observations, development assessment | ✅ done |
-| 7 | Parent observation, notifications, media upload | ⬜ **next** |
-| 8 | Dashboards, search, filters, basic PDF | ⬜ |
-| 9 | Security, responsive fixes, deployment, backup, error handling | ⬜ |
-| 10 | Integration, bug fixes, production build, documentation, handover | ⬜ |
+| 7 | Parent observation, notifications, media upload | ✅ done |
+| 8 | Dashboards, search, filters, basic PDF | ✅ done |
+| 9 | Security, responsive fixes, deployment, backup, error handling | ✅ mostly (deployment blocked on D3, responsive untested on devices) |
+| 10 | Integration, bug fixes, production build, documentation, handover | ⬜ **next** — child edit view, deployment, device testing |
 
-**Position: end of Day 8.** Days 1–8 also produced work not on the original
+> The Day 8 version of this table still showed Day 7 as "next" and Day 8 as
+> not started, both contradicted by the progress log immediately below it.
+> The log is written at the end of each day; this table was not.
+
+**Position: end of Day 9.** Days 1–9 also produced work not on the original
 plan — the invitation system, the audit log, the administrator workspace and
 the Cyrillic PDF spike — which is why the remaining days are tight rather than
 comfortable. Full record in section 21.
@@ -319,13 +327,19 @@ Production    web, worker, beat, postgres, redis + external object storage
 ```
 
 All configuration from environment variables, `/healthz` checks database and
-cache, daily `pg_dump` with a documented restore procedure, and no production
+cache, `scripts/backup.sh` and `scripts/restore.sh` for the dump and the
+documented way back (run from cron on the server, and copied off the machine —
+a backup on the database's own disk survives nothing that matters), and no production
 data or real child photos in development (RFP §707 — `seed_demo` refuses to
 run with `DEBUG` off).
 
-> ⚠️ **Blocking unknown.** Hosting and object storage are still undecided.
-> `.env.example` ships MinIO defaults as a placeholder. Deployment is a Phase 1
-> Definition-of-Done item, so this needs a decision before Day 9.
+> ⚠️ **Blocking unknown.** Hosting and object storage are still undecided —
+> deferred again on Day 9 at the client's request. `.env.example` ships MinIO
+> defaults as a placeholder. Everything deployment needs on this side is now
+> ready: the production settings pass Django's own checklist, the static build
+> runs, and backup and restore are scripted and exercised. What is left is a
+> provider. Deployment therefore moves to Day 10 and stays the one Phase 1
+> Definition-of-Done item nobody here can close alone.
 
 ## 16. Testing checklist
 
@@ -340,11 +354,11 @@ Formal QA is the client's. Before handover we still verify:
 | File upload | ✅ 34 tests, incl. MIME spoofing and EXIF GPS |
 | Responsive layout on real devices | ⬜ |
 | Chrome, Safari, Edge, Android browser | ⬜ |
-| Production build | ⬜ |
-| Backup and restore | ⬜ |
-| PDF with Cyrillic and images | ⚠️ a real child portfolio renders and parses back correctly; **printed A4 page not yet inspected by a human** |
+| Production build | ✅ `check --deploy` clean under `config.settings.prod`, `collectstatic` post-processes 640 files through the manifest storage |
+| Backup and restore | ✅ `scripts/backup.sh` verified against the live database, archive restored into a scratch database and row counts compared table by table |
+| PDF with Cyrillic and images | ⚠️ renders and parses back correctly, and no longer carries the template's own commentary — but the **printed A4 page has still not been inspected by a human**, which is exactly how that commentary survived eight days |
 
-Current: **397 tests passing.**
+Current: **505 tests passing**, `ruff` clean.
 
 ## 17. Definition of done — Phase 1
 
@@ -370,12 +384,20 @@ Current: **397 tests passing.**
 | Basic dashboard works | ✅ |
 | Basic PDF export works | ✅ |
 | PostgreSQL works | ✅ |
-| Production build works | ❌ |
+| Production build works | ✅ |
 | Application is deployed | ❌ |
 | Critical authorization / security issues fixed | ✅ |
 | No known blocking runtime errors | ✅ |
 
-**22 of 24 met.**
+**23 of 24 met.**
+
+"Production build works" means what was actually run on Day 9: the project
+starts under `config.settings.prod`, `manage.py check --deploy` reports
+nothing but the placeholder `SECRET_KEY` from the development `.env`, and
+`collectstatic` post-processes all 640 files through WhiteNoise's manifest
+storage — the step that fails loudly when a stylesheet references a file that
+is not there. It does not mean the application has served traffic in
+production; that is the row below it, and it stays ❌ until D3 is answered.
 
 ## 18. Out of scope for Phase 1
 
@@ -660,15 +682,98 @@ Desktop died mid-session and its cache directory was left corrupted. The
 test suite ran in full afterwards and passed; the lint gate is outstanding
 and is the first thing to run on Day 9.
 
+### Day 9 — 2026-08-10 · the lint gate, error pages, backup, and a leak
+
+Planned as security, responsive fixes, deployment, backup and error handling.
+Deployment was deferred with the client (D3); the rest landed, and one thing
+nobody had planned for turned up on the way.
+
+**Days 6–8 were never committed.** Three days of work — six new apps, about
+nineteen models and two hundred tests — existed only in the working tree.
+`ruff --fix` rewrites files in place, so the day started by committing that
+tree as `4e8e14c` before anything touched it.
+
+**`ruff` finally ran, and had nothing to say.** The Day 8 debt closes with
+`All checks passed!`. Worth recording that the lint gate found nothing while
+the defect below sat in twenty-six templates: lint checks Python, and this
+was in the HTML.
+
+**Django's `{# ... #}` does not span lines.** The lexer matches comments with
+`{#.*?#}` and no DOTALL flag, so a comment written across several lines is
+not a comment at all. The text becomes literal output, and any `{% ... %}`
+inside it is parsed as a real tag. Both consequences were present:
+
+- Thirty-seven comments across thirty-one templates were rendering as
+  visible text. `base_teacher.html` emitted its own English design notes
+  immediately after `<!doctype html>` — on every page a teacher opened.
+- `reports/child_portfolio.html` has no `{% extends %}`, so its fourteen-line
+  header comment went into **the PDF**. Every child portfolio generated
+  since Day 8 carried "RFP §10.1, §10.3 · Cyrillic — DejaVu Sans, installed
+  in the image…" printed on page one. That is the document that goes to a
+  family.
+
+The Day 8 entry recorded that the PDF was verified by parsing it back rather
+than by looking at it, and named the printed page as unchecked. This is what
+that gap cost. The page-count and Cyrillic assertions passed the whole time,
+because they asked whether certain text was present, never whether other
+text was absent.
+
+Two guards, at different levels. `apps/core/tests/test_templates.py` lexes
+every template and fails on a `{#` that survives into a text token — the
+source-level rule, which also catches the next one written. The PDF test now
+asserts that "RFP", "CLAUDE.md" and `{#` do **not** appear in the extracted
+text — the artefact-level rule, on the one output that leaves the building.
+The second was confirmed by restoring the old template and watching it fail
+before the fix went back in.
+
+**Error pages.** 400, 403, 404, 500 and the CSRF failure page, in Mongolian,
+self-contained: no static tag, no context processors, no database. A 500 is
+rendered by Django's own handler with an empty context, and the reason it
+fired may well be the database — a page that needs one is a page that fails
+when it is needed. They carry no navigation either, which is the §21.4 rule
+seen from the other side: a 404 from `can_access_child()` has to look like a
+mistyped address, and a sidebar naming the review queue would describe the
+system to someone who should learn nothing from it.
+
+Nothing routes to these templates and nothing imports them — Django finds
+them by filename — so the tests go through the request cycle. They only work
+because `DEBUG` is False under test, which is also why writing them broke
+thirty-nine authorization tests before the comment bug was understood.
+
+**Backup and restore.** `scripts/backup.sh` dumps through the `db` container,
+so the host needs no PostgreSQL client and the dump always comes from the
+version that wrote the data, then reads the archive back with
+`pg_restore --list`: a dump nobody has parsed is a file, not a backup. It
+refused nothing on the first run — 352 KB, 53 tables. The restore was
+exercised into a scratch database rather than over the development one, and
+every table's row count compared. `restore.sh` refuses unless the database
+name from `.env` is repeated on the command line, because the confirmation
+that cannot be given by accident is the only kind worth having.
+
+**Production build.** `check --deploy` under `config.settings.prod` reports
+one warning, the placeholder `SECRET_KEY` from the development `.env`.
+`collectstatic` post-processes 640 files through the manifest storage.
+
+**Known limitations, unchanged.** Responsive layout is still untested on real
+devices; a browser window resized on a laptop is not a phone, and that row
+does not move until someone holds one. The printed A4 page still has not been
+looked at by a human — more pressing now, not less, since the template that
+produces it changed today.
+
 ### Running totals
 
-| | Day 1 | Day 2 | Day 4 | Day 5 | Day 6 | Day 7 | Day 8 |
-|---|---|---|---|---|---|---|---|
-| Tests | 64 | 93 | 156 | 189 | 278 | 346 | **397** |
-| Models | 14 | 14 | 15 | 18 | 27 | 33 | **34** |
-| DoD met | — | — | 12/24 | 14/24 | 16/24 | 20/24 | **22/24** |
+| | Day 1 | Day 2 | Day 4 | Day 5 | Day 6 | Day 7 | Day 8 | Day 9 |
+|---|---|---|---|---|---|---|---|---|
+| Tests | 64 | 93 | 156 | 189 | 278 | 346 | 397 | **505** |
+| Models | 14 | 14 | 15 | 18 | 27 | 33 | 34 | **34** |
+| DoD met | — | — | 12/24 | 14/24 | 16/24 | 20/24 | 22/24 | **23/24** |
 
 Models excludes the three `django-simple-history` mirrors.
+
+Day 9 adds no models and no features. Of its 108 new tests, 99 are the
+template guard — two assertions run against every template — and 9 are the
+error pages. A jump in the test count that buys no new behaviour is what
+finding a defect looks like.
 
 ---
 
@@ -709,7 +814,13 @@ less DevOps, ~$30–60/month) · either one paired with Cloudflare R2 for files.
 **Status: no longer blocks upload.** The media layer runs against any
 S3-compatible bucket through Django's storage abstraction, with MinIO
 standing in locally, so the choice of provider is a deployment-time setting
-rather than a code decision. **Still blocks Day 9 deployment.**
+rather than a code decision.
+
+**Deferred again on Day 9 at the client's request**, so deployment moves to
+Day 10. Nothing on this side is waiting on it any more: production settings
+pass Django's checklist, the static build runs, and backup and restore are
+scripted and exercised. What remains is a provider and an afternoon. It is
+the only Phase 1 Definition-of-Done item that cannot be closed from here.
 
 ### D4 — Deferred until their own phase
 

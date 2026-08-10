@@ -1,6 +1,6 @@
 {% extends base_template %}
-{# RFP §8.1, field for field. Leaving both target lists empty addresses the
-   whole kindergarten, which is the common case and needs no extra control. #}
+{% comment %} RFP §8.1, field for field. Leaving both target lists empty addresses the
+   whole kindergarten, which is the common case and needs no extra control. {% endcomment %}
 
 {% block title %}{% if announcement %}Мэдэгдэл засах{% else %}Шинэ мэдэгдэл{% endif %}{% endblock %}
 {% block heading %}

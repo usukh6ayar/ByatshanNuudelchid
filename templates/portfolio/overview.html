@@ -5,8 +5,8 @@
 {% block heading %}{{ child.full_name }} — хувийн хавтас{% endblock %}
 
 {% block content %}
-  {# RFP §3.4, §4.4. The photo is served through the permission check at
-     /media/<uuid>/full/ — there is no direct link to a child's image. #}
+  {% comment %} RFP §3.4, §4.4. The photo is served through the permission check at
+     /media/<uuid>/full/ — there is no direct link to a child's image. {% endcomment %}
   <div class="card">
     <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap">
       {% if child.photo %}

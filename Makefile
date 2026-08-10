@@ -1,4 +1,4 @@
-.PHONY: up down build sh test lint fix migrate migrations superuser storage seed pdf-spike logs
+.PHONY: up down build sh test lint fix migrate migrations superuser storage seed pdf-spike logs backup restore check-deploy
 
 up:            ## Start the stack
 	docker compose up
@@ -44,3 +44,13 @@ pdf-spike:     ## Render the Cyrillic sample PDF (spec section 13.1)
 
 logs:
 	docker compose logs -f web worker
+
+backup:        ## Dump the database and verify the dump parses (RFP §16)
+	./scripts/backup.sh
+
+restore:       ## Restore a dump — DESTRUCTIVE. make restore FILE=backups/x.dump DB=kinder
+	./scripts/restore.sh $(FILE) $(DB)
+
+check-deploy:  ## Django's production checklist against config.settings.prod
+	docker compose run --rm -e DJANGO_SETTINGS_MODULE=config.settings.prod \
+		web python manage.py check --deploy

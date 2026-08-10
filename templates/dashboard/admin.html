@@ -1,10 +1,10 @@
 {% extends "base_teacher.html" %}
-{# RFP §12.2. Uses the staff layout: an administrator is staff, and a third
+{% comment %} RFP §12.2. Uses the staff layout: an administrator is staff, and a third
    chrome for one screen would be a third thing to keep in step.
 
    The figures come from the cache a Celery beat task fills (CLAUDE.md §6),
    so the timestamp is shown — a number without an "as of" invites someone
-   to treat a fifteen-minute-old count as live. #}
+   to treat a fifteen-minute-old count as live. {% endcomment %}
 
 {% block title %}Удирдлагын самбар{% endblock %}
 {% block heading %}Удирдлагын самбар{% endblock %}

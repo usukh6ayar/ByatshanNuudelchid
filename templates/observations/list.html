@@ -1,6 +1,6 @@
 {% extends base_template %}
-{# RFP §5.1, §5.2. Both roles read this list; the permission layer already
-   decided which rows are in it, so the template does no filtering. #}
+{% comment %} RFP §5.1, §5.2. Both roles read this list; the permission layer already
+   decided which rows are in it, so the template does no filtering. {% endcomment %}
 
 {% block title %}Ажиглалт{% endblock %}
 {% block heading %}Ажиглалт — {{ child.full_name }}{% endblock %}
@@ -31,8 +31,8 @@
         </select>
       </div>
 
-      {# RFP §11 — "хөгжлийн чиглэлээр", "үнэлгээний түвшнээр",
-         "огнооны интервалаар" #}
+      {% comment %} RFP §11 — "хөгжлийн чиглэлээр", "үнэлгээний түвшнээр",
+         "огнооны интервалаар" {% endcomment %}
       <div>
         <label for="id_domain">Хөгжлийн чиглэл</label>
         <select name="domain" id="id_domain">

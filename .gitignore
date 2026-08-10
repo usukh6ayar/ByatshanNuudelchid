@@ -30,6 +30,7 @@ db.sqlite3
 /local_data/
 *.dump
 *.sql.gz
+/backups/
 
 # Generated artifacts
 spike.pdf

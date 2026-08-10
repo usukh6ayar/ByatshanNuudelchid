@@ -1,6 +1,6 @@
 {% extends "base_teacher.html" %}
-{# Modelled on docs/design/screens/teacher-child-profile-360.jpeg.
-   Only the sections backed by data that exists today are rendered. #}
+{% comment %} Modelled on docs/design/screens/teacher-child-profile-360.jpeg.
+   Only the sections backed by data that exists today are rendered. {% endcomment %}
 
 {% block title %}{{ child.full_name }}{% endblock %}
 {% block heading %}{{ child.full_name }}{% endblock %}
@@ -9,9 +9,9 @@
   <div class="grid grid--2">
     <div class="card">
       <div style="display:flex; gap:16px; align-items:flex-start">
-        {# RFP §3.4. Served through the permission check, never linked
+        {% comment %} RFP §3.4. Served through the permission check, never linked
            directly (spec section 7.1). The initial stands in when there is
-           no photo — an empty box reads as a broken page. #}
+           no photo — an empty box reads as a broken page. {% endcomment %}
         {% if child.photo %}
           <img class="avatar avatar--lg"
                src="{% url 'media:serve' child.photo.public_id 'full' %}"

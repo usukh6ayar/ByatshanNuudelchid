@@ -1,7 +1,7 @@
 {% extends "base_teacher.html" %}
-{# RFP §6.3 — "багш бүлгийн бүх хүүхдийг нэг дэлгэц дээрээс хурдан үнэлэх".
+{% comment %} RFP §6.3 — "багш бүлгийн бүх хүүхдийг нэг дэлгэц дээрээс хурдан үнэлэх".
    One form, one save, one transaction: a teacher who changes their mind
-   half way down the list has not already written five rows. #}
+   half way down the list has not already written five rows. {% endcomment %}
 
 {% block title %}Түргэн үнэлгээ{% endblock %}
 {% block heading %}Түргэн үнэлгээ — {{ group.name }}{% endblock %}

@@ -51,7 +51,34 @@ make migrations    # generate — then read the output file
 make seed          # demo kindergarten, staff, children, observations
 make storage       # create the media bucket if it is missing
 make pdf-spike     # render the Cyrillic sample PDF
+make check-deploy  # Django's production checklist against config.settings.prod
+make backup        # dump the database into ./backups and verify the dump
 ```
+
+## Backup and restore
+
+RFP §16. `make backup` runs `pg_dump` inside the `db` container, writes a
+timestamped custom-format archive to `./backups`, and then reads the archive
+back with `pg_restore --list` — a dump nobody has ever parsed is a file, not a
+backup. Archives older than `RETENTION_DAYS` (default 14) are removed.
+
+```bash
+make backup
+BACKUP_DIR=/srv/backups RETENTION_DAYS=30 ./scripts/backup.sh
+
+make restore FILE=backups/kinder-20260810T090000Z.dump DB=kinder
+```
+
+Restoring **replaces every row** in the target database, so `restore.sh`
+refuses to run unless the database name from `.env` is repeated on the command
+line. Run `make migrate` afterwards: the code may be newer than the dump.
+
+On a server, run the backup from cron and copy the archives off the machine —
+a backup on the same disk as the database survives nothing that matters.
+
+Uploaded photos live in object storage, not in the dump. Their backup is
+bucket versioning and the provider's lifecycle rules, configured when the
+hosting decision (`ROADMAP.md`, D3) is made.
 
 ## Two things to know before contributing
 

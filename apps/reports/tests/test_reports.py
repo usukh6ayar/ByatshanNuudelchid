@@ -184,6 +184,18 @@ def test_the_pdf_renders_with_cyrillic_and_page_numbers(world, filled):
     assert "Хуудас" in text
     assert "Өрнийн орд" in text or "хөгжлийн" in text.lower()
 
+    # The document goes to a family. Nothing addressed to whoever maintains
+    # the template belongs in it — and this is not hypothetical: the header
+    # comment in child_portfolio.html was written as `{# ... #}` across
+    # several lines, which Django does not treat as a comment, so fourteen
+    # lines of English notes were printed on page one of every portfolio
+    # until 2026-08-10. The page-count and Cyrillic assertions above were
+    # both satisfied the whole time; only reading the page would have shown
+    # it. apps/core/tests/test_templates.py guards the source, this guards
+    # the artefact the client actually receives.
+    for leak in ("RFP", "{#", "CLAUDE.md", "builder.py"):
+        assert leak not in text, f"internal commentary reached the PDF: {leak!r}"
+
 
 def test_the_result_is_stored_as_a_protected_file(world, filled):
     job = services.request_child_portfolio(actor=world["dulmaa"],

@@ -7,9 +7,9 @@
   <h1>Нэвтрэх</h1>
   <p class="sub">Хүүхдийн хөгжлийн цахим хувийн хавтас</p>
 
-  {# Tabs come from the approved design. They only change which identifier
+  {% comment %} Tabs come from the approved design. They only change which identifier
      the field asks for — see LOGIN_TABS in views.py. Plain links, so they
-     work without JavaScript. #}
+     work without JavaScript. {% endcomment %}
   <nav class="tabs" aria-label="Хэрэглэгчийн төрөл">
     {% for key, label in tabs %}
       <a href="?role={{ key }}"

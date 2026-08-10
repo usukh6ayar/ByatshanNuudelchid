@@ -1,6 +1,6 @@
 {% extends base_template %}
-{# RFP §3.4. The image is shown through /media/<uuid>/full/, which runs the
-   permission check before it hands back anything — never a direct link. #}
+{% comment %} RFP §3.4. The image is shown through /media/<uuid>/full/, which runs the
+   permission check before it hands back anything — never a direct link. {% endcomment %}
 
 {% block title %}Хүүхдийн зураг{% endblock %}
 {% block heading %}Зураг — {{ child.full_name }}{% endblock %}

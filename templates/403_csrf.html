@@ -1,0 +1,23 @@
+{% extends "base_error.html" %}
+
+{% comment %} django.views.csrf.csrf_failure picks this up automatically. In practice it
+   fires when a form sat open long enough for the session to expire, so the
+   page explains that rather than accusing the user of anything, and points
+   at the login screen instead of the home page — home would only bounce
+   them there anyway. The `reason` in the context is deliberately not shown:
+   it is for the log, not for the family. {% endcomment %}
+
+{% block title %}Хуудасны хугацаа дууссан{% endblock %}
+{% block mark %}⏳{% endblock %}
+{% block code %}403{% endblock %}
+{% block heading %}Хуудасны хугацаа дууссан{% endblock %}
+
+{% block body %}
+  <p>Аюулгүй байдлын үүднээс хүсэлтийг хүлээж авсангүй.</p>
+  <p>Ихэвчлэн маягтыг удаан нээлттэй орхиход ийм алдаа гардаг.
+     Дахин нэвтэрч, мэдээллээ дахин илгээнэ үү.</p>
+{% endblock %}
+
+{% block actions %}
+  <a class="btn" href="{% url 'accounts:login' %}">Дахин нэвтрэх</a>
+{% endblock %}

@@ -1,10 +1,10 @@
 {% extends base_template %}
-{# RFP §549, §626 — the system stays usable while this renders, and the
+{% comment %} RFP §549, §626 — the system stays usable while this renders, and the
    screen says what is happening rather than sitting blank.
 
    The page polls a small JSON endpoint instead of holding the connection
    open. It also works with JavaScript switched off: the "Дахин шалгах"
-   button below does the same thing by hand. #}
+   button below does the same thing by hand. {% endcomment %}
 
 {% block title %}Тайлан бэлдэж байна{% endblock %}
 {% block heading %}PDF тайлан — {{ child.full_name }}{% endblock %}
