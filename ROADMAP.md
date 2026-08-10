@@ -2,7 +2,7 @@
 
 Children's Development Digital Portfolio System.
 
-**Status as of 2026-08-10: Phase 1 in progress — 14 of 17 requirement groups
+**Status as of 2026-08-11: Phase 1 in progress — 14 of 17 requirement groups
 complete, 3 partial, 0 not started.** Detail in section 7. The three partials
 are deployment (blocked on decision D3), responsive layout on real devices,
 and the REST API (deferred by decision D2).
@@ -78,7 +78,7 @@ children at two kindergartens.
 | Object storage | S3-compatible (MinIO in dev) | ✅ upload, signed URLs, `make storage` |
 | Runtime | Docker + docker-compose | ✅ in place |
 | Row history | django-simple-history | ✅ on `Child`, `AboutMe`, `ChildAgeProfile` |
-| Lint / test | ruff, pytest | ✅ 569 tests passing, ruff clean |
+| Lint / test | ruff, pytest | ✅ 575 tests passing, ruff clean |
 
 ## 5. Architecture overview
 
@@ -364,7 +364,7 @@ Formal QA is the client's. Before handover we still verify:
 | Backup and restore | ✅ `scripts/backup.sh` verified against the live database; `scripts/restore.sh` itself run end to end against a scratch database, twice, with row counts compared table by table |
 | PDF with Cyrillic and images | ✅ all 8 pages of a real portfolio rendered to PNG and read. Ө ө Ү ү correct, margins clean, header and page counter on every page, no English. Two defects found and fixed — see the Day 10 log |
 
-Current: **569 tests passing**, `ruff` clean.
+Current: **575 tests passing**, `ruff` clean.
 
 ## 17. Definition of done — Phase 1
 
@@ -921,7 +921,7 @@ bar resizing the viewport mid-scroll, or a real network.
 
 | | Day 1 | Day 2 | Day 4 | Day 5 | Day 6 | Day 7 | Day 8 | Day 9 | Day 10 |
 |---|---|---|---|---|---|---|---|---|---|
-| Tests | 64 | 93 | 156 | 189 | 278 | 346 | 397 | 505 | **569** |
+| Tests | 64 | 93 | 156 | 189 | 278 | 346 | 397 | 505 | **575** |
 | Models | 14 | 14 | 15 | 18 | 27 | 33 | 34 | 34 | **34** |
 | DoD met | — | — | 12/24 | 14/24 | 16/24 | 20/24 | 22/24 | 23/24 | **23/24** |
 
@@ -1001,10 +1001,29 @@ confidence rating shown in the mockups, the separate child display code
 (`CHD-0002`) alongside the registration number, and per-kindergarten storage
 quotas. None block Phase 1.
 
-### D5 — Empty sections in the printed portfolio
+### D5 — Empty sections in the printed portfolio ✅ resolved 2026-08-11
 
-**Open. Needs the client, not a developer.** Found on Day 10 by rendering a
-real portfolio and looking at it.
+**Decision: option 1 — omit empty sections entirely.** Found on Day 10 by
+rendering a real portfolio and looking at it; decided by the client the
+following day.
+
+Implemented in `builder.py` rather than the template, because the template's
+job is to lay out what it is given (CLAUDE.md §2.1) and because "does this
+section have anything in it" is the same question the request form will need
+when it stops offering checkboxes for sections that would render blank.
+
+`basic` is never dropped: it is the registration record, and the child exists
+by definition. The assessment matrix counts as empty when no term holds a
+value — a grid of dashes tells a family nothing they did not already know.
+The filter can only ever narrow the requested set, never widen it, and there
+is a test that says so.
+
+Measured on the artefact, not inferred: the demo portfolio went from **8
+pages to 5**, and a child registered this morning now gets **3 pages instead
+of 8**.
+
+The original three options are kept below, because the reasoning for
+option 3 was real and someone may revisit it.
 
 `section { page-break-before: always }` gives each §10.1 section its own
 page, which is correct for a document that is printed, punched and kept — a
@@ -1024,8 +1043,5 @@ that is most of the document.
    is waiting — which for a kindergarten filling in a portfolio over three
    years is arguably the point.
 
-Option 3 is a real position, not a non-answer, which is why this is being
-asked rather than decided. Ask the client alongside D3.
-
-Whichever is chosen, it is a change to `templates/reports/child_portfolio.html`
-and possibly `builder.py`; roughly an hour either way.
+Option 3 was a real position, not a non-answer, which is why this was asked
+rather than decided.

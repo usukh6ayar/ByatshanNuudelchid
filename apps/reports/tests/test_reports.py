@@ -26,6 +26,7 @@ from apps.reports.tasks import generate_report
 pytestmark = pytest.mark.django_db
 
 PASSWORD = "test-password-1234"
+DEFAULT = services.DEFAULT_SECTIONS
 
 
 def login(client, user):
@@ -320,6 +321,69 @@ def test_unpublished_assessments_stay_out_of_the_familys_copy(world, filled):
     cells = [cell for row in context["assessment_matrix"]["rows"]
              for cell in row["cells"]]
     assert all(cell is None for cell in cells)
+
+
+# ------------------------------------------------------------------ D5
+# An empty section used to get a full A4 page carrying one grey line. For a
+# newly enrolled child that was five of the eight pages.
+
+def test_a_section_with_nothing_in_it_is_left_out(world):
+    """`world` has a child with no observations, no About Me, no assessments."""
+    context = build_context(viewer=world["dulmaa"], child=world["bataa"],
+                            sections=DEFAULT)
+
+    assert "about_me" not in context["sections"]
+    assert "observations" not in context["sections"]
+    assert "parent_observations" not in context["sections"]
+    assert "assessments" not in context["sections"]
+
+
+def test_the_basic_section_is_never_dropped(world):
+    """It is the registration record, and the child exists by definition."""
+    context = build_context(viewer=world["dulmaa"], child=world["bataa"],
+                            sections=DEFAULT)
+
+    assert "basic" in context["sections"]
+
+
+def test_a_section_with_content_is_kept(world, filled):
+    context = build_context(viewer=world["dulmaa"], child=world["bataa"],
+                            sections=DEFAULT)
+
+    assert "observations" in context["sections"]
+
+
+def test_an_assessment_matrix_of_only_dashes_counts_as_empty(world):
+    """A grid with no value recorded in any term tells a family nothing."""
+    context = build_context(viewer=world["dulmaa"], child=world["bataa"],
+                            sections=["basic", "assessments"])
+
+    assert "assessments" not in context["sections"]
+
+
+def test_dropping_a_section_does_not_widen_the_request(world, filled):
+    """Only ever a subset: this must not turn into a way to add sections."""
+    context = build_context(viewer=world["dulmaa"], child=world["bataa"],
+                            sections=["basic", "observations"])
+
+    assert context["sections"] <= {"basic", "observations"}
+
+
+def test_an_empty_portfolio_is_short(world):
+    """The whole point of D5, measured on the artefact.
+
+    A child registered this morning: one cover page and one page of
+    registration details, not eight pages of headings.
+    """
+    job = services.request_child_portfolio(actor=world["dulmaa"],
+                                           child=world["bataa"])
+    generate_report(job.pk)
+    job.refresh_from_db()
+
+    assert job.status == ReportJob.Status.DONE
+    assert job.page_count <= 3, (
+        "a portfolio with no content yet should not run to eight pages"
+    )
 
 
 def test_only_the_requested_sections_appear(world, filled):

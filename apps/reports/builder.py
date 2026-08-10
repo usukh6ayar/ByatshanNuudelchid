@@ -90,7 +90,59 @@ def build_context(*, viewer, child, sections) -> dict:
             viewer, child, enrollment.school_year
         )
 
+    # Decided last, once every section knows whether it has anything to say.
+    context["sections"] = _sections_with_content(context, wanted)
     return context
+
+
+def _sections_with_content(context: dict, wanted: set[str]) -> set[str]:
+    """Drop the sections that would print a heading and nothing else — D5.
+
+    Each §10.1 section starts on its own page, which is right for a document
+    that gets printed and punched: a section split across a fold is
+    unreadable. The consequence is that an empty section also gets a page,
+    and for a newly enrolled child that was five of eight pages carrying one
+    grey line reading "Бөглөгдөөгүй байна."
+
+    ``basic`` is never dropped. It is the registration record — name, date of
+    birth, guardians — and a portfolio without it is not a portfolio. It also
+    cannot be empty: the child exists.
+
+    Decided here rather than in the template because the template's job is to
+    lay out what it is given (CLAUDE.md §2.1), and because "is this section
+    empty" is the same question the request form will need when it stops
+    offering checkboxes for sections that would render blank.
+    """
+    filled = {"basic"} & wanted
+
+    checks = {
+        "about_me": lambda: context.get("about") is not None,
+        "birthdays": lambda: bool(context.get("birthdays")),
+        "age_profiles": lambda: bool(context.get("age_profiles")),
+        "observations": lambda: bool(context.get("observations")),
+        "parent_observations": lambda: bool(context.get("parent_observations")),
+        # A matrix with no assessment recorded in any term is a grid of
+        # dashes, which tells a family nothing they did not already know.
+        "assessments": lambda: _matrix_has_a_value(
+            context.get("assessment_matrix")
+        ),
+    }
+
+    for code, has_content in checks.items():
+        if code in wanted and has_content():
+            filled.add(code)
+
+    return filled
+
+
+def _matrix_has_a_value(matrix) -> bool:
+    if not matrix:
+        return False
+    return any(
+        cell is not None
+        for row in matrix.get("rows", [])
+        for cell in row.get("cells", [])
+    )
 
 
 def _photo(child) -> str | None:
