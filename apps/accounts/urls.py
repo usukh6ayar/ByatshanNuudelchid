@@ -10,7 +10,7 @@ urlpatterns = [
 
     # RFP §3.3 — a person maintains their own details. No id in the URL:
     # the subject is always the logged-in user.
-    path("miniy-buurtgel/", views.profile, name="profile"),
+    path("minii-burtgel/", views.profile, name="profile"),
 
     path("nuuts-ug-sergeeh/", views.password_reset_request,
          name="password_reset"),

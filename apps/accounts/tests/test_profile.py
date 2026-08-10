@@ -19,7 +19,7 @@ from apps.accounts.models import Role, TeacherProfile
 pytestmark = pytest.mark.django_db
 
 PASSWORD = "test-password-1234"
-URL = "/miniy-buurtgel/"
+URL = "/minii-burtgel/"
 
 
 def login(client, user):

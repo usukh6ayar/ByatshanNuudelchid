@@ -2,8 +2,10 @@
 
 Children's Development Digital Portfolio System.
 
-**Status as of 2026-08-10: Phase 1 in progress — 13 of 17 requirement groups
-complete, 2 partial, 2 not started.** Detail in section 7.
+**Status as of 2026-08-10: Phase 1 in progress — 14 of 17 requirement groups
+complete, 3 partial, 0 not started.** Detail in section 7. The three partials
+are deployment (blocked on decision D3), responsive layout on real devices,
+and the REST API (deferred by decision D2).
 
 This file is kept in sync with the codebase. Every "done" below names the file
 or test that proves it.
@@ -76,7 +78,7 @@ children at two kindergartens.
 | Object storage | S3-compatible (MinIO in dev) | ✅ upload, signed URLs, `make storage` |
 | Runtime | Docker + docker-compose | ✅ in place |
 | Row history | django-simple-history | ✅ on `Child`, `AboutMe`, `ChildAgeProfile` |
-| Lint / test | ruff, pytest | ✅ 397 tests passing |
+| Lint / test | ruff, pytest | ✅ 544 tests passing, ruff clean |
 
 ## 5. Architecture overview
 
@@ -144,7 +146,7 @@ end to end.
 |---|---|---|---|
 | 1 | Authentication — admin/teacher/parent login, RBAC, hashing, logout, password reset | ✅ done | `apps/accounts/`, `test_login.py`, `test_password_reset.py` |
 | 2 | Kindergarten & group management — CRUD, school year, teacher assignment | ✅ done | `apps/tenants/`, `/udirdlaga/`, `test_admin.py` |
-| 3 | Teacher management — profile, assigned kindergarten/group/children | ✅ done | Model + assignment from Day 2; self-service profile at `/miniy-buurtgel/` — `test_profile.py` |
+| 3 | Teacher management — profile, assigned kindergarten/group/children | ✅ done | Model + assignment from Day 2; self-service profile at `/minii-burtgel/` — `test_profile.py` |
 | 4 | Child management — create, edit, view, photo, group, year, guardian link, active/archived | ✅ done | Edit view added Day 10 — `test_child_edit.py` |
 | 5 | Parent management — account, parent↔child, access only to own children | ✅ done | `register_guardian`, `test_views_authorization.py` |
 | 6 | Digital child portfolio — About Me, birthday, ages 2–5, basic photos | ✅ done | `apps/portfolio/`, `test_portfolio.py`; profile photo via `apps/media/` |
