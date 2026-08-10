@@ -44,12 +44,52 @@ def test_seed_demo_can_be_run_twice():
 
     The first version invited teachers unconditionally and died on the
     username unique constraint the second time.
+
+    This used to assert that a second run left *four* children — it tolerated
+    the demo growing by a class every time anyone re-ran it, which is how a
+    development database ends up with thirty-two children nobody asked for.
+    ``--children`` now reads as "make sure there are this many", so a re-run
+    tops up towards the number and otherwise leaves the data alone.
     """
     call_command("seed_demo", children=2)
     call_command("seed_demo", children=2)
 
-    assert Child.objects.count() == 4      # two more, not a crash
+    assert Child.objects.count() == 2      # topped up, not doubled
     assert Term.objects.count() == 4       # and no duplicate terms
+
+
+@override_settings(DEBUG=True)
+def test_seed_demo_tops_up_to_the_requested_number():
+    call_command("seed_demo", children=2)
+    call_command("seed_demo", children=5)
+
+    assert Child.objects.count() == 5
+
+
+@override_settings(DEBUG=True)
+def test_seed_demo_does_not_repeat_a_childs_observations():
+    """`create_observation` always creates, so a re-run would double them."""
+    call_command("seed_demo", children=2)
+    first = Observation.objects.count()
+    call_command("seed_demo", children=2)
+
+    assert Observation.objects.count() == first
+
+
+@override_settings(DEBUG=True)
+def test_the_demo_year_has_a_term_containing_today():
+    """Otherwise §12.1, §6.3 and §6.4 all report "no term configured".
+
+    That is not hypothetical: the seeded year ran to 31 May 2026, and from
+    June onwards the dashboard showed no assessment progress while several
+    hundred assessments sat in the table.
+    """
+    import datetime as dt
+
+    call_command("seed_demo", children=2)
+    today = dt.date.today()
+
+    assert Term.objects.filter(starts_on__lte=today, ends_on__gte=today).exists()
 
 
 @override_settings(DEBUG=False)

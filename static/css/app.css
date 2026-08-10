@@ -192,14 +192,18 @@ a { color: var(--brand); }
   display: flex; align-items: center; gap: 13px; flex-wrap: wrap;
 }
 
-/* A tile with an icon puts its text in a wrapper, so the wrapper is the
-   second flex item and stacks naturally. A tile *without* an icon has the
-   label and value as direct children — and as bare flex items those two
-   lines sat side by side, which is how "Нас 4" ended up reading across the
-   portfolio page instead of down it. Giving them a full-width basis makes
-   them wrap onto their own lines whichever way the tile is written, so no
-   template has to remember. */
-.tile > .tile__label, .tile > .tile__value { flex: 1 0 100%; }
+/* Making the tile a flex row for the icon turned every other tile's contents
+   into columns: the label beside the value on the administrator dashboard,
+   and on the portfolio an age heading, a definition list and an edit link
+   all fighting for one line.
+
+   So stacking is the default and sitting beside something is the exception.
+   Only the icon opts out, and only the element immediately after it shares
+   its row. Any tile written any other way stacks, which is what a tile
+   looks like, and no template has to know. */
+.tile > * { flex: 1 0 100%; min-width: 0; }
+.tile > .tile__icon { flex: 0 0 auto; }
+.tile > .tile__icon + * { flex: 1 1 auto; }
 .tile__icon {
   width: 44px; height: 44px; border-radius: 13px; flex-shrink: 0;
   display: grid; place-items: center;
