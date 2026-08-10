@@ -28,6 +28,10 @@ body {
   color: var(--ink);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   line-height: 1.5;
+  /* Nothing in this application is meant to be read by scrolling the page
+     sideways. Wide content — the §6.3 grid, long registration numbers —
+     scrolls inside its own container instead. */
+  overflow-x: hidden;
 }
 
 a { color: var(--brand); }
@@ -73,7 +77,14 @@ a { color: var(--brand); }
     padding: 14px;
   }
   .nav { flex-direction: row; overflow-x: auto; gap: 6px; }
-  .nav a { white-space: nowrap; }
+  /* 44px minimum on anything tapped with a thumb (RFP §629–635). The
+     desktop 10px padding gives about 37px, which is a miss often enough to
+     be noticed on a nav bar that also scrolls sideways. */
+  .nav a {
+    white-space: nowrap;
+    display: flex; align-items: center; min-height: 44px;
+  }
+  .btn { padding: 13px 18px; min-height: 44px; }
   .main { padding: 18px 14px 40px; }
 }
 
@@ -113,7 +124,12 @@ a { color: var(--brand); }
 
 /* ---------------------------------------------------------------- table */
 
-.table-wrap { overflow-x: auto; }
+/* `min-width: 0` is what makes the scrolling actually work. A grid or flex
+   item defaults to `min-width: auto`, which is its content's width, so
+   without this the wrapper grows to fit the table and the *page* scrolls
+   sideways instead of the table. The §6.3 group grid is the widest table in
+   the app and the one that shows it. */
+.table-wrap { overflow-x: auto; min-width: 0; }
 table { width: 100%; border-collapse: collapse; font-size: .9rem; }
 th, td { padding: 11px 12px; text-align: left; border-bottom: 1px solid var(--line); }
 th { color: var(--muted); font-weight: 600; font-size: .82rem;
@@ -128,7 +144,13 @@ td .name { font-weight: 600; }
 label { display: block; font-weight: 600; font-size: .86rem; margin: 14px 0 5px; }
 input[type=text], input[type=email], input[type=tel], input[type=date],
 input[type=search], input[type=number], select, textarea {
-  width: 100%; padding: 10px 12px; font-size: .95rem; font-family: inherit;
+  /* 16px, not .95rem. Mobile Safari zooms the viewport whenever a focused
+     control is under 16px and does not zoom back out afterwards, so a
+     teacher filling in an observation on a phone ends up panning a form
+     that no longer fits the screen. This is the single most consequential
+     number in the file for RFP §17 — CLAUDE.md §5 says it has to work on a
+     phone before it works anywhere else. */
+  width: 100%; padding: 10px 12px; font-size: 16px; font-family: inherit;
   border: 1px solid var(--line); border-radius: 10px;
   background: var(--card); color: var(--ink);
 }
@@ -161,9 +183,18 @@ textarea { min-height: 90px; resize: vertical; }
 
 .code-box {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 2rem; font-weight: 700; letter-spacing: .28em;
+  /* Six digits at 2rem plus .28em tracking is about 300px, which overflows
+     a 375px screen once the card padding is counted. clamp() keeps it as
+     large as fits — the code is read aloud off the screen, so legibility
+     matters more than the exact size. */
+  font-size: clamp(1.35rem, 7vw, 2rem);
+  font-weight: 700; letter-spacing: .28em;
   background: var(--brand-soft); color: var(--brand);
   padding: 16px 20px; border-radius: 12px; text-align: center;
+  /* The tracking adds a trailing gap after the last digit; without this the
+     text sits visibly left of centre. */
+  text-indent: .28em;
+  overflow-wrap: anywhere;
 }
 
 .switcher { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
@@ -179,6 +210,16 @@ dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px;
            margin: 0; font-size: .92rem; }
 dl.facts dt { color: var(--muted); }
 dl.facts dd { margin: 0; }
+
+@media (max-width: 560px) {
+  /* `max-content` sizes the label column to the longest label, which on a
+     narrow screen pushes the value column off the right edge — the child
+     detail page has "Бүртгэлийн дугаар" and "Эрүүл мэндийн тэмдэглэл" in
+     the same list. Stacking is the only thing that always fits. */
+  dl.facts { grid-template-columns: 1fr; gap: 2px; }
+  dl.facts dt { margin-top: 10px; }
+  dl.facts dt:first-child { margin-top: 0; }
+}
 
 /* Visible to a screen reader only. The §6.3 grid has one select per child;
    the column header alone does not say whose row it is (RFP §629–635). */
