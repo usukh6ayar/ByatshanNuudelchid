@@ -448,6 +448,176 @@ def test_a_rejected_upload_explains_itself(client, world):
     assert not MediaFile.objects.exists()
 
 
+# ------------------------------------------------- §21.4, the other two screens
+# CLAUDE.md §4.1 for ``media:observation_attach`` and ``media:delete``. The
+# services behind them are covered above through direct calls, which is not
+# the same claim: a view that forgot to check would still pass every one of
+# those. These go through the HTTP client.
+#
+# The three mandated names are already taken in this module by the §21.10
+# tests for ``media:serve``, so each is prefixed with the screen it exercises.
+
+@pytest.fixture
+def observation(world):
+    import datetime as dt
+
+    daily = ObservationType.objects.get(kindergarten=None, code="daily")
+    return create_observation(
+        actor=world["dulmaa"], child=world["bataa"], type=daily,
+        observed_on=dt.date(2025, 10, 1),
+    )
+
+
+def attach_url(child, observation):
+    return reverse("media:observation_attach", args=[child.pk, observation.pk])
+
+
+def delete_url(child, media):
+    return reverse("media:delete", args=[child.pk, media.public_id])
+
+
+def test_attach_teacher_from_another_group_gets_404(client, world, observation,
+                                                    make_teacher, make_group):
+    other = make_group(world["naran"], world["naran_year"], "Сарнай")
+    stranger = make_teacher(world["naran"], other, username="stranger")
+    login(client, stranger)
+
+    url = attach_url(world["bataa"], observation)
+    assert client.get(url).status_code == 404
+    assert client.post(url, {"photo": make_jpeg()}).status_code == 404
+    assert observation.media_links.count() == 0
+
+
+def test_attach_guardian_of_another_child_gets_404(client, world, observation,
+                                                   make_guardian, make_child):
+    elsewhere = make_child(world["naran"], world["sunflower"],
+                           first_name="Өөр")
+    outsider = make_guardian(elsewhere, world["naran"], username="other_mother")
+    login(client, outsider)
+
+    url = attach_url(world["bataa"], observation)
+    assert client.get(url).status_code == 404
+    assert client.post(url, {"photo": make_jpeg()}).status_code == 404
+    assert observation.media_links.count() == 0
+
+
+def test_attach_user_from_another_kindergarten_gets_404(client, world,
+                                                        observation):
+    login(client, world["oyun"])
+
+    url = attach_url(world["bataa"], observation)
+    assert client.get(url).status_code == 404
+    assert client.post(url, {"photo": make_jpeg()}).status_code == 404
+    assert observation.media_links.count() == 0
+
+
+def test_attach_refuses_the_childs_own_guardian(client, world, observation):
+    """RFP §5.1 is the teacher's record — ``can_record_for_child``, not access.
+
+    This family may read the observation. Adding evidence to it is a
+    different permission, and the one the view has to get right.
+    """
+    login(client, world["bataa_mother"])
+
+    url = attach_url(world["bataa"], observation)
+    assert client.get(url).status_code == 404
+    assert client.post(url, {"photo": make_jpeg()}).status_code == 404
+    assert observation.media_links.count() == 0
+
+
+def test_attach_refuses_an_observation_belonging_to_another_child(
+    client, world, observation
+):
+    """A real observation id, reached through a child it does not belong to."""
+    login(client, world["dulmaa"])          # entitled to both children
+
+    url = attach_url(world["saraa"], observation)
+    assert client.get(url).status_code == 404
+    assert client.post(url, {"photo": make_jpeg()}).status_code == 404
+    assert observation.media_links.count() == 0
+
+
+def test_the_attach_screen_renders_and_works(client, world, observation):
+    login(client, world["dulmaa"])
+    url = attach_url(world["bataa"], observation)
+
+    assert client.get(url).status_code == 200
+
+    response = client.post(url, {"photo": make_jpeg(),
+                                 "caption": "Барьсан цамхаг"})
+
+    assert response.status_code == 302
+    link = observation.media_links.get()
+    assert link.caption == "Барьсан цамхаг"
+    assert link.media_file.purpose == MediaFile.Purpose.OBSERVATION
+
+
+def test_delete_teacher_from_another_group_gets_404(client, world, photo,
+                                                    make_teacher, make_group):
+    other = make_group(world["naran"], world["naran_year"], "Сарнай")
+    stranger = make_teacher(world["naran"], other, username="stranger")
+    login(client, stranger)
+
+    assert client.post(delete_url(world["bataa"], photo)).status_code == 404
+    assert MediaFile.objects.filter(pk=photo.pk).exists()
+
+
+def test_delete_guardian_of_another_child_gets_404(client, world, photo,
+                                                   make_guardian, make_child):
+    elsewhere = make_child(world["naran"], world["sunflower"],
+                           first_name="Өөр")
+    outsider = make_guardian(elsewhere, world["naran"], username="other_mother")
+    login(client, outsider)
+
+    assert client.post(delete_url(world["bataa"], photo)).status_code == 404
+    assert MediaFile.objects.filter(pk=photo.pk).exists()
+
+
+def test_delete_user_from_another_kindergarten_gets_404(client, world, photo):
+    login(client, world["oyun"])
+
+    assert client.post(delete_url(world["bataa"], photo)).status_code == 404
+    assert MediaFile.objects.filter(pk=photo.pk).exists()
+
+
+def test_delete_refuses_the_childs_own_guardian(client, world, photo):
+    """``delete_media`` raises ``PermissionDenied``; the view must answer 404.
+
+    Otherwise the guardian learns the file exists and that someone else may
+    remove it — RFP §21.4 is about the answer, not only the outcome.
+    """
+    login(client, world["bataa_mother"])
+
+    assert client.post(delete_url(world["bataa"], photo)).status_code == 404
+    assert MediaFile.objects.filter(pk=photo.pk).exists()
+
+
+def test_delete_refuses_a_file_belonging_to_another_child(client, world, photo):
+    """Bataa's photo, reached through Saraa's id by an entitled teacher."""
+    login(client, world["dulmaa"])
+
+    assert client.post(delete_url(world["saraa"], photo)).status_code == 404
+    assert MediaFile.objects.filter(pk=photo.pk).exists()
+
+
+def test_delete_refuses_a_get(client, world, photo):
+    """CLAUDE.md §5 — archiving is confirmed and posted, never a link."""
+    login(client, world["dulmaa"])
+
+    assert client.get(delete_url(world["bataa"], photo)).status_code == 404
+    assert MediaFile.objects.filter(pk=photo.pk).exists()
+
+
+def test_the_entitled_teacher_archives_the_photo(client, world, photo):
+    login(client, world["dulmaa"])
+
+    response = client.post(delete_url(world["bataa"], photo))
+
+    assert response.status_code == 302
+    assert not MediaFile.objects.filter(pk=photo.pk).exists()
+    assert MediaFile.all_objects.get(pk=photo.pk).deleted_at is not None
+
+
 def test_the_signed_url_branch_is_taken_when_configured(client, world, photo,
                                                         settings, monkeypatch):
     """Production redirects instead of streaming — spec section 7.1.
