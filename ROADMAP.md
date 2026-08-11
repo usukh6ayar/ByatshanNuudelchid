@@ -1013,6 +1013,13 @@ is an account in the client's name; handover is a set of credentials. A
 managed platform keeps its own internals, which makes that clause harder to
 satisfy honestly.
 
+**The domain is registered at iTools** (2026-08-11), the host stays Hetzner.
+The registrant must be the client, not the developer — the same §781 clause
+covers "домэйн" explicitly. DNS is served by iTools' nameservers with a plain
+A record to the Hetzner IP; Cloudflare is in this stack for R2 only and its
+proxy stays off, because Caddy issues the certificate itself (see
+`docs/DEPLOYMENT.md` §1).
+
 **Two things stated earlier in this project's discussion were wrong, and are
 corrected here rather than quietly dropped:**
 

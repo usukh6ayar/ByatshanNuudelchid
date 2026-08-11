@@ -21,13 +21,41 @@ Mongolia, so the server is as close to Mongolia as this provider gets.
 | | |
 |---|---|
 | A host | Hetzner CPX21 (3 vCPU / 4 GB, **Singapore**) is comfortable for one kindergarten. Anything running Docker works |
-| A domain | With DNS pointing at the host |
+| A domain | Registered at **iTools**. An A record pointing at the Hetzner host, served from iTools' own nameservers — **DNS only, not proxied** |
 | TLS | A reverse proxy terminating HTTPS — Caddy is three lines and renews certificates itself |
 | An S3-compatible bucket | Cloudflare R2. Storage is $0.015/GB and **egress is free**, which matters here because the traffic is photographs being viewed by families |
 
 Create every account in the **client's** name, not the developer's. RFP §781
 makes the client the owner of the server, the domain, the database and the
 cloud storage; handover should be a transfer of credentials, not a migration.
+
+### The domain, in the order it has to happen
+
+Caddy requests the certificate itself the first time it starts, over HTTP on
+port 80. That only works if the name already resolves, so the DNS comes
+first and the deployment second:
+
+1. **A record → the Hetzner IP**, at iTools. Wait until `dig +short
+   your-domain.mn` answers with that address from somewhere other than the
+   machine you set it on. Run `deploy.sh` before this and the certificate
+   request fails and retries with a backoff.
+2. **Port 80 and 443 open** on the host. Port 80 is not optional — it is how
+   the certificate is issued and renewed.
+3. `DOMAIN` in `.env` (`deploy.sh` refuses without it).
+4. `DJANGO_ALLOWED_HOSTS` contains it, and `DJANGO_CSRF_TRUSTED_ORIGINS`
+   contains `https://` plus it. `deploy.sh` checks both.
+
+**Do not put Cloudflare's proxy in front of it.** The account exists for R2,
+and turning the orange cloud on for this record is a different thing:
+Cloudflare terminates TLS, Caddy stops being able to prove ownership on port
+80, and with SSL mode "Flexible" the origin is reached over plain HTTP — so
+`X-Forwarded-Proto` says `http`, `SECURE_SSL_REDIRECT` fires, and the browser
+loops. DNS-only. Caddy owns the certificate.
+
+The `Caddyfile` has one site block, `{$DOMAIN}`, so the deployment answers on
+the bare domain. `www.` would need a second A record, a redirect block in the
+`Caddyfile` and its own entry in `DJANGO_ALLOWED_HOSTS` — `deploy.sh`'s check
+is a substring match and would not catch its absence.
 
 The bucket **must be private**. RFP §4.4 and §21.10 are explicit: children's
 photographs are never reachable by URL alone. The application issues
