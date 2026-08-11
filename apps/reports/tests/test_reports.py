@@ -18,7 +18,7 @@ from apps.media.models import MediaFile
 from apps.observations.models import Observation, ObservationType
 from apps.observations.services import create_observation, review_observation
 from apps.portfolio.services import save_about_me
-from apps.reports import services
+from apps.reports import builder, services
 from apps.reports.builder import build_context
 from apps.reports.models import ReportJob
 from apps.reports.tasks import generate_report
@@ -204,6 +204,53 @@ def test_the_pdf_renders_with_cyrillic_and_page_numbers(world, filled):
     assert "««" not in text
     assert "»»" not in text
     assert "«Чи эхлээд тавь.»" in text
+
+
+def test_the_logo_is_embedded_in_the_pdf(world, filled):
+    """RFP §10.3 — "цэцэрлэгийн лого, нэртэй".
+
+    The name has been on every page since the first render; the logo was
+    listed in the template's header comment as if it were there and was not.
+    Asserting on the embedded image rather than on the markup, because the
+    failure that mattered was a data URI the template never received: a
+    missing static file makes ``_logo()`` return ``None`` and the ``{% if %}``
+    silently skips the tag.
+    """
+    import io
+
+    import pypdf
+
+    job = services.request_child_portfolio(actor=world["dulmaa"],
+                                           child=world["bataa"])
+    generate_report(job.pk)
+    job.refresh_from_db()
+
+    from apps.media import services as media_services
+
+    reader = pypdf.PdfReader(
+        io.BytesIO(media_services.read_bytes(job.result_media))
+    )
+    # ``filled`` gives this child no profile photograph, so the cover has
+    # exactly one image and it is the mark. Asserted rather than assumed:
+    # if the fixture gains a photo, this says so instead of passing on the
+    # wrong image.
+    assert world["bataa"].photo is None
+    assert len(reader.pages[0].images) == 1, "the logo is not on the cover"
+
+
+def test_a_missing_logo_file_does_not_break_the_render(world, filled,
+                                                       monkeypatch):
+    """A report without the mark still prints. §549 — never fail the render."""
+    monkeypatch.setattr(builder, "LOGO_STATIC_PATH", "img/does-not-exist.png")
+    builder._logo.cache_clear()
+
+    job = services.request_child_portfolio(actor=world["dulmaa"],
+                                           child=world["bataa"])
+    generate_report(job.pk)
+    job.refresh_from_db()
+
+    assert job.status == ReportJob.Status.DONE
+    builder._logo.cache_clear()
 
 
 def test_the_result_is_stored_as_a_protected_file(world, filled):

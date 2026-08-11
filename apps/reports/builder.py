@@ -12,9 +12,13 @@ hide the rest, is one forgotten ``{% if %}`` away from handing a family
 another kindergarten's notes.
 """
 
+from functools import lru_cache
+
+from django.contrib.staticfiles import finders
+
 from apps.assessment import selectors as assessment_selectors
 from apps.children.services import current_enrollment
-from apps.core.pdf import data_uri_from_bytes
+from apps.core.pdf import data_uri, data_uri_from_bytes
 from apps.media import services as media_services
 from apps.observations import selectors as observation_selectors
 from apps.observations.models import Observation
@@ -28,6 +32,10 @@ __all__ = ["build_context"]
 # the medium variant exists to embed instead of the original.
 MAX_INLINE_BYTES = 4 * 1024 * 1024
 
+# The small variant on purpose: it prints at 22mm and the 512px original
+# would add a quarter of a megabyte to every report for no visible gain.
+LOGO_STATIC_PATH = "img/logo-160.png"
+
 
 def build_context(*, viewer, child, sections) -> dict:
     """Everything the portfolio template renders, and nothing else."""
@@ -40,6 +48,7 @@ def build_context(*, viewer, child, sections) -> dict:
         "enrollment": enrollment,
         "sections": wanted,
         "photo_data_uri": _photo(child),
+        "logo_data_uri": _logo(),
         "generated_for": viewer,
     }
 
@@ -143,6 +152,21 @@ def _matrix_has_a_value(matrix) -> bool:
         for row in matrix.get("rows", [])
         for cell in row.get("cells", [])
     )
+
+
+@lru_cache(maxsize=1)
+def _logo() -> str | None:
+    """The product mark, inlined — §10.3 wants the logo on the report.
+
+    Cached because it is the same handful of kilobytes on every page of
+    every report, and a batch export would otherwise re-encode it per child.
+    Per-kindergarten logos are a separate field this system does not have
+    yet; when it does, this becomes the fallback rather than the only answer.
+    """
+    path = finders.find(LOGO_STATIC_PATH)
+    if path is None:                     # not collected, or renamed
+        return None
+    return data_uri(path)
 
 
 def _photo(child) -> str | None:

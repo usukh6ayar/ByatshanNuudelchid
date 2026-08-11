@@ -1,4 +1,4 @@
-{# Shared shell for unauthenticated pages. RFP §13, §629-635. #}
+{% load static %}{# Shared shell for unauthenticated pages. RFP §13, §629-635. #}
 <!doctype html>
 <html lang="mn">
 <head>
@@ -15,6 +15,10 @@
            line-height:1.5; }
     main { width:100%; max-width:400px; background:#fff; padding:32px 28px;
            border-radius:14px; border:1px solid var(--line); }
+    /* auth-login-and-password-reset.jpeg centres the mark above the title.
+       Height-constrained rather than width-constrained: the wordmark below
+       the arc makes the image taller than it is wide. */
+    .logo { display:block; height:82px; width:auto; margin:0 auto 14px; }
     h1 { font-size:1.4rem; margin:0 0 4px; }
     .sub { color:var(--muted); font-size:.9rem; margin:0 0 24px; }
     label { display:block; font-weight:600; font-size:.9rem; margin:16px 0 6px; }
@@ -51,6 +55,10 @@
   </style>
 </head>
 <body>
-  <main>{% block content %}{% endblock %}</main>
+  <main>
+    <img class="logo" src="{% static 'img/logo-160.png' %}"
+         alt="Бяцхан нүүдэлчид" width="149" height="160">
+    {% block content %}{% endblock %}
+  </main>
 </body>
 </html>

@@ -4,7 +4,7 @@
    · Cyrillic          — DejaVu Sans, installed in the image, named in CSS
    · A4                — @page size
    · page numbers      — @bottom-center counters
-   · logo and name     — the header, repeated as a running title
+   · logo and name     — the mark on the cover, the name as a running title
    · child photo       — inlined as a data URI, never fetched
    · no distortion     — object-fit: contain on every image
    · reasonable size   — one photograph, no decoration
@@ -45,7 +45,20 @@
   h3 { font-size: 11pt; margin: 5mm 0 2mm; }
   p  { margin: 0 0 3mm; }
 
-  .cover { text-align: center; padding-top: 30mm; }
+  /* §10.3 — "цэцэрлэгийн лого, нэртэй". The running title carries the name
+     on every page; the cover carries the mark, where there is room for it
+     to be recognisable. object-fit keeps §10.3's "зураг суналт, гажилтгүй"
+     true whatever aspect ratio a future per-kindergarten logo arrives in. */
+  .cover { text-align: center; padding-top: 22mm; }
+  /* Block, or it shares a line with the photograph below it — both are
+     inline images in a centred box. object-fit keeps §10.3's "зураг суналт,
+     гажилтгүй" true whatever aspect ratio a per-kindergarten logo arrives
+     in; the height is what is fixed, because the wordmark under the arc
+     makes this mark taller than it is wide. */
+  .cover .logo {
+    display: block; height: 24mm; width: auto; max-width: 60mm;
+    object-fit: contain; margin: 0 auto 9mm;
+  }
   .cover .photo {
     width: 55mm; height: 55mm; object-fit: contain;
     border: 1pt solid #ddd; border-radius: 3mm; margin-bottom: 8mm;
@@ -73,6 +86,10 @@
 
 {# ------------------------------------------------------------- cover #}
 <div class="cover">
+  {% if logo_data_uri %}
+    <img class="logo" src="{{ logo_data_uri }}" alt="Бяцхан нүүдэлчид">
+  {% endif %}
+
   {% if photo_data_uri %}
     <img class="photo" src="{{ photo_data_uri }}"
          alt="{{ child.full_name }}-ийн зураг">

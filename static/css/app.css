@@ -74,12 +74,20 @@ a { color: var(--brand); }
 }
 
 .brand { display: flex; gap: 11px; align-items: center; }
+/* The mockups tuck the logo into a tinted rounded square rather than letting
+   it sit on the sidebar directly — the mark is drawn on white, and against
+   the dark theme's panel it would otherwise float. The tint is light in both
+   themes for the same reason. */
 .brand__mark {
   width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
-  display: grid; place-items: center; font-size: 1.25rem;
-  background: linear-gradient(140deg, #7c6cf0, #5b4bd6 55%, #4834b0);
-  color: #fff;
+  display: grid; place-items: center;
+  background: #f1efff; padding: 2px;
 }
+/* The mark is 1.38:1, so in a square tile the width is what runs out first.
+   Width leads and the height follows; object-fit is the guard against a
+   future logo with different proportions being stretched (§10.3's "зураг
+   суналт, гажилтгүй" applies on screen too). */
+.brand__mark img { width: 100%; height: auto; object-fit: contain; }
 .brand__name { display: block; font-weight: 700; font-size: .9rem; line-height: 1.25; }
 .brand__sub { color: var(--muted); font-size: .75rem; }
 
@@ -439,9 +447,9 @@ dl.facts--cols dd { margin: 2px 0 0; font-weight: 600; }
   --c-blue-soft: #16233b; --c-green-soft: #12301d; --c-amber-soft: #33260f;
   --c-sky-soft: #10293a; --c-pink-soft: #331a26; --c-teal-soft: #0e2b28;
 }
-:root[data-theme="dark"] .brand__mark {
-  background: linear-gradient(140deg, #8f80ff, #6a58e8 55%, #4834b0);
-}
+/* Kept light in the dark theme on purpose: the logo is a full-colour mark
+   drawn on white, so a dark tile behind it reads as a hole in the sidebar. */
+:root[data-theme="dark"] .brand__mark { background: #edeaff; }
 
 /* The switch itself, drawn as the mockup draws it: an icon, a label and a
    track that slides. A real checkbox underneath, so it is reachable by
