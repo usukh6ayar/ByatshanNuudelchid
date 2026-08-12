@@ -31,6 +31,7 @@ from .models import (
     AssessmentScale,
     DevelopmentDomain,
     Term,
+    TermReport,
 )
 
 __all__ = [
@@ -42,6 +43,8 @@ __all__ = [
     "child_assessments",
     "assessment_matrix",
     "group_grid",
+    "term_report",
+    "term_reports_for",
 ]
 
 
@@ -224,4 +227,42 @@ def _previous_term_levels(enrollments, term, domain) -> dict:
             term__number=term.number - 1,
             domain=domain,
         ).select_related("level")
+    }
+
+
+def _readable_reports(user, child):
+    """Every term report about this child this user may read — §2.3.
+
+    The guardian filter is the whole difference between the two roles, and
+    it lives here so no screen has to remember it.
+    """
+    queryset = TermReport.objects.filter(
+        child=child,
+        kindergarten_id__in=visible_kindergartens(user, child),
+    )
+    if is_guardian_of(user, child):
+        queryset = queryset.filter(status=TermReport.Status.FINAL)
+    return queryset
+
+
+def term_report(user, child, term) -> "TermReport | None":
+    """RFP §6.4 — one term's narrative, or ``None`` if not readable."""
+    return (
+        _readable_reports(user, child)
+        .filter(term=term)
+        .select_related("term", "author")
+        .first()
+    )
+
+
+def term_reports_for(user, child) -> dict:
+    """``{term_id: TermReport}`` for the child screen.
+
+    A dict rather than a queryset because the template looks each term up by
+    id while iterating the matrix columns; a filter per column is the N+1
+    CLAUDE.md §3.5 forbids.
+    """
+    return {
+        report.term_id: report
+        for report in _readable_reports(user, child).select_related("term")
     }

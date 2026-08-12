@@ -244,3 +244,60 @@ def test_editing_a_final_report_leaves_it_final(world, term):
 
     assert report.status == TermReport.Status.FINAL
     assert report.finalized_at is not None
+
+
+def test_a_guardian_cannot_see_a_draft_report(world, term):
+    """RFP §2.3 — "багшийн зөвшөөрсөн"."""
+    services.save_term_report(actor=world["dulmaa"], child=world["bataa"],
+                              term=term, **NARRATIVE)
+
+    assert selectors.term_report(world["dulmaa"], world["bataa"], term)
+    assert selectors.term_report(world["bataa_mother"], world["bataa"],
+                                 term) is None
+
+
+def test_a_guardian_sees_it_once_finalized(world, term):
+    services.save_term_report(actor=world["dulmaa"], child=world["bataa"],
+                              term=term, **NARRATIVE)
+    services.finalize_term(actor=world["dulmaa"], child=world["bataa"],
+                           term=term)
+
+    report = selectors.term_report(world["bataa_mother"], world["bataa"], term)
+
+    assert report is not None
+    assert report.strengths == NARRATIVE["strengths"]
+
+
+def test_another_kindergarten_sees_nothing(world, term):
+    services.save_term_report(actor=world["dulmaa"], child=world["bataa"],
+                              term=term, **NARRATIVE)
+    services.finalize_term(actor=world["dulmaa"], child=world["bataa"],
+                           term=term)
+
+    assert selectors.term_report(world["oyun"], world["bataa"], term) is None
+
+
+def test_after_a_transfer_the_author_keeps_it_and_the_new_school_does_not(
+    world, term
+):
+    """CLAUDE.md §1.2, the read half. Task 2 pinned where the row is filed;
+    this pins who can still see it."""
+    services.save_term_report(actor=world["dulmaa"], child=world["bataa"],
+                              term=term, **NARRATIVE)
+    services.finalize_term(actor=world["dulmaa"], child=world["bataa"],
+                           term=term)
+
+    transfer_bataa_to_och(world)
+
+    assert selectors.term_report(world["dulmaa"], world["bataa"], term)
+    assert selectors.term_report(world["oyun"], world["bataa"], term) is None
+
+
+def test_term_reports_for_maps_term_id_to_report(world, terms):
+    """The child screen needs one lookup, not one query per term."""
+    services.save_term_report(actor=world["dulmaa"], child=world["bataa"],
+                              term=terms[0], **NARRATIVE)
+
+    found = selectors.term_reports_for(world["dulmaa"], world["bataa"])
+
+    assert set(found) == {terms[0].pk}
