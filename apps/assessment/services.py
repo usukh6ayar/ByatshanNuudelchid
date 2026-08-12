@@ -24,6 +24,8 @@ __all__ = [
     "save_group_assessments",
     "publish_term",
     "save_term_report",
+    "finalize_term",
+    "reopen_term",
     "ensure_default_terms",
     "save_config",
     "save_term",
@@ -289,6 +291,64 @@ def save_term_report(*, actor, child, term, strengths="", needs_support="",
 
     return save_record(actor=actor, obj=report, created=created,
                        request=request)
+
+
+def _report_for(child, term) -> TermReport:
+    """The report being finalized, or a message saying to write one first."""
+    report = TermReport.objects.filter(child=child, term=term).first()
+    if report is None:
+        raise ValidationError("Эхлээд улирлын тайланг бичнэ үү.")
+    return report
+
+
+@transaction.atomic
+def finalize_term(*, actor, child, term, request=None) -> TermReport:
+    """RFP §6.4, §2.3 — declare the term finished and open it to the family.
+
+    One action, two effects: the report becomes final and that term's
+    assessments become visible. ``publish_term`` is *called* rather than
+    reimplemented, so the rule for opening a term to guardians stays in one
+    place (CLAUDE.md §1.1) and the teacher has one mental model rather than
+    two switches that can disagree.
+    """
+    _guard(actor, child)
+
+    report = _report_for(child, term)
+    if report.is_empty:
+        # Four blank headings tell a family less than no report at all —
+        # the same question D5 settled for the printed portfolio.
+        raise ValidationError(
+            "Хоосон тайланг дуусгах боломжгүй. Дор хаяж нэг хэсгийг бөглөнө үү."
+        )
+
+    report.status = TermReport.Status.FINAL
+    report.finalized_at = timezone.now()
+    saved = save_record(actor=actor, obj=report, created=False,
+                        request=request)
+
+    publish_term(actor=actor, child=child, term=term, visible=True,
+                 request=request)
+    return saved
+
+
+@transaction.atomic
+def reopen_term(*, actor, child, term, request=None) -> TermReport:
+    """Undo :func:`finalize_term`.
+
+    Not in the RFP. It exists because a report finalized by mistake
+    otherwise has no route back except the database.
+    """
+    _guard(actor, child)
+
+    report = _report_for(child, term)
+    report.status = TermReport.Status.DRAFT
+    report.finalized_at = None
+    saved = save_record(actor=actor, obj=report, created=False,
+                        request=request)
+
+    publish_term(actor=actor, child=child, term=term, visible=False,
+                 request=request)
+    return saved
 
 
 @transaction.atomic

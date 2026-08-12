@@ -5,7 +5,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 
 from apps.assessment import selectors, services
-from apps.assessment.models import TermReport
+from apps.assessment.models import Assessment, TermReport
 
 pytestmark = pytest.mark.django_db
 
@@ -166,3 +166,81 @@ def test_saving_writes_an_audit_row(world, term):
         action=AuditAction.CREATE, actor_user=world["dulmaa"],
         object_type="assessment.TermReport",
     ).exists()
+
+
+def test_finalizing_also_publishes_the_terms_assessments(world, term, domain,
+                                                         level):
+    """The one-button contract. A teacher has one mental model: the term is
+    finished or it is not."""
+    services.save_assessment(actor=world["dulmaa"], child=world["bataa"],
+                             domain=domain, term=term, level=level)
+    services.save_term_report(actor=world["dulmaa"], child=world["bataa"],
+                              term=term, **NARRATIVE)
+
+    report = services.finalize_term(actor=world["dulmaa"],
+                                    child=world["bataa"], term=term)
+
+    assert report.status == TermReport.Status.FINAL
+    assert report.finalized_at is not None
+    assert Assessment.objects.get(child=world["bataa"],
+                                  term=term).visible_to_parents is True
+
+
+def test_finalizing_an_empty_report_is_refused(world, term):
+    """Four blank headings are worse than nothing — the same question D5
+    settled for the printed portfolio."""
+    services.save_term_report(actor=world["dulmaa"], child=world["bataa"],
+                              term=term)
+
+    with pytest.raises(ValidationError):
+        services.finalize_term(actor=world["dulmaa"], child=world["bataa"],
+                               term=term)
+
+    assert TermReport.objects.get().status == TermReport.Status.DRAFT
+
+
+def test_finalizing_without_a_report_is_refused(world, term):
+    with pytest.raises(ValidationError):
+        services.finalize_term(actor=world["dulmaa"], child=world["bataa"],
+                               term=term)
+
+
+def test_a_guardian_cannot_finalize(world, term):
+    services.save_term_report(actor=world["dulmaa"], child=world["bataa"],
+                              term=term, **NARRATIVE)
+
+    with pytest.raises(PermissionDenied):
+        services.finalize_term(actor=world["bataa_mother"],
+                               child=world["bataa"], term=term)
+
+
+def test_reopening_hides_the_assessments_again(world, term, domain, level):
+    services.save_assessment(actor=world["dulmaa"], child=world["bataa"],
+                             domain=domain, term=term, level=level)
+    services.save_term_report(actor=world["dulmaa"], child=world["bataa"],
+                              term=term, **NARRATIVE)
+    services.finalize_term(actor=world["dulmaa"], child=world["bataa"],
+                           term=term)
+
+    report = services.reopen_term(actor=world["dulmaa"], child=world["bataa"],
+                                  term=term)
+
+    assert report.status == TermReport.Status.DRAFT
+    assert report.finalized_at is None
+    assert Assessment.objects.get(child=world["bataa"],
+                                  term=term).visible_to_parents is False
+
+
+def test_editing_a_final_report_leaves_it_final(world, term):
+    services.save_term_report(actor=world["dulmaa"], child=world["bataa"],
+                              term=term, **NARRATIVE)
+    services.finalize_term(actor=world["dulmaa"], child=world["bataa"],
+                           term=term)
+
+    report = services.save_term_report(
+        actor=world["dulmaa"], child=world["bataa"], term=term,
+        **NARRATIVE | {"strengths": "Үсгийн алдаа зассан"},
+    )
+
+    assert report.status == TermReport.Status.FINAL
+    assert report.finalized_at is not None
