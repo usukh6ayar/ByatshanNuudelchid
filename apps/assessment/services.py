@@ -14,7 +14,7 @@ from apps.children.models import Enrollment
 from apps.core.permissions import can_record_for_child, visible_kindergartens
 from apps.core.services import save_record
 
-from .models import Assessment, Term
+from .models import Assessment, Term, TermReport
 from .selectors import current_term, domains_for, levels_for
 
 __all__ = [
@@ -23,6 +23,7 @@ __all__ = [
     "save_assessment",
     "save_group_assessments",
     "publish_term",
+    "save_term_report",
     "ensure_default_terms",
     "save_config",
     "save_term",
@@ -243,6 +244,51 @@ def publish_term(*, actor, child, term, visible: bool, request=None) -> int:
         save_record(actor=actor, obj=assessment, created=False, request=request)
         changed += 1
     return changed
+
+
+@transaction.atomic
+def save_term_report(*, actor, child, term, strengths="", needs_support="",
+                     next_goals="", advice_for_parents="",
+                     enrollment=None, request=None) -> TermReport:
+    """RFP §6.4 — write or update the narrative for one term.
+
+    Idempotent on ``(child, enrollment, term)``, the same shape as
+    ``save_assessment``: a second submission updates the row rather than
+    creating a second one, and the database constraint of the same name is
+    the backstop for §17's double-click, not the mechanism.
+
+    Editing a finalized report leaves it finalized. A teacher fixing a typo
+    must not make the report a family is reading disappear; the edit goes
+    live and ``AuditLog`` records it. Reverting is ``reopen_term``, which is
+    a decision rather than a side effect.
+    """
+    _guard(actor, child)
+
+    enrollment = enrollment or recording_enrollment(child)
+    if enrollment.child_id != child.pk:
+        raise ValidationError("Бүртгэл нь өөр хүүхдийнх байна.")
+
+    assert_writable(actor, child, enrollment)
+    _check_term(enrollment, term)
+
+    report = TermReport.objects.filter(
+        child=child, enrollment=enrollment, term=term
+    ).first()
+    created = report is None
+    if created:
+        report = TermReport(
+            kindergarten_id=enrollment.kindergarten_id,
+            child=child, enrollment=enrollment, term=term,
+        )
+
+    report.strengths = strengths
+    report.needs_support = needs_support
+    report.next_goals = next_goals
+    report.advice_for_parents = advice_for_parents
+    report.author = actor
+
+    return save_record(actor=actor, obj=report, created=created,
+                       request=request)
 
 
 @transaction.atomic
