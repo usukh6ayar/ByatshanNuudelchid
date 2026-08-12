@@ -105,35 +105,69 @@
         </form>
       </div>
 
-      {# RFP §2.3 — a term stays closed until the teacher says it is done. #}
+      {% comment %} RFP §6.4 — the narrative report per term. Finalizing one is also
+         what opens that term to the guardians, so this replaces the old
+         separate "publish" control. {% endcomment %}
       <div class="card" style="max-width:820px">
-        <h2>Эцэг эхэд нээх</h2>
+        <h2>Улирлын тайлан</h2>
         <p class="brand__sub" style="margin-top:-8px">
-          Улирлын үнэлгээг дуусгасны дараа эцэг эхэд харуулна.
+          Улирал бүрийн дүгнэлт. Дуусгасны дараа эцэг эхэд харагдана.
         </p>
 
-        <form method="post" action="{% url 'assessment:publish' child.pk %}">
-          {% csrf_token %}
-          <label for="id_publish_term">Улирал</label>
-          <select name="term" id="id_publish_term" required>
-            {% for term in terms %}
-              <option value="{{ term.pk }}">
-                {{ term.name }}
-                {% if term.pk in published_terms %}— нээлттэй{% endif %}
-              </option>
-            {% endfor %}
-          </select>
-
-          <div style="display:flex; gap:10px; align-items:center; margin-top:10px">
-            <input type="checkbox" name="visible" id="id_visible" style="width:auto" checked>
-            <label for="id_visible" style="margin:0">Эцэг эхэд харуулах</label>
-          </div>
-
-          <div class="btn-row">
-            <button type="submit" class="btn">Хадгалах</button>
-          </div>
-        </form>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Улирал</th><th>Төлөв</th><th></th></tr>
+            </thead>
+            <tbody>
+              {% for term, report in term_reports %}
+                <tr>
+                  <td class="name">{{ term.name }}</td>
+                  <td>
+                    {% if report.is_final %}
+                      <span class="badge badge--ok">Дууссан</span>
+                    {% elif report %}
+                      <span class="badge badge--muted">Ноорог</span>
+                    {% else %}
+                      <span class="badge badge--muted">Бичээгүй</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a href="{% url 'assessment:term_report' child.pk term.pk %}">
+                      Нээх
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
+    {% endif %}
+
+    {% if not can_record %}
+      {% for term, report in term_reports %}
+        {% if report %}
+          <div class="card" style="max-width:820px">
+            <h2>{{ term.name }} — багшийн дүгнэлт</h2>
+            {% if report.strengths %}
+              <h3>Давуу тал</h3><p>{{ report.strengths|linebreaksbr }}</p>
+            {% endif %}
+            {% if report.needs_support %}
+              <h3>Дэмжих шаардлагатай чадвар</h3>
+              <p>{{ report.needs_support|linebreaksbr }}</p>
+            {% endif %}
+            {% if report.next_goals %}
+              <h3>Дараагийн улирлын зорилго</h3>
+              <p>{{ report.next_goals|linebreaksbr }}</p>
+            {% endif %}
+            {% if report.advice_for_parents %}
+              <h3>Эцэг эхэд өгөх зөвлөмж</h3>
+              <p>{{ report.advice_for_parents|linebreaksbr }}</p>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
     {% endif %}
   {% endif %}
 {% endblock %}

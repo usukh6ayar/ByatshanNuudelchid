@@ -3,6 +3,7 @@
 import pytest
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
+from django.urls import reverse
 
 from apps.assessment import selectors, services
 from apps.assessment.models import Assessment, TermReport
@@ -301,3 +302,115 @@ def test_term_reports_for_maps_term_id_to_report(world, terms):
     found = selectors.term_reports_for(world["dulmaa"], world["bataa"])
 
     assert set(found) == {terms[0].pk}
+
+
+# ------------------------------------------------------------------ §21
+# CLAUDE.md §4.1 — the three mandatory tests, through the HTTP client. A
+# view that forgets its check passes every service-level test above.
+
+def report_url(child, term):
+    return reverse("assessment:term_report", args=[child.pk, term.pk])
+
+
+def test_teacher_from_another_group_gets_404(client, world, term,
+                                             make_teacher, make_group):
+    other = make_group(world["naran"], world["naran_year"], "Сарнай")
+    stranger = make_teacher(world["naran"], other, username="stranger")
+    login(client, stranger)
+
+    url = report_url(world["bataa"], term)
+    assert client.get(url).status_code == 404
+    assert client.post(url, NARRATIVE).status_code == 404
+    assert not TermReport.objects.exists()
+
+
+def test_guardian_of_another_child_gets_404(client, world, term,
+                                            make_guardian, make_child):
+    elsewhere = make_child(world["naran"], world["sunflower"],
+                           first_name="Өөр")
+    outsider = make_guardian(elsewhere, world["naran"],
+                             username="other_mother")
+    login(client, outsider)
+
+    url = report_url(world["bataa"], term)
+    assert client.get(url).status_code == 404
+    assert client.post(url, NARRATIVE).status_code == 404
+    assert not TermReport.objects.exists()
+
+
+def test_user_from_another_kindergarten_gets_404(client, world, term):
+    login(client, world["oyun"])
+
+    url = report_url(world["bataa"], term)
+    assert client.get(url).status_code == 404
+    assert client.post(url, NARRATIVE).status_code == 404
+    assert not TermReport.objects.exists()
+
+
+def test_the_childs_own_guardian_cannot_reach_the_editor(client, world, term):
+    """§6.4 is the teacher's record. This family may read the finished
+    report on the assessment screen; writing it is a different permission."""
+    login(client, world["bataa_mother"])
+
+    url = report_url(world["bataa"], term)
+    assert client.get(url).status_code == 404
+    assert client.post(url, NARRATIVE).status_code == 404
+    assert not TermReport.objects.exists()
+
+
+def test_a_term_from_another_year_gets_404(client, world, term,
+                                           naran_admin_user):
+    """A real term id, reached through a child it does not apply to."""
+    och_terms = services.ensure_default_terms(actor=naran_admin_user,
+                                              school_year=world["och_year"])
+    login(client, world["dulmaa"])
+
+    url = report_url(world["bataa"], och_terms[0])
+    assert client.get(url).status_code == 404
+    assert not TermReport.objects.exists()
+
+
+def test_the_teacher_writes_and_finalizes_from_the_screen(client, world, term,
+                                                          domain, level):
+    services.save_assessment(actor=world["dulmaa"], child=world["bataa"],
+                             domain=domain, term=term, level=level)
+    login(client, world["dulmaa"])
+    url = report_url(world["bataa"], term)
+
+    assert client.get(url).status_code == 200
+
+    assert client.post(url, NARRATIVE | {"action": "save"}).status_code == 302
+    assert TermReport.objects.get().status == TermReport.Status.DRAFT
+
+    assert client.post(url, NARRATIVE | {"action": "finalize"}).status_code == 302
+    assert TermReport.objects.get().status == TermReport.Status.FINAL
+    assert Assessment.objects.get().visible_to_parents is True
+
+
+def test_finalizing_an_empty_report_from_the_screen_explains_itself(
+    client, world, term
+):
+    login(client, world["dulmaa"])
+
+    response = client.post(report_url(world["bataa"], term),
+                           {"action": "finalize"}, follow=True)
+
+    assert response.status_code == 200
+    assert "Хоосон" in response.content.decode()
+    assert TermReport.objects.get().status == TermReport.Status.DRAFT
+
+
+def test_a_guardian_sees_the_finished_report_on_the_child_screen(client, world,
+                                                                 term):
+    """§2.3 — the family reads it where they already read the matrix."""
+    services.save_term_report(actor=world["dulmaa"], child=world["bataa"],
+                              term=term, **NARRATIVE)
+    login(client, world["bataa_mother"])
+    child_screen = reverse("assessment:child", args=[world["bataa"].pk])
+
+    assert NARRATIVE["strengths"] not in client.get(child_screen).content.decode()
+
+    services.finalize_term(actor=world["dulmaa"], child=world["bataa"],
+                           term=term)
+
+    assert NARRATIVE["strengths"] in client.get(child_screen).content.decode()

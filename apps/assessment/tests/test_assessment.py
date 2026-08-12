@@ -320,15 +320,18 @@ def test_a_guardian_sees_nothing_until_the_term_is_published(world, term,
                                        world["bataa"]).count() == 1
 
 
-def test_publishing_opens_the_term_to_the_guardian(client, world, term,
+def test_finalizing_opens_the_term_to_the_guardian(client, world, term,
                                                    domain, level):
+    """Was a POST to the separate publish route until 2026-08-11. The
+    control moved into the term report — finalizing is what opens the term
+    now."""
     services.save_assessment(actor=world["dulmaa"], child=world["bataa"],
                              domain=domain, term=term, level=level)
     login(client, world["dulmaa"])
 
     response = client.post(
-        reverse("assessment:publish", args=[world["bataa"].pk]),
-        {"term": term.pk, "visible": "on"},
+        reverse("assessment:term_report", args=[world["bataa"].pk, term.pk]),
+        {"strengths": "Гүйлт сайн", "action": "finalize"},
     )
 
     assert response.status_code == 302
@@ -336,14 +339,14 @@ def test_publishing_opens_the_term_to_the_guardian(client, world, term,
                                        world["bataa"]).count() == 1
 
 
-def test_a_guardian_cannot_publish(client, world, term, domain, level):
+def test_a_guardian_cannot_finalize_a_term(client, world, term, domain, level):
     services.save_assessment(actor=world["dulmaa"], child=world["bataa"],
                              domain=domain, term=term, level=level)
     login(client, world["bataa_mother"])
 
     response = client.post(
-        reverse("assessment:publish", args=[world["bataa"].pk]),
-        {"term": term.pk, "visible": "on"},
+        reverse("assessment:term_report", args=[world["bataa"].pk, term.pk]),
+        {"strengths": "Гүйлт сайн", "action": "finalize"},
     )
 
     assert response.status_code == 404

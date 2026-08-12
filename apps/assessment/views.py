@@ -56,13 +56,19 @@ def child_assessment(request, child_id):
     audit(action=AuditAction.VIEW, request=request, child=child, obj=child,
           kindergarten=child.kindergarten, section="assessment")
 
+    reports = selectors.term_reports_for(request.user, child)
     context |= {
         "school_year": school_year,
         "matrix": matrix,
         "terms": matrix["terms"],
         "levels": selectors.levels_for(child.kindergarten_id),
         "group": enrollment.group,
-        "published_terms": _published_terms(request.user, child),
+        # Paired here rather than looked up in the template: Django cannot
+        # index a dict by a variable key without a custom filter, and one
+        # filter for one screen is not worth a template library.
+        "term_reports": [
+            (term, reports.get(term.pk)) for term in matrix["terms"]
+        ],
     }
     return render(request, "assessment/child.html", context)
 
@@ -115,32 +121,67 @@ def child_assessment_save(request, child_id):
 
 
 @login_required
-def publish(request, child_id):
-    """RFP §2.3 — open a finished term to the guardians."""
+def term_report(request, child_id, term_id):
+    """RFP §6.4 — the narrative a teacher writes once the grid is filled in.
+
+    Teacher-only: ``_context`` resolves the child through the permission
+    layer, and ``can_record_for_child`` is what separates reading the
+    portfolio from writing the professional record (§5.1, §6.3). A guardian
+    reads the finished report on the assessment screen instead.
+    """
     context = _context(request, child_id)
     child = context["child"]
 
-    if request.method != "POST":
+    if not context["can_record"]:
         raise Http404
 
     enrollment = current_enrollment(child)
+    if enrollment is None:
+        raise Http404
+
     term = Term.objects.filter(
-        school_year_id=getattr(enrollment, "school_year_id", None),
-        pk=request.POST.get("term") or 0,
+        school_year=enrollment.school_year, pk=term_id
     ).first()
     if term is None:
         raise Http404
 
-    try:
-        services.publish_term(
-            actor=request.user, child=child, term=term,
-            visible=request.POST.get("visible") == "on", request=request,
-        )
-    except PermissionDenied:
-        raise Http404 from None
+    if request.method == "POST":
+        narrative = {
+            field: request.POST.get(field, "").strip()
+            for field in ("strengths", "needs_support", "next_goals",
+                          "advice_for_parents")
+        }
+        try:
+            services.save_term_report(actor=request.user, child=child,
+                                      term=term, enrollment=enrollment,
+                                      request=request, **narrative)
+            if request.POST.get("action") == "finalize":
+                services.finalize_term(actor=request.user, child=child,
+                                       term=term, request=request)
+                messages.success(request, "Тайлан дуусаж, эцэг эхэд нээгдлээ.")
+            elif request.POST.get("action") == "reopen":
+                services.reopen_term(actor=request.user, child=child,
+                                     term=term, request=request)
+                messages.success(request, "Тайлан ноорог болж хаагдлаа.")
+            else:
+                messages.success(request, "Тайлан хадгалагдлаа.")
+        except PermissionDenied:
+            raise Http404 from None
+        except ValidationError as exc:
+            messages.error(request, _message(exc))
 
-    messages.success(request, "Үнэлгээний харагдац шинэчлэгдлээ.")
-    return redirect("assessment:child", child_id=child.pk)
+        return redirect("assessment:term_report", child_id=child.pk,
+                        term_id=term.pk)
+
+    audit(action=AuditAction.VIEW, request=request, child=child, obj=child,
+          kindergarten=child.kindergarten, section="term_report")
+
+    context |= {
+        "term": term,
+        "report": selectors.term_report(request.user, child, term),
+        "assessments": selectors.child_assessments(request.user, child, term),
+    }
+    return render(request, "assessment/term_report.html", context)
 
 
 @login_required
@@ -202,16 +243,6 @@ def group_grid(request, group_id):
 
 
 # ---------------------------------------------------------------- helpers
-
-
-def _published_terms(user, child) -> set[int]:
-    """Which terms are already open to the guardians — drives the toggle."""
-    from .models import Assessment
-
-    return set(
-        Assessment.objects.filter(child=child, visible_to_parents=True)
-        .values_list("term_id", flat=True)
-    )
 
 
 def _message(exc) -> str:
