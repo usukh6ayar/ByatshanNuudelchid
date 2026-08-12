@@ -1243,19 +1243,17 @@ and ends with that card's closing `</div>`. Replace the whole card with:
               <tr><th>Улирал</th><th>Төлөв</th><th></th></tr>
             </thead>
             <tbody>
-              {% for term in terms %}
+              {% for term, report in term_reports %}
                 <tr>
                   <td class="name">{{ term.name }}</td>
                   <td>
-                    {% with report=term_reports|get_item:term.pk %}
-                      {% if report.is_final %}
-                        <span class="badge badge--ok">Дууссан</span>
-                      {% elif report %}
-                        <span class="badge badge--muted">Ноорог</span>
-                      {% else %}
-                        <span class="badge badge--muted">Бичээгүй</span>
-                      {% endif %}
-                    {% endwith %}
+                    {% if report.is_final %}
+                      <span class="badge badge--ok">Дууссан</span>
+                    {% elif report %}
+                      <span class="badge badge--muted">Ноорог</span>
+                    {% else %}
+                      <span class="badge badge--muted">Бичээгүй</span>
+                    {% endif %}
                   </td>
                   <td>
                     <a href="{% url 'assessment:term_report' child.pk term.pk %}">
@@ -1270,11 +1268,12 @@ and ends with that card's closing `</div>`. Replace the whole card with:
       </div>
 ```
 
-That `get_item` filter does not exist yet — the next step decides against it.
+`term_reports` is a list of `(term, report)` pairs, not a dict. Django cannot
+index a dict by a variable key without a custom template filter, and one
+filter for one screen is not worth a template library — so the view pairs
+them. The next step adds that.
 
-- [ ] **Step 7: Replace the dict lookup with a list**
-
-Django templates cannot index a dict by variable key without a custom filter, and one filter for one screen is not worth a template library. Change the view instead.
+- [ ] **Step 7: Feed the template its pairs**
 
 In `apps/assessment/views.py`, inside `child_assessment`, find:
 
@@ -1300,30 +1299,9 @@ and immediately above the `context |= {` line, add:
 ```
 
 Then delete the now-unused `_published_terms` helper at the bottom of the file.
-
-In `templates/assessment/child.html`, change the loop from Step 6 to iterate the pairs:
-
-```html
-              {% for term, report in term_reports %}
-                <tr>
-                  <td class="name">{{ term.name }}</td>
-                  <td>
-                    {% if report.is_final %}
-                      <span class="badge badge--ok">Дууссан</span>
-                    {% elif report %}
-                      <span class="badge badge--muted">Ноорог</span>
-                    {% else %}
-                      <span class="badge badge--muted">Бичээгүй</span>
-                    {% endif %}
-                  </td>
-                  <td>
-                    <a href="{% url 'assessment:term_report' child.pk term.pk %}">
-                      Нээх
-                    </a>
-                  </td>
-                </tr>
-              {% endfor %}
-```
+The only reference to it was the line you just replaced, and the only
+reference to `published_terms` in the template was inside the publish card
+Step 6 removed — so nothing is left pointing at either.
 
 - [ ] **Step 8: Show guardians the finished report**
 
