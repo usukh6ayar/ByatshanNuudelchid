@@ -381,17 +381,12 @@ def test_a_term_from_another_school_year_is_refused(world, term,
                                   term=och_terms[0], **NARRATIVE)
 
 
-def test_a_transferred_childs_report_stays_with_its_enrollment(
-    world, term, naran_admin_user
-):
-    """CLAUDE.md §1.2 — the report follows the enrollment it was written
-    under, so a transfer does not hand it to the new kindergarten."""
+def transfer_bataa_to_och(world):
+    """Bataa moves from Наран to Оч mid-year. Used by the §1.2 tests here
+    and in Task 4, so it is a helper rather than a copy in each."""
     import datetime as dt
 
     from apps.children.models import Enrollment
-
-    services.save_term_report(actor=world["dulmaa"], child=world["bataa"],
-                              term=term, **NARRATIVE)
 
     Enrollment.objects.filter(child=world["bataa"]).update(
         status=Enrollment.Status.TRANSFERRED, ended_on=dt.date(2026, 1, 15)
@@ -404,11 +399,20 @@ def test_a_transferred_childs_report_stays_with_its_enrollment(
     world["bataa"].kindergarten = world["och"]
     world["bataa"].save()
 
+
+def test_a_transferred_childs_report_keeps_its_kindergarten(world, term):
+    """CLAUDE.md §1.2 — the report stays filed against the kindergarten it
+    was written in, so a transfer does not hand it to the new one.
+
+    Whether each user can then *read* it is the selector's job, tested in
+    Task 4 once ``term_report`` exists."""
+    services.save_term_report(actor=world["dulmaa"], child=world["bataa"],
+                              term=term, **NARRATIVE)
+
+    transfer_bataa_to_och(world)
+
     report = TermReport.objects.get()
     assert report.kindergarten_id == world["naran"].pk
-    # Its author keeps it; the new kindergarten never sees it.
-    assert selectors.term_report(world["dulmaa"], world["bataa"], term)
-    assert selectors.term_report(world["oyun"], world["bataa"], term) is None
 
 
 def test_saving_writes_an_audit_row(world, term):
@@ -792,6 +796,22 @@ def test_another_kindergarten_sees_nothing(world, term):
     assert selectors.term_report(world["oyun"], world["bataa"], term) is None
 
 
+def test_after_a_transfer_the_author_keeps_it_and_the_new_school_does_not(
+    world, term
+):
+    """CLAUDE.md §1.2, the read half. Task 2 pinned where the row is filed;
+    this pins who can still see it."""
+    services.save_term_report(actor=world["dulmaa"], child=world["bataa"],
+                              term=term, **NARRATIVE)
+    services.finalize_term(actor=world["dulmaa"], child=world["bataa"],
+                           term=term)
+
+    transfer_bataa_to_och(world)
+
+    assert selectors.term_report(world["dulmaa"], world["bataa"], term)
+    assert selectors.term_report(world["oyun"], world["bataa"], term) is None
+
+
 def test_term_reports_for_maps_term_id_to_report(world, terms):
     """The child screen needs one lookup, not one query per term."""
     services.save_term_report(actor=world["dulmaa"], child=world["bataa"],
@@ -805,7 +825,7 @@ def test_term_reports_for_maps_term_id_to_report(world, terms):
 - [ ] **Step 2: Run and watch them fail**
 
 ```bash
-docker compose exec -T web pytest apps/assessment/tests/test_term_report.py -q -k "guardian_cannot_see or once_finalized or another_kindergarten_sees or reports_for"
+docker compose exec -T web pytest apps/assessment/tests/test_term_report.py -q -k "guardian_cannot_see or once_finalized or another_kindergarten_sees or reports_for or after_a_transfer"
 ```
 
 Expected: `AttributeError: ... has no attribute 'term_report'`.
@@ -866,7 +886,7 @@ def term_reports_for(user, child) -> dict:
 docker compose exec -T web pytest apps/assessment/tests/test_term_report.py -q
 ```
 
-Expected: `18 passed`.
+Expected: `19 passed`.
 
 - [ ] **Step 5: Commit**
 
