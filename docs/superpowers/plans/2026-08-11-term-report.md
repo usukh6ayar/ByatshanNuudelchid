@@ -30,6 +30,8 @@ docker compose exec -T web ruff check .                   # lint
 
 The full suite takes about six minutes and currently reports **630 passed**. Run the single test you are working on while iterating; run the app's suite before each commit.
 
+**Lint is part of green.** `ruff` fails on an import that nothing uses yet, so each task adds only the imports its own code needs — do not import ahead for a later task. Tasks 2–5 all append to `apps/assessment/tests/test_term_report.py`, and each says which imports to add to its top when it needs them.
+
 ---
 
 ## File structure
@@ -72,12 +74,10 @@ Create `apps/assessment/tests/test_term_report.py`:
 """The narrative term report — RFP §6.4, §10.2, and the §21 rules."""
 
 import pytest
-from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
-from django.urls import reverse
 
 from apps.assessment import selectors, services
-from apps.assessment.models import Assessment, TermReport
+from apps.assessment.models import TermReport
 
 pytestmark = pytest.mark.django_db
 
@@ -277,8 +277,8 @@ def test_one_report_per_child_per_term(world, term):
     from apps.children.services import current_enrollment
 
     enrollment = current_enrollment(world["bataa"])
-    fields = dict(kindergarten=world["naran"], child=world["bataa"],
-                  enrollment=enrollment, term=term)
+    fields = {"kindergarten": world["naran"], "child": world["bataa"],
+              "enrollment": enrollment, "term": term}
     TermReport.objects.create(**fields, strengths="Эхний")
 
     with pytest.raises(IntegrityError), transaction.atomic():
@@ -322,7 +322,14 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 - [ ] **Step 1: Write the failing tests**
 
-Append to `apps/assessment/tests/test_term_report.py`:
+First add the exceptions these tests assert on to the imports at the top of
+`apps/assessment/tests/test_term_report.py`:
+
+```python
+from django.core.exceptions import PermissionDenied, ValidationError
+```
+
+Then append:
 
 ```python
 NARRATIVE = {
@@ -533,7 +540,14 @@ This is the one-button contract: finalizing the report also opens that term's as
 
 - [ ] **Step 1: Write the failing tests**
 
-Append to `apps/assessment/tests/test_term_report.py`:
+These assert on the assessments the finalize publishes, so extend the model
+import at the top of `apps/assessment/tests/test_term_report.py`:
+
+```python
+from apps.assessment.models import Assessment, TermReport
+```
+
+Then append:
 
 ```python
 def test_finalizing_also_publishes_the_terms_assessments(world, term, domain,
@@ -885,7 +899,14 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 - [ ] **Step 1: Write the three mandatory authorization tests**
 
-CLAUDE.md §4.1. Append to `apps/assessment/tests/test_term_report.py`:
+CLAUDE.md §4.1. These go through the HTTP client, so add the URL helper to
+the imports at the top of `apps/assessment/tests/test_term_report.py`:
+
+```python
+from django.urls import reverse
+```
+
+Then append:
 
 ```python
 # ------------------------------------------------------------------ §21

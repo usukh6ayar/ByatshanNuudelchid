@@ -1,12 +1,10 @@
 """The narrative term report — RFP §6.4, §10.2, and the §21 rules."""
 
 import pytest
-from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
-from django.urls import reverse
 
 from apps.assessment import selectors, services
-from apps.assessment.models import Assessment, TermReport
+from apps.assessment.models import TermReport
 
 pytestmark = pytest.mark.django_db
 
@@ -65,8 +63,8 @@ def test_one_report_per_child_per_term(world, term):
     from apps.children.services import current_enrollment
 
     enrollment = current_enrollment(world["bataa"])
-    fields = dict(kindergarten=world["naran"], child=world["bataa"],
-                  enrollment=enrollment, term=term)
+    fields = {"kindergarten": world["naran"], "child": world["bataa"],
+              "enrollment": enrollment, "term": term}
     TermReport.objects.create(**fields, strengths="Эхний")
 
     with pytest.raises(IntegrityError), transaction.atomic():
