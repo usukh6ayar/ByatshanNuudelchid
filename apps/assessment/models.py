@@ -1,8 +1,10 @@
 """Development assessment — RFP §6.1, §6.2, §6.3, §6.4. Spec section 6.4.
 
-Phase 1 covers the configuration tables, the four terms of a school year, and
-the per-domain assessment itself. ``TermReport`` and ``AnnualReport`` (§6.4's
-narrative report and §6.5's annual one) are Phase 2 — see ROADMAP section 8.
+Phase 1 covers the configuration tables, the four terms of a school year, the
+per-domain assessment, and ``TermReport`` — §6.4's narrative report, pulled
+forward from Phase 2 because §20-II lists it as mandatory MVP and §21.7 makes
+it an acceptance criterion. ``AnnualReport`` (§6.5) is still Phase 2 — see
+ROADMAP section 8.
 
 **Where the configuration lives.** §6.1 and §6.2 require an administrator to
 be able to edit the domains and the levels, so both are tables rather than
@@ -290,3 +292,79 @@ class Assessment(TenantScopedModel):
 
     def __str__(self) -> str:
         return f"{self.child} — {self.domain.name} ({self.term.name})"
+
+
+class TermReport(TenantScopedModel):
+    """RFP §6.4's narrative report — one per child per term.
+
+    The per-domain levels live in ``Assessment``; this is the wrapper a
+    teacher writes once the term's grid is filled in. There is deliberately
+    no general ``teacher_comment`` here: ``Assessment.comment`` already
+    holds the teacher's note for each domain, and the approved mockup shows
+    it there, under the domain it belongs to. A second comment box would
+    leave the teacher guessing which one the family reads.
+
+    ``enrollment`` is part of the uniqueness constraint for the same reason
+    ``Assessment`` carries it: after a transfer the previous kindergarten's
+    report stays attached to the enrollment it was written under, so
+    ``visible_kindergartens()`` keeps showing it to its author and to nobody
+    else (CLAUDE.md §1.2).
+    """
+
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Ноорог"
+        FINAL = "final", "Дууссан"
+
+    child = models.ForeignKey("children.Child", on_delete=models.CASCADE,
+                              related_name="term_reports")
+    enrollment = models.ForeignKey("children.Enrollment",
+                                   on_delete=models.PROTECT,
+                                   related_name="term_reports")
+    term = models.ForeignKey(Term, on_delete=models.PROTECT,
+                             related_name="reports", verbose_name="улирал")
+
+    strengths = models.TextField("давуу тал", blank=True)
+    needs_support = models.TextField("дэмжих шаардлагатай чадвар", blank=True)
+    next_goals = models.TextField("дараагийн улирлын зорилго", blank=True)
+    advice_for_parents = models.TextField("эцэг эхэд өгөх зөвлөмж", blank=True)
+
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
+                               blank=True, on_delete=models.SET_NULL,
+                               related_name="+")
+    status = models.CharField("төлөв", max_length=10, choices=Status.choices,
+                              default=Status.DRAFT, db_index=True)
+    # Not auto_now: §6.4 wants "тайлан үүсгэсэн огноо", the moment the
+    # teacher declared it done. ``updated_at`` moves on every save and would
+    # report a typo fix as a freshly written report.
+    finalized_at = models.DateTimeField("дуусгасан огноо", null=True,
+                                        blank=True)
+
+    class Meta:
+        verbose_name = "улирлын тайлан"
+        verbose_name_plural = "улирлын тайлан"
+        ordering = ["-term__number"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["child", "enrollment", "term"],
+                condition=models.Q(deleted_at__isnull=True),
+                name="uniq_term_report_per_child_term",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["child", "term"]),
+            models.Index(fields=["kindergarten", "term"]),
+            models.Index(fields=["enrollment", "term"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.child} — {self.term.name}"
+
+    @property
+    def is_final(self) -> bool:
+        return self.status == self.Status.FINAL
+
+    @property
+    def is_empty(self) -> bool:
+        """No narrative at all. ``finalize_term`` refuses to publish this."""
+        return not any((self.strengths, self.needs_support,
+                        self.next_goals, self.advice_for_parents))
