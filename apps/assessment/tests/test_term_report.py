@@ -414,3 +414,25 @@ def test_a_guardian_sees_the_finished_report_on_the_child_screen(client, world,
                            term=term)
 
     assert NARRATIVE["strengths"] in client.get(child_screen).content.decode()
+
+
+def test_the_admin_soft_deletes_rather_than_dropping_the_row(rf, world, term):
+    """CLAUDE.md §2.4, §3.3 — an admin delete must not lose the record.
+
+    ``rf`` rather than a stub object: ``soft_delete`` records the actor's IP
+    from ``request.META`` for the audit row, so a bare namespace fails on
+    the one line that matters here.
+    """
+    from apps.assessment.admin import TermReportAdmin
+    from apps.core.admin_site import admin_site
+
+    services.save_term_report(actor=world["dulmaa"], child=world["bataa"],
+                              term=term, **NARRATIVE)
+    report = TermReport.objects.get()
+
+    request = rf.post("/udirdlaga/")
+    request.user = world["dulmaa"]
+    TermReportAdmin(TermReport, admin_site).delete_model(request, report)
+
+    assert not TermReport.objects.filter(pk=report.pk).exists()
+    assert TermReport.all_objects.get(pk=report.pk).deleted_at is not None

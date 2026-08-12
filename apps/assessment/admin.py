@@ -25,6 +25,7 @@ from .models import (
     DevelopmentDomain,
     DevelopmentIndicator,
     Term,
+    TermReport,
 )
 
 
@@ -163,3 +164,20 @@ class TermAdmin(TenantScopedAdmin):
         services.save_term(
             actor=request.user, obj=obj, created=not change, request=request
         )
+
+
+@admin.register(TermReport, site=admin_site)
+class TermReportAdmin(TenantScopedAdmin):
+    """RFP §6.4. Read-mostly: the narrative is written on the teacher's
+    screen, and this exists so an administrator can find and archive one.
+
+    ``ServiceBackedAdmin`` routes save and delete through the services, so
+    an admin action still writes an audit row and still soft-deletes
+    (CLAUDE.md §2.4, §3.3).
+    """
+
+    list_display = ("child", "term", "status", "author", "finalized_at")
+    list_filter = ("status", "term")
+    search_fields = ("child__last_name", "child__first_name")
+    list_select_related = ("child", "term", "author")
+    exclude = ("kindergarten",)
