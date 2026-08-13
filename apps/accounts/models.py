@@ -128,6 +128,7 @@ class Membership(BaseModel):
     kindergarten = models.ForeignKey(
         "tenants.Kindergarten", null=True, blank=True,
         on_delete=models.CASCADE, related_name="memberships",
+        verbose_name="цэцэрлэг",
     )
     role = models.CharField("эрх", max_length=20, choices=Role.choices)
     is_active = models.BooleanField("идэвхтэй", default=True)

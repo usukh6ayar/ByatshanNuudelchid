@@ -1,0 +1,126 @@
+{% extends "admin/base.html" %}
+{% comment %} Django's admin, wearing the product's colours — RFP §13, §622.
+
+   `/udirdlaga/` is a screen a kindergarten director actually uses, not a
+   developer tool, so arriving there from the dashboard should not feel like
+   landing in a different application. Django's own chrome is 1990s blue and
+   its own typography; this restyles it with the tokens from app.css and adds
+   a way back to the dashboard.
+
+   Restyled rather than rebuilt: the admin's changelist, filters, search,
+   pagination and inline forms are a lot of working screens, and replacing
+   them with hand-written views to change their colour is not a trade worth
+   making. What matters is that the two do not look like two products.
+{% endcomment %}
+{% load static %}
+
+{% block title %}{{ title }} · Удирдлага{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  :root,
+  html[data-theme="light"] {
+    --ink: #1f2430;
+    --muted: #6b7280;
+    --brand: #5b4bd6;
+    --brand-soft: #eeecfd;
+    --page-bg: #f6f7fb;
+    --card: #ffffff;
+    --line: #e6e8ef;
+
+    /* Django's own variables, pointed at ours. Setting these is what
+       recolours the changelist, the buttons and the form rows without
+       overriding a rule for each. */
+    --primary: #5b4bd6;
+    --secondary: #4a3cc0;
+    --accent: #5b4bd6;
+    --primary-fg: #ffffff;
+    --header-bg: #2b2f3a;
+    --header-color: #ffffff;
+    --header-branding-color: #ffffff;
+    --header-link-color: #ffffff;
+    --link-fg: #5b4bd6;
+    --link-hover-color: #4a3cc0;
+    --link-selected-fg: #4a3cc0;
+    --body-bg: #f6f7fb;
+    --body-fg: #1f2430;
+    --body-quiet-color: #6b7280;
+    --body-loud-color: #1f2430;
+    --breadcrumbs-bg: #2b2f3a;
+    --breadcrumbs-fg: #cbd0dd;
+    --breadcrumbs-link-fg: #ffffff;
+    --selected-bg: #eeecfd;
+    --selected-row: #f7f6ff;
+    --button-bg: #5b4bd6;
+    --button-fg: #ffffff;
+    --button-hover-bg: #4a3cc0;
+    --default-button-bg: #5b4bd6;
+    --default-button-hover-bg: #4a3cc0;
+    --close-button-bg: #6b7280;
+    --close-button-hover-bg: #4b5563;
+    --border-color: #e6e8ef;
+    --darkened-bg: #f1f2f7;
+  }
+
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  /* The product uses rounded cards throughout; the admin's square panels
+     next to them is the difference that reads as "another application". */
+  #content-main .module,
+  #changelist,
+  #changelist-filter,
+  .inline-group {
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  #branding h1, #branding h1 a:link, #branding h1 a:visited {
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+
+  /* A director lands here from the dashboard sidebar and needs the way
+     back. Django's header has no product navigation at all. */
+  .kinder-back {
+    display: inline-block;
+    margin-left: 18px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .14);
+    color: #fff;
+    font-size: .82rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .kinder-back:hover { background: rgba(255, 255, 255, .24); }
+
+  .button, input[type=submit], input[type=button], .submit-row input {
+    border-radius: 10px;
+    font-weight: 600;
+  }
+
+  #changelist-filter { border-radius: 14px; }
+  .paginator { border-radius: 0 0 14px 14px; }
+</style>
+{% endblock %}
+
+{% block branding %}
+<div id="site-name">
+  <a href="{% url 'admin:index' %}">{{ site_header|default:_('Django administration') }}</a>
+  <a class="kinder-back" href="{% url 'dashboard:admin' %}">← Хяналтын самбар</a>
+</div>
+{% endblock %}
+
+{% comment %} Django 5 renders a colour-scheme toggle that writes its own
+   data-theme. The product has its own switch in the sidebar, and two
+   independent togglers disagreeing is worse than one missing.
+{% endcomment %}
+{% block usertools %}
+  <div id="user-tools">
+    {{ request.user }} ·
+    <a href="{% url 'accounts:logout' %}">Гарах</a>
+  </div>
+{% endblock %}
