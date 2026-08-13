@@ -14,6 +14,7 @@ from django.core.paginator import Paginator
 from django.http import Http404
 from django.shortcuts import redirect, render
 
+from apps.core.layouts import layout_for
 from apps.core.permissions import visible_children
 from apps.tenants.selectors import assignable_groups
 
@@ -46,7 +47,7 @@ def announcement_list(request):
     return render(request, "comms/list.html", {
         "page": page,
         "is_staff": staff,
-        "base_template": "base_teacher.html" if staff else "base_parent.html",
+        "base_template": layout_for(request.user, guardian_view=not staff),
         "nav": "announcements",
         "unread": 0 if staff else selectors.unread_count(request.user),
     })
@@ -67,7 +68,7 @@ def announcement_detail(request, announcement_id):
     return render(request, "comms/detail.html", {
         "announcement": announcement,
         "is_staff": staff,
-        "base_template": "base_teacher.html" if staff else "base_parent.html",
+        "base_template": layout_for(request.user, guardian_view=not staff),
         "nav": "announcements",
         "readers": selectors.readers(announcement) if staff else None,
         "can_edit": staff and services.can_publish_in(
@@ -106,7 +107,7 @@ def announcement_form(request, announcement_id=None):
         ).distinct().order_by("last_name", "first_name"),
         "selected_groups": set(),
         "selected_children": set(),
-        "base_template": "base_teacher.html",
+        "base_template": layout_for(request.user),
         "nav": "announcements",
     }
 
@@ -196,7 +197,7 @@ def announcement_delete(request, announcement_id):
     if request.method != "POST":
         return render(request, "comms/delete_confirm.html", {
             "announcement": announcement,
-            "base_template": "base_teacher.html",
+            "base_template": layout_for(request.user),
             "nav": "announcements",
         })
 

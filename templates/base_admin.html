@@ -1,0 +1,126 @@
+{% load static %}<!doctype html>
+{% comment %} Administrator layout — RFP §13 asks for three, and §2.1 lists what an
+   administrator does: kindergartens, groups, teachers, children, guardians,
+   the assessment configuration, reports and the audit log. None of that is
+   on a teacher's menu, and half a teacher's menu is meaningless here — an
+   administrator has no group of their own to review observations for.
+
+   Built from `docs/design/screens/admin-dashboard.jpeg`: the same sidebar
+   shape as the staff layout, a different list inside it.
+
+   The entries point at `/udirdlaga/`, the project's own admin site, not
+   Django's. Sections belonging to a later phase are deliberately absent —
+   a menu item that goes nowhere teaches people the system is broken.
+{% endcomment %}
+<html lang="mn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Удирдлага{% endblock %} · Хүүхдийн хөгжлийн хавтас</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% include "_theme_head.html" %}
+</head>
+<body>
+{% include "_icons.html" %}
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand__mark">
+        <img src="{% static 'img/mark-96.png' %}" alt="Бяцхан нүүдэлчид" width="36" height="26">
+      </span>
+      <span>
+        <span class="brand__name">Хүүхдийн хөгжлийн<br>цахим хувийн хавтас</span>
+        <span class="brand__sub">Админ систем</span>
+      </span>
+    </div>
+
+    <nav class="nav" aria-label="Үндсэн цэс">
+      <a href="{% url 'dashboard:admin' %}"
+         {% if nav == 'dashboard' %}aria-current="page"{% endif %}>
+        <svg class="ic" aria-hidden="true"><use href="#i-dashboard"></use></svg>
+        Хяналтын самбар
+      </a>
+      <a href="{% url 'udirdlaga:tenants_kindergarten_changelist' %}"
+         {% if nav == 'kindergartens' %}aria-current="page"{% endif %}>
+        <svg class="ic" aria-hidden="true"><use href="#i-home"></use></svg>
+        Цэцэрлэгийн удирдлага
+      </a>
+      <a href="{% url 'udirdlaga:tenants_group_changelist' %}"
+         {% if nav == 'groups' %}aria-current="page"{% endif %}>
+        <svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg>
+        Бүлгийн удирдлага
+      </a>
+      <a href="{% url 'udirdlaga:accounts_membership_changelist' %}"
+         {% if nav == 'staff' %}aria-current="page"{% endif %}>
+        <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
+        Багшийн удирдлага
+      </a>
+      <a href="{% url 'children:list' %}"
+         {% if nav == 'children' %}aria-current="page"{% endif %}>
+        <svg class="ic" aria-hidden="true"><use href="#i-portfolio"></use></svg>
+        Хүүхдийн удирдлага
+      </a>
+      <a href="{% url 'udirdlaga:accounts_user_changelist' %}"
+         {% if nav == 'users' %}aria-current="page"{% endif %}>
+        <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
+        Хэрэглэгч ба эрх
+      </a>
+      <a href="{% url 'udirdlaga:assessment_developmentdomain_changelist' %}"
+         {% if nav == 'domains' %}aria-current="page"{% endif %}>
+        <svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg>
+        Хөгжлийн шалгуур
+      </a>
+      <a href="{% url 'udirdlaga:assessment_term_changelist' %}"
+         {% if nav == 'terms' %}aria-current="page"{% endif %}>
+        <svg class="ic" aria-hidden="true"><use href="#i-cake"></use></svg>
+        Улирал, хичээлийн жил
+      </a>
+      <a href="{% url 'comms:list' %}"
+         {% if nav == 'announcements' %}aria-current="page"{% endif %}>
+        <svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg>
+        Мэдэгдэл
+      </a>
+      <a href="{% url 'accounts:profile' %}"
+         {% if nav == 'profile' %}aria-current="page"{% endif %}>
+        <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
+        Миний бүртгэл
+      </a>
+      <a href="{% url 'accounts:logout' %}">
+        <svg class="ic" aria-hidden="true"><use href="#i-logout"></use></svg>
+        Гарах
+      </a>
+    </nav>
+
+    {% include "_theme.html" %}
+
+    {% block sidebar_foot %}{% endblock %}
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1>{% block heading %}{% endblock %}</h1>
+        {% block lede %}{% endblock %}
+      </div>
+      <div class="who">
+        <span class="avatar avatar--sm" aria-hidden="true">
+          {{ request.user.first_name|first|default:"·" }}
+        </span>
+        <span>
+          <span class="who__name">{{ request.user }}</span><br>
+          <span class="brand__sub">Админ</span>
+        </span>
+      </div>
+    </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <p class="msg msg--ok" role="status">{{ message }}</p>
+      {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+</div>
+</body>
+</html>

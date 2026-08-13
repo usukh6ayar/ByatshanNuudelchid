@@ -1,4 +1,4 @@
-{% extends "base_teacher.html" %}
+{% extends base_template|default:default_layout|default:"base_teacher.html" %}
 {% comment %} The code is shown exactly once. Only its hash is stored, so it cannot be
    looked up again — re-sending issues a new invitation. {% endcomment %}
 

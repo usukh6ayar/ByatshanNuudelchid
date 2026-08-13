@@ -21,6 +21,7 @@ from django.utils import timezone
 
 from apps.assessment.selectors import domains_for, levels_for
 from apps.children import selectors as child_selectors
+from apps.core.layouts import layout_for
 from apps.core.models import AuditAction
 from apps.core.permissions import can_record_for_child, is_guardian_of
 from apps.core.services import audit
@@ -40,7 +41,7 @@ def _context(request, child_id) -> dict:
         "child": child,
         "is_guardian": guardian,
         "can_record": can_record_for_child(request.user, child),
-        "base_template": "base_parent.html" if guardian else "base_teacher.html",
+        "base_template": layout_for(request.user, guardian_view=guardian),
         "nav": "home" if guardian else "children",
     }
 

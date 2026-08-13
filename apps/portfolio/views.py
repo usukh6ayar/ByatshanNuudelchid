@@ -13,6 +13,7 @@ from django.http import Http404
 from django.shortcuts import redirect, render
 
 from apps.children import selectors as child_selectors
+from apps.core.layouts import layout_for
 from apps.core.models import AuditAction
 from apps.core.permissions import is_guardian_of
 from apps.core.services import audit
@@ -31,7 +32,7 @@ def _context(request, child_id) -> dict:
     return {
         "child": child,
         "is_guardian": guardian,
-        "base_template": "base_parent.html" if guardian else "base_teacher.html",
+        "base_template": layout_for(request.user, guardian_view=guardian),
         "nav": "home" if guardian else "children",
     }
 

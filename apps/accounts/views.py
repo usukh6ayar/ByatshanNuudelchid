@@ -24,6 +24,8 @@ from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 
+from apps.core.layouts import layout_for
+
 from . import services
 
 # The approved design shows Багш / Эцэг эх / Админ tabs on the login screen.
@@ -263,7 +265,7 @@ def profile(request):
 
     context: dict = {
         "is_teacher": is_teacher,
-        "base_template": _layout_for(user),
+        "base_template": layout_for(user),
         "form": {
             "last_name": user.last_name,
             "first_name": user.first_name,
@@ -317,23 +319,6 @@ def _years_or_none(value):
     if not value.isdigit():
         raise ValueError("Ажилласан жилийг тоогоор бичнэ үү.")
     return int(value)
-
-
-def _layout_for(user) -> str:
-    """The profile page belongs to whichever shell the user already sees.
-
-    RFP §13 gives each role its own layout; sending a parent into the teacher
-    chrome to edit their phone number would be the one screen that looks like
-    somebody else's application. Administrators get the staff shell, which is
-    what the rest of the codebase does — their own workspace is the Django
-    admin site at /udirdlaga/ and has no base template here.
-    """
-    staff_roles = {services.Role.TEACHER, services.Role.ADMIN,
-                   services.Role.SUPERADMIN}
-    roles = set(
-        user.memberships.filter(is_active=True).values_list("role", flat=True)
-    )
-    return "base_teacher.html" if roles & staff_roles else "base_parent.html"
 
 
 def _error_message(exc) -> str:

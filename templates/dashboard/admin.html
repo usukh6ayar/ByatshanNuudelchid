@@ -1,6 +1,8 @@
-{% extends "base_teacher.html" %}
-{% comment %} RFP §12.2. Uses the staff layout: an administrator is staff, and a third
-   chrome for one screen would be a third thing to keep in step.
+{% extends "base_admin.html" %}
+{% comment %} RFP §12.2, in the administrator's own layout — RFP §13 asks for three.
+   It used to extend the teacher layout, which meant a director saw
+   "Хянах ажиглалт" for groups they do not teach and no way to reach the
+   kindergartens they do administer.
 
    The figures come from the cache a Celery beat task fills (CLAUDE.md §6),
    so the timestamp is shown — a number without an "as of" invites someone

@@ -75,6 +75,8 @@ TEMPLATES = [
                 # RFP §8.1 — the unread badge lives in the layout, so it
                 # cannot depend on each view remembering to pass it.
                 "apps.comms.context_processors.announcements",
+                # RFP §13 — and neither can the layout itself.
+                "apps.core.context_processors.layout",
             ],
         },
     },

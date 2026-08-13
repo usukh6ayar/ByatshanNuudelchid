@@ -1,4 +1,4 @@
-{% extends "base_teacher.html" %}
+{% extends base_template|default:default_layout|default:"base_teacher.html" %}
 
 {% block title %}Шинэ хүүхэд бүртгэх{% endblock %}
 {% block heading %}Шинэ хүүхэд бүртгэх{% endblock %}

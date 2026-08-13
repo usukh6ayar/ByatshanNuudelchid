@@ -1,4 +1,4 @@
-{% extends "base_teacher.html" %}
+{% extends base_template|default:default_layout|default:"base_teacher.html" %}
 
 {% block title %}Асран хамгаалагч нэмэх{% endblock %}
 {% block heading %}Асран хамгаалагч нэмэх{% endblock %}
