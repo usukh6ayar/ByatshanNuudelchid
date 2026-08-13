@@ -16,6 +16,21 @@
     <form method="post" novalidate>
       {% csrf_token %}
 
+      <label for="id_report_type">Тайлангийн төрөл</label>
+      <select name="report_type" id="id_report_type">
+        <option value="child_portfolio">Хүүхдийн хувийн хавтас</option>
+        {% if terms %}<option value="term_report">Улирлын тайлан</option>{% endif %}
+      </select>
+
+      {% if terms %}
+        <label for="id_term">Улирал — улирлын тайлан сонгосон бол</label>
+        <select name="term" id="id_term">
+          {% for term in terms %}
+            <option value="{{ term.pk }}">{{ term.name }}</option>
+          {% endfor %}
+        </select>
+      {% endif %}
+
       {% for code, label in sections %}
         <div style="display:flex; gap:10px; align-items:center; margin-top:10px">
           <input type="checkbox" name="sections" value="{{ code }}"

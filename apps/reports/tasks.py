@@ -14,13 +14,14 @@ from apps.core.pdf import render_pdf_with_pages
 from apps.media import services as media_services
 
 from . import services
-from .builder import build_context
+from .builder import build_context, build_term_report_context
 from .models import ReportJob
 
 logger = logging.getLogger(__name__)
 
 TEMPLATES = {
     ReportJob.Type.CHILD_PORTFOLIO: "reports/child_portfolio.html",
+    ReportJob.Type.TERM_REPORT: "reports/term_report.html",
 }
 
 
@@ -80,21 +81,49 @@ def _render(job: ReportJob) -> tuple[bytes, int]:
     if job.child is None:
         raise ValueError("Тайлан хүүхэдгүй байна.")
 
-    context = build_context(
-        # The report contains what the *requester* may see, not what the
-        # worker could reach. builder.py explains why.
-        viewer=job.requested_by,
-        child=job.child,
-        sections=job.params.get("sections", []),
-    )
+    if job.type == ReportJob.Type.TERM_REPORT:
+        context = _term_report_context(job)
+    else:
+        context = build_context(
+            # The report contains what the *requester* may see, not what the
+            # worker could reach. builder.py explains why.
+            viewer=job.requested_by,
+            child=job.child,
+            sections=job.params.get("sections", []),
+        )
     return render_pdf_with_pages(template, context)
+
+
+def _term_report_context(job: ReportJob) -> dict:
+    """RFP §10.2. Fails the job rather than printing an empty document.
+
+    Two ways this legitimately has nothing to render: the term was deleted
+    between the request and the worker, or the requester may not read the
+    report — a guardian and a draft. Both produce a paper with headings and
+    no content, which looks like a bug to whoever downloads it, so the row
+    carries the reason instead (§549).
+    """
+    from apps.assessment.models import Term
+
+    term = Term.objects.filter(pk=job.params.get("term_id")).first()
+    if term is None:
+        raise ValueError("Улирал олдсонгүй.")
+
+    context = build_term_report_context(
+        viewer=job.requested_by, child=job.child, term=term
+    )
+    if context["report"] is None:
+        raise ValueError("Тайлан бэлэн болоогүй байна.")
+    return context
 
 
 def _filename(job: ReportJob) -> str:
     """A name a family can find again in their downloads folder."""
     child = job.child
     stamp = job.requested_at.strftime("%Y%m%d")
-    return f"{child.last_name}_{child.first_name}_hawtas_{stamp}.pdf"
+    kind = ("tailan" if job.type == ReportJob.Type.TERM_REPORT
+            else "hawtas")
+    return f"{child.last_name}_{child.first_name}_{kind}_{stamp}.pdf"
 
 
 @shared_task

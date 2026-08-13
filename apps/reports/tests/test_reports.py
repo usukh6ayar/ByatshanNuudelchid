@@ -644,3 +644,114 @@ def test_a_guardian_gets_no_context_for_a_draft_term(world, term_with_report):
                                         term=term_with_report)
 
     assert context["report"] is None
+
+
+def test_the_term_report_pdf_contains_all_four_sections(world,
+                                                        term_with_report):
+    """RFP §21.7. Asserted on text extracted from the rendered file, not on
+    the template — Day 10's lesson that a template can satisfy every
+    structural assertion and still print the wrong thing."""
+    import io
+
+    import pypdf
+
+    job = services.request_term_report(actor=world["dulmaa"],
+                                       child=world["bataa"],
+                                       term=term_with_report)
+    generate_report(job.pk)
+    job.refresh_from_db()
+
+    assert job.status == ReportJob.Status.DONE
+
+    from apps.media import services as media_services
+
+    reader = pypdf.PdfReader(
+        io.BytesIO(media_services.read_bytes(job.result_media))
+    )
+    text = "\n".join(page.extract_text() for page in reader.pages)
+
+    assert "Давуу тал" in text
+    assert "Дэмжих шаардлагатай чадвар" in text
+    assert "Дараагийн улирлын зорилго" in text
+    assert "Эцэг эхэд өгөх зөвлөмж" in text
+    assert "Гүйлт сайн" in text
+    assert world["bataa"].full_name in text
+    assert "Хуудас" in text
+    for leak in ("RFP", "{#", "CLAUDE.md", "builder.py"):
+        assert leak not in text, f"internal commentary reached the PDF: {leak!r}"
+
+
+def test_a_guardians_pdf_of_a_draft_term_fails_rather_than_leaking(
+    world, term_with_report
+):
+    """The report must not answer differently from the screen."""
+    assessment_services.reopen_term(actor=world["dulmaa"],
+                                    child=world["bataa"],
+                                    term=term_with_report)
+
+    job = services.request_term_report(actor=world["bataa_mother"],
+                                       child=world["bataa"],
+                                       term=term_with_report)
+    generate_report(job.pk)
+    job.refresh_from_db()
+
+    assert job.status == ReportJob.Status.FAILED
+
+
+def test_a_job_whose_term_no_longer_exists_fails_with_a_message(
+    world, term_with_report
+):
+    job = services.request_term_report(actor=world["dulmaa"],
+                                       child=world["bataa"],
+                                       term=term_with_report)
+    job.params = {"term_id": 999999}
+    job.save(update_fields=["params"])
+
+    generate_report(job.pk)
+    job.refresh_from_db()
+
+    assert job.status == ReportJob.Status.FAILED
+    assert job.error_message
+
+
+def test_the_term_report_downloads_under_its_own_name(world,
+                                                      term_with_report):
+    """_filename hardcoded _hawtas_, so a term report would arrive named
+    like a portfolio."""
+    job = services.request_term_report(actor=world["dulmaa"],
+                                       child=world["bataa"],
+                                       term=term_with_report)
+    generate_report(job.pk)
+    job.refresh_from_db()
+
+    assert "hawtas" not in job.result_media.original_name
+    assert "tailan" in job.result_media.original_name
+
+
+def test_the_request_screen_queues_a_term_report(client, world,
+                                                 term_with_report):
+    login(client, world["dulmaa"])
+
+    response = client.post(
+        request_url(world["bataa"]),
+        {"report_type": "term_report", "term": term_with_report.pk},
+    )
+
+    assert response.status_code == 302
+    assert ReportJob.objects.filter(
+        type=ReportJob.Type.TERM_REPORT
+    ).exists()
+
+
+def test_a_term_report_without_a_term_explains_itself(client, world,
+                                                      term_with_report):
+    login(client, world["dulmaa"])
+
+    response = client.post(request_url(world["bataa"]),
+                           {"report_type": "term_report"})
+
+    assert response.status_code == 200
+    assert "Улирлаа сонгоно уу" in response.content.decode()
+    assert not ReportJob.objects.filter(
+        type=ReportJob.Type.TERM_REPORT
+    ).exists()

@@ -13,7 +13,9 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect, render
 
+from apps.assessment import selectors as assessment_selectors
 from apps.children import selectors as child_selectors
+from apps.children.services import current_enrollment
 from apps.core.permissions import is_guardian_of
 
 from . import services
@@ -57,8 +59,16 @@ def report_request(request, child_id):
     context = _context(request, child_id)
     child = context["child"]
 
+    # §10.2's second report type needs a term to render. A child with no
+    # active enrollment has no school year and so no terms — the form then
+    # offers the portfolio alone rather than an empty dropdown.
+    enrollment = current_enrollment(child)
+    terms = (list(assessment_selectors.terms_for(enrollment.school_year))
+             if enrollment else [])
+
     context |= {
         "sections": services.SECTIONS,
+        "terms": terms,
         "recent": ReportJob.objects.filter(
             child=child, requested_by=request.user
         ).order_by("-requested_at")[:5],
@@ -66,11 +76,23 @@ def report_request(request, child_id):
 
     if request.method == "POST":
         try:
-            job = services.request_child_portfolio(
-                actor=request.user, child=child,
-                sections=request.POST.getlist("sections"),
-                request=request,
-            )
+            if request.POST.get("report_type") == "term_report":
+                term = next(
+                    (t for t in terms
+                     if str(t.pk) == request.POST.get("term")), None
+                )
+                if term is None:
+                    raise ValidationError("Улирлаа сонгоно уу.")
+                job = services.request_term_report(
+                    actor=request.user, child=child, term=term,
+                    request=request,
+                )
+            else:
+                job = services.request_child_portfolio(
+                    actor=request.user, child=child,
+                    sections=request.POST.getlist("sections"),
+                    request=request,
+                )
         except PermissionDenied:
             raise Http404 from None
         except ValidationError as exc:
