@@ -22,6 +22,7 @@ class ReportJob(TenantScopedModel):
 
     class Type(models.TextChoices):
         CHILD_PORTFOLIO = "child_portfolio", "Хүүхдийн хувийн хавтас"
+        TERM_REPORT = "term_report", "Улирлын тайлан"
 
     class Status(models.TextChoices):
         QUEUED = "queued", "Дараалалд"

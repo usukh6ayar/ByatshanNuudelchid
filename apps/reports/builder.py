@@ -24,7 +24,7 @@ from apps.observations import selectors as observation_selectors
 from apps.observations.models import Observation
 from apps.portfolio import selectors as portfolio_selectors
 
-__all__ = ["build_context"]
+__all__ = ["build_context", "build_term_report_context"]
 
 # Photographs dominate the file size (§10.3 wants a small file at good
 # quality). One inlined photo per report is the profile picture; observation
@@ -102,6 +102,28 @@ def build_context(*, viewer, child, sections) -> dict:
     # Decided last, once every section knows whether it has anything to say.
     context["sections"] = _sections_with_content(context, wanted)
     return context
+
+
+def build_term_report_context(*, viewer, child, term) -> dict:
+    """RFP §10.2 — one term's report, scoped to whoever asked for it.
+
+    ``report`` is ``None`` when the viewer may not see it — a guardian and a
+    draft. The task fails the job in that case rather than rendering a paper
+    of empty headings, so the PDF cannot answer differently from the screen.
+    """
+    return {
+        "child": child,
+        "kindergarten": child.kindergarten,
+        "enrollment": current_enrollment(child),
+        "term": term,
+        "report": assessment_selectors.term_report(viewer, child, term),
+        "assessments": list(
+            assessment_selectors.child_assessments(viewer, child, term)
+        ),
+        "photo_data_uri": _photo(child),
+        "logo_data_uri": _logo(),
+        "generated_for": viewer,
+    }
 
 
 def _sections_with_content(context: dict, wanted: set[str]) -> set[str]:

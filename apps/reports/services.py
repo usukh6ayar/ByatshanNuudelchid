@@ -15,6 +15,7 @@ from .models import ReportJob
 __all__ = [
     "SECTIONS",
     "request_child_portfolio",
+    "request_term_report",
     "mark_running",
     "mark_done",
     "mark_failed",
@@ -81,6 +82,43 @@ def request_child_portfolio(*, actor, child, sections=None,
         child=child,
         type=ReportJob.Type.CHILD_PORTFOLIO,
         params={"sections": _clean_sections(sections)},
+        requested_by=actor,
+        status=ReportJob.Status.QUEUED,
+        expires_at=timezone.now() + dt.timedelta(
+            days=settings.REPORT_RETENTION_DAYS
+        ),
+    )
+    save_record(actor=actor, obj=job, created=True, request=request)
+
+    from .tasks import generate_report
+
+    transaction.on_commit(lambda: generate_report.delay(job.pk))
+    return job
+
+
+@transaction.atomic
+def request_term_report(*, actor, child, term, request=None) -> ReportJob:
+    """RFP §10.2 — queue one term's report as a PDF.
+
+    The term is stored by id rather than as a relation because ``params``
+    is a record of what was asked for, not a schema — the same reason the
+    portfolio stores its section list there.
+    """
+    if not can_access_child(actor, child):
+        raise PermissionDenied
+
+    kindergartens = visible_kindergartens(actor, child)
+    if not kindergartens:
+        raise PermissionDenied
+
+    job = ReportJob(
+        kindergarten_id=(
+            child.kindergarten_id if child.kindergarten_id in kindergartens
+            else next(iter(kindergartens))
+        ),
+        child=child,
+        type=ReportJob.Type.TERM_REPORT,
+        params={"term_id": term.pk},
         requested_by=actor,
         status=ReportJob.Status.QUEUED,
         expires_at=timezone.now() + dt.timedelta(

@@ -573,3 +573,74 @@ def test_a_guardian_may_request_their_own_childs_portfolio(client, world,
 
     assert response.status_code == 302
     assert ReportJob.objects.get().requested_by == world["bataa_mother"]
+
+
+# ------------------------------------------------------------------ §10.2
+
+@pytest.fixture
+def term_with_report(world, filled):
+    """A finalized term report for Bataa — RFP §6.4.
+
+    ``filled`` already created the four terms and one assessment in the
+    first of them. ``ensure_default_terms`` returns the existing rows rather
+    than making a second set, so calling it again is how you get hold of
+    them without the fixture having to return them.
+    """
+    terms = assessment_services.ensure_default_terms(
+        actor=world["dulmaa"], school_year=world["naran_year"]
+    )
+    assessment_services.save_term_report(
+        actor=world["dulmaa"], child=world["bataa"], term=terms[0],
+        strengths="Гүйлт сайн",
+        needs_support="Тэнцвэр алдах нь ажиглагддаг",
+        next_goals="Тэнцвэрийн дасгал тогтмол хийх",
+        advice_for_parents="Гэртээ тэнцвэрийн дасгал тоглоно уу",
+    )
+    assessment_services.finalize_term(actor=world["dulmaa"],
+                                      child=world["bataa"], term=terms[0])
+    return terms[0]
+
+
+def test_requesting_a_term_report_queues_the_right_type(world,
+                                                        term_with_report):
+    job = services.request_term_report(actor=world["dulmaa"],
+                                       child=world["bataa"],
+                                       term=term_with_report)
+
+    assert job.type == ReportJob.Type.TERM_REPORT
+    assert job.params["term_id"] == term_with_report.pk
+    assert job.status == ReportJob.Status.QUEUED
+
+
+def test_a_stranger_cannot_request_a_term_report(world, term_with_report):
+    with pytest.raises(PermissionDenied):
+        services.request_term_report(actor=world["oyun"],
+                                     child=world["bataa"],
+                                     term=term_with_report)
+
+
+def test_the_term_context_carries_the_four_sections(world, term_with_report):
+    from apps.reports.builder import build_term_report_context
+
+    context = build_term_report_context(viewer=world["dulmaa"],
+                                        child=world["bataa"],
+                                        term=term_with_report)
+
+    assert context["report"].strengths == "Гүйлт сайн"
+    assert context["term"] == term_with_report
+    assert context["logo_data_uri"]
+
+
+def test_a_guardian_gets_no_context_for_a_draft_term(world, term_with_report):
+    """The screen and the report must give the same answer."""
+    from apps.reports.builder import build_term_report_context
+
+    assessment_services.reopen_term(actor=world["dulmaa"],
+                                    child=world["bataa"],
+                                    term=term_with_report)
+
+    context = build_term_report_context(viewer=world["bataa_mother"],
+                                        child=world["bataa"],
+                                        term=term_with_report)
+
+    assert context["report"] is None
