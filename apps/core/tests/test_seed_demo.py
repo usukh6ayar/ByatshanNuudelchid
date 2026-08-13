@@ -16,7 +16,11 @@ from apps.children.models import Child
 from apps.comms.models import Announcement
 from apps.observations.models import Observation
 
-pytestmark = pytest.mark.django_db
+# Every test here runs the whole seeding command — four children with photos,
+# observations and assessments — so the file is 15 of the suite's slowest
+# seconds. Marked slow as a group: `make test-fast` skips it, `make test`
+# does not.
+pytestmark = [pytest.mark.django_db, pytest.mark.slow]
 
 
 @override_settings(DEBUG=True)

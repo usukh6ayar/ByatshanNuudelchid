@@ -1,7 +1,13 @@
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings.dev"
 python_files = ["test_*.py"]
-addopts = "--reuse-db -q"
+# -n 4 rather than 8: measured 2m56s against 2m51s on this machine, so the
+# database is the limit past four workers and the extra ones only cost memory.
+# --reuse-db keeps the schema between runs; add --create-db after a migration.
+addopts = "--reuse-db -q -n 4"
+markers = [
+    "slow: PDF rendering and seed_demo — the tests worth skipping on a quick loop",
+]
 testpaths = ["apps"]
 
 [tool.ruff]

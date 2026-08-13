@@ -5,6 +5,13 @@ pytest-django==4.11.1
 pytest-cov==6.2.1
 factory-boy==3.3.3
 
+# Run the suite across cores. The `world` fixture rebuilds two kindergartens
+# per test and the profile puts most of the time in setup rather than in the
+# tests themselves, so the work parallelises almost linearly. Each worker
+# gets its own test database — which also makes a second concurrent run safe,
+# instead of two runs colliding on one database as they did on 2026-08-13.
+pytest-xdist==3.6.1
+
 # Inspect generated PDFs — RFP §10.3. WeasyPrint writes object streams, so
 # byte-level greps do not work; the file has to be parsed.
 pypdf==6.1.1

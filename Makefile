@@ -12,8 +12,14 @@ build:
 sh:
 	docker compose run --rm web bash
 
-test:          ## Run the full suite (authorization tests are mandatory — CLAUDE.md §4.1)
+test:          ## The full suite, four workers (~3 min). Before a push
 	docker compose run --rm web pytest
+
+test-fast:     ## Everything except PDF rendering and seed_demo (~1 min). While coding
+	docker compose run --rm web pytest -m "not slow"
+
+test-app:      ## One app: make test-app APP=assessment (~30s). The inner loop
+	docker compose run --rm web pytest apps/$(APP)
 
 test-perms:    ## Just the authorization tests (RFP §21.2-21.4)
 	docker compose run --rm web pytest apps/core/tests/test_permissions.py -v

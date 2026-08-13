@@ -56,6 +56,30 @@ make check-deploy  # Django's production checklist against config.settings.prod
 make backup        # dump the database into ./backups and verify the dump
 ```
 
+## Running the tests
+
+672 tests. Four workers by default (`pyproject.toml`), which took the full
+suite from about 7 minutes to under 3.
+
+```bash
+make test-app APP=assessment   # ~30s  — the inner loop, while writing code
+make test-fast                 # ~2.5m — everything except PDF and seed_demo
+make test                      # ~3m   — all of it, before a push
+```
+
+**Use `test-app` while working.** Timing each app separately gives 25–36
+seconds, which is the difference between running the tests and not bothering.
+The full suite is for before a push, and it is cheap enough to leave running
+in another terminal.
+
+`-m "not slow"` drops 11 tests: `seed_demo`, which builds a whole demo
+kindergarten per test, and five that render a real PDF through WeasyPrint.
+**Authorization tests are never marked slow** — CLAUDE.md §4.1 makes them
+mandatory, and a skipped 404 test is how a leak ships.
+
+After a migration, add `--create-db`; `--reuse-db` otherwise keeps the schema
+between runs.
+
 ## Backup and restore
 
 RFP §16. `make backup` runs `pg_dump` inside the `db` container, writes a

@@ -158,6 +158,7 @@ def test_the_worker_is_started_only_after_the_commit(client, world, filled,
 
 # ------------------------------------------------------------------ §10.3
 
+@pytest.mark.slow
 def test_the_pdf_renders_with_cyrillic_and_page_numbers(world, filled):
     """RFP §10.3 — the whole point of the Day 1 spike, now on real data."""
     import pypdf
@@ -206,6 +207,7 @@ def test_the_pdf_renders_with_cyrillic_and_page_numbers(world, filled):
     assert "«Чи эхлээд тавь.»" in text
 
 
+@pytest.mark.slow
 def test_the_logo_is_embedded_in_the_pdf(world, filled):
     """RFP §10.3 — "цэцэрлэгийн лого, нэртэй".
 
@@ -238,6 +240,7 @@ def test_the_logo_is_embedded_in_the_pdf(world, filled):
     assert len(reader.pages[0].images) == 1, "the logo is not on the cover"
 
 
+@pytest.mark.slow
 def test_a_missing_logo_file_does_not_break_the_render(world, filled,
                                                        monkeypatch):
     """A report without the mark still prints. §549 — never fail the render."""
@@ -416,6 +419,7 @@ def test_dropping_a_section_does_not_widen_the_request(world, filled):
     assert context["sections"] <= {"basic", "observations"}
 
 
+@pytest.mark.slow
 def test_an_empty_portfolio_is_short(world):
     """The whole point of D5, measured on the artefact.
 
@@ -646,6 +650,7 @@ def test_a_guardian_gets_no_context_for_a_draft_term(world, term_with_report):
     assert context["report"] is None
 
 
+@pytest.mark.slow
 def test_the_term_report_pdf_contains_all_four_sections(world,
                                                         term_with_report):
     """RFP §21.7. Asserted on text extracted from the rendered file, not on
