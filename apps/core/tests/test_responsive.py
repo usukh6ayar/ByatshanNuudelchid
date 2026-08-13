@@ -75,7 +75,11 @@ def test_every_table_that_reaches_a_browser_is_wrapped():
     The report templates are excluded deliberately: they are rendered to A4
     by WeasyPrint and never opened in a browser.
     """
-    print_only = {"reports/child_portfolio.html", "reports/spike.html"}
+    print_only = {
+        "reports/child_portfolio.html",
+        "reports/term_report.html",
+        "reports/spike.html",
+    }
 
     unwrapped = []
     for path in sorted(TEMPLATE_ROOT.rglob("*.html")):

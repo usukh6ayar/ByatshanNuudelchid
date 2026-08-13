@@ -328,7 +328,13 @@ ObservationMedia    observation, media_file, caption, taken on, order
 
 **Why `ObservationDomain` is its own table:** a single observation ("built a tower from blocks and explained it to a friend") belongs to Creativity, Language and Communication simultaneously. A single-column domain would make the §12.3 per-domain averages wrong.
 
-### 6.4 Assessment (8 tables) — Phase 1 except TermReport and AnnualReport, which are Phase 2
+### 6.4 Assessment (8 tables) — Phase 1 except AnnualReport, which is Phase 2
+
+`TermReport` moved into Phase 1 on 2026-08-12 — see
+`2026-08-11-term-report-design.md`, which also drops the `teacher comment`
+field listed below: `Assessment.comment` already holds the per-domain note,
+and a second general comment box would leave the teacher guessing which one
+the family reads.
 
 ```
 DevelopmentDomain   kindergarten(null = system default), name, color,
@@ -348,10 +354,11 @@ Assessment          child, enrollment, domain, indicator(nullable),
                     term, level, comment, assessed_by, assessed_at
                     ⚠ unique(child, enrollment, domain, indicator, term)
 
-TermReport          child, enrollment, term, teacher comment, strengths,
+TermReport          child, enrollment, term, strengths,
                     areas needing support, goals for next term,
                     advice for parents, author,
                     status: draft|final, finalized at                     §6.4
+                    ⚠ unique(child, enrollment, term)
 
 AnnualReport        child, school_year, progress, strengths,
                     skills to develop, year-end conclusion,

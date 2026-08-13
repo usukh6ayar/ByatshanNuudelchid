@@ -303,8 +303,10 @@ section 7; spec section 1 mirrors it.
 **Do not build a later phase's work on your own initiative.** Not in Phase 1:
 
 - **Phase 2** — full portfolio timeline, milestones, photo albums, growth
-  tracking, term and annual reports, document library, Excel, activity posts,
-  consent records, HEIC conversion
+  tracking, the annual report (§6.5), document library, Excel, activity posts,
+  consent records, HEIC conversion. **The term report (§6.4) is not on this
+  list**: it was pulled into Phase 1 on 2026-08-12, because §20-II makes it
+  mandatory MVP and §21.7 an acceptance criterion — see ROADMAP D1
 - **Phase 3** — surveys, analytics, health and safety, attendance, medication,
   voice notes, WebP and thumbnails, CDN, QPay payments
 - **Never** — native mobile applications

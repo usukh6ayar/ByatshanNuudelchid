@@ -2,7 +2,7 @@
 
 Children's Development Digital Portfolio System.
 
-**Status as of 2026-08-11: Phase 1 in progress — 14 of 17 requirement groups
+**Status as of 2026-08-12: Phase 1 in progress — 14 of 17 requirement groups
 complete, 3 partial, 0 not started.** Detail in section 7. The three partials
 are deployment (provider chosen — D3 — but never run against a server),
 responsive layout on real devices, and the REST API (deferred by decision D2).
@@ -151,12 +151,12 @@ end to end.
 | 5 | Parent management — account, parent↔child, access only to own children | ✅ done | `register_guardian`, `test_views_authorization.py` |
 | 6 | Digital child portfolio — About Me, birthday, ages 2–5, basic photos | ✅ done | `apps/portfolio/`, `test_portfolio.py`; profile photo via `apps/media/` |
 | 7 | Teacher observation — full entry form with photo and parent visibility | ✅ done | `apps/observations/`, `test_observations.py`; attachments in `test_media.py` |
-| 8 | Basic development assessment — areas, levels 1–4, comment, progress | ✅ done | `apps/assessment/`, `test_assessment.py`; §6.3 group grid, §6.4 term matrix |
+| 8 | Basic development assessment — areas, levels 1–4, comment, progress | ✅ done | `apps/assessment/`, `test_assessment.py`, `test_term_report.py`; §6.3 group grid, §6.4 term matrix and narrative report |
 | 9 | Basic parent observation — submit, teacher views, visibility | ✅ done | Parent form, teacher review queue, §5.4 flow — `test_observations.py` |
 | 10 | Notifications — teacher → parent, read/unread | ✅ done | `apps/comms/`, `test_announcements.py`; §8.1 targeting, unread badge |
 | 11 | Basic dashboards — teacher and admin | ✅ done | `apps/dashboard/`, `test_dashboard.py`; §12.1 direct, §12.2 cached by Celery beat |
 | 12 | Search & filtering — name, group, school year, active/archived | ✅ done | §11's full list, incl. school year, date interval, domain and level — `test_observations.py`, `test_views_authorization.py` |
-| 13 | Basic PDF export — child info, photo, portfolio, observations, assessments | ✅ done | `apps/reports/`, `test_reports.py`; §549 queue, §10.3 A4 + Cyrillic verified by parsing the output |
+| 13 | Basic PDF export — child info, photo, portfolio, observations, assessments | ✅ done | `apps/reports/`, `test_reports.py`; §549 queue, §10.3 A4 + Cyrillic verified by parsing the output; §10.2 term report added 2026-08-12 |
 | 14 | Backend — REST API, PostgreSQL, migrations, auth, ownership, upload, logging, env | ⚠️ partial | Everything except the REST API. **See decision D2** |
 | 15 | Deployment — production, HTTPS, prod database, backup, health check | ⚠️ partial | `/healthz`, `prod.py` passing `check --deploy`, `docker-compose.prod.yml`, `Caddyfile`, `scripts/deploy.sh` with its refusals exercised, backup/restore rehearsed. Target chosen (D3): Hetzner Singapore + Cloudflare R2. **Everything except a server** |
 | 16 | Basic security — hashing, RBAC, ownership, no cross-child access, secure files, HTTPS, validation, injection/XSS, cookies | ✅ done | 40+ authorization tests; HTTPS and file access land with 15 and 4 |
@@ -197,8 +197,9 @@ WebP · payments · smart pickup · mobile apps · AI · multi-language.
 
 Full digital portfolio (complete 2–5 history, timeline, gallery, milestones) ·
 advanced gallery (multi-upload, albums, captions, categories, ordering,
-HEIC/JPG/PNG, compression) · growth tracking with charts · full reporting
-(child, seasonal, annual, development profile, growth, group, batch) ·
+HEIC/JPG/PNG, compression) · growth tracking with charts · the rest of §10.2's
+report types (annual, development profile, growth, group, batch — the child
+portfolio and the term report shipped in Phase 1) ·
 advanced PDF (A4, Cyrillic, page numbers, logo, photos, charts, print-ready,
 optimized size) · teacher document library with versions and bookmarks ·
 Excel import/export · improved dashboards.
@@ -516,7 +517,8 @@ four age pages.
 
 **Decisions.** D1 and D2 resolved — growth tracking, the document library,
 term and annual reports, milestones, albums, activity posts and consent move
-to Phase 2; the REST API stays deferred. The media plan corrected: Phase 1
+to Phase 2; the REST API stays deferred. (D1 was later amended: the term
+report came back into Phase 1 on 2026-08-12.) The media plan corrected: Phase 1
 verifies the MIME type and strips EXIF GPS only, and does both inline.
 
 Zodiac sign and year animal are computed, never stored (§206). The portfolio
@@ -975,6 +977,17 @@ activity posts and consent records.
 Design spec section 1 has been rewritten to match, with section 1.5 recording
 what moved and why. `CLAUDE.md` §7.1, `README.md` and `docs/design/INDEX.md`
 now point here for phase boundaries.
+
+**Amended 2026-08-12.** The client confirmed the deferral, then asked for
+**`TermReport` specifically to be pulled back into Phase 1**: RFP §20-II
+lists "Улирлын тайлан" among the mandatory MVP features and §21.7 makes it
+an acceptance criterion, so deferring it meant shipping an MVP that could
+not pass its own acceptance test. Built to
+`docs/superpowers/specs/2026-08-11-term-report-design.md`.
+
+The rest of D1's list stays in Phase 2 — the full portfolio timeline,
+milestones, photo albums, growth tracking, document library, `AnnualReport`
+(§6.5), Excel, activity posts and consent records.
 
 ### D2 — "Clean REST API" as a Phase 1 item ✅ resolved 2026-08-09
 
