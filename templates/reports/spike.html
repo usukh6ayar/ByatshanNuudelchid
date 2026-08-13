@@ -1,0 +1,80 @@
+{# Cyrillic PDF spike — RFP §10.3. Not a production template. #}
+<style>
+  /* The container installs fonts-dejavu-core, which covers Cyrillic.
+     Replace with a purpose-chosen Mongolian font in assets/fonts/ later —
+     the mechanism is what this spike proves, not the typeface. */
+  @page {
+    size: A4;
+    margin: 18mm 16mm 20mm 16mm;
+    @bottom-center {
+      content: "Хуудас " counter(page) " / " counter(pages);
+      font-family: "DejaVu Sans", sans-serif;
+      font-size: 9pt;
+      color: #666;
+    }
+  }
+
+  body {
+    font-family: "DejaVu Sans", sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #1a1a1a;
+  }
+
+  header { border-bottom: 2px solid #4a7c59; padding-bottom: 8mm; margin-bottom: 8mm;
+           display: flex; align-items: center; gap: 6mm; }
+  .logo  { width: 22mm; height: 22mm; object-fit: contain; }
+  h1     { font-size: 18pt; margin: 0; }
+  .sub   { color: #666; font-size: 10pt; }
+
+  .photo { width: 45mm; height: 45mm; object-fit: contain; float: right;
+           border: 1px solid #ddd; margin-left: 6mm; }
+
+  table  { width: 100%; border-collapse: collapse; margin-top: 6mm; }
+  th, td { border: 1px solid #ddd; padding: 3mm; text-align: left; font-size: 10pt; }
+  th     { background: #f4f7f5; }
+</style>
+
+<header>
+  {% if logo_data_uri %}<img class="logo" src="{{ logo_data_uri }}" alt="Лого">{% endif %}
+  <div>
+    <h1>Наран цэцэрлэг</h1>
+    <div class="sub">Хүүхдийн хөгжлийн хувийн хавтас</div>
+  </div>
+</header>
+
+{% if photo_data_uri %}<img class="photo" src="{{ photo_data_uri }}" alt="Хүүхдийн зураг">{% endif %}
+
+<h2>Батбаярын Батаа</h2>
+<p class="sub">4 нас · 2025–2026 оны хичээлийн жил · Наранцэцэг бүлэг</p>
+
+<p>
+  Энэ бол монгол кирилл үсгийн PDF рендерийн шалгалт. Доорх мөрөнд
+  кирилл цагаан толгойн бүх үсэг орсон байна:
+</p>
+
+<p><strong>
+  Аа Бб Вв Гг Дд Ее Ёё Жж Зз Ии Йй Кк Лл Мм Нн Оо Өө Пп Рр Сс Тт
+  Уу Үү Фф Хх Цц Чч Шш Щщ Ъъ Ыы Ьь Ээ Юю Яя
+</strong></p>
+
+<p>
+  Онцгой анхаарах үсгүүд: <strong>Ө ө Ү ү</strong> — эдгээр нь орос кирилл
+  дээр байдаггүй тул фонт дутуу байвал эхлээд эдгээр нь алдагдана.
+</p>
+
+<table>
+  <tr><th>Хөгжлийн чиглэл</th><th>Үнэлгээ</th><th>Багшийн тайлбар</th></tr>
+  <tr><td>Хэл яриа</td><td>Хүлээгдэж буй түвшинд</td>
+      <td>Өгүүлбэрээ бүтэн хэлдэг болсон</td></tr>
+  <tr><td>Танин мэдэхүй</td><td>Хүлээгдэж буй түвшнээс ахисан</td>
+      <td>Тоо, өнгийг сайн ялгадаг</td></tr>
+  <tr><td>Бие бялдар, хөдөлгөөн</td><td>Хөгжиж байгаа</td>
+      <td>Тэнцвэрээ барих дасгал үргэлжлүүлэх</td></tr>
+  <tr><td>Нийгэмшихүй</td><td>Хүлээгдэж буй түвшинд</td>
+      <td>Найзуудтайгаа зохицон тоглодог</td></tr>
+</table>
+
+<p style="margin-top: 8mm; font-size: 9pt; color: #888;">
+  Тоон шалгалт: 0 1 2 3 4 5 6 7 8 9 · Огноо: 2026-08-07 · Ж/₮ 15,000
+</p>

@@ -1,0 +1,15 @@
+{% extends "base_error.html" %}
+
+{% comment %} Reached only where refusing openly reveals nothing — an admin screen a
+   teacher opened, for instance. Anything touching child data raises 404
+   instead (CLAUDE.md §1.1). {% endcomment %}
+
+{% block title %}Хандах эрхгүй{% endblock %}
+{% block mark %}🔒{% endblock %}
+{% block code %}403{% endblock %}
+{% block heading %}Хандах эрхгүй{% endblock %}
+
+{% block body %}
+  <p>Танд энэ хуудсыг үзэх эрх байхгүй байна.</p>
+  <p>Хэрэв энэ нь алдаа гэж үзэж байвал цэцэрлэгийн админд хандана уу.</p>
+{% endblock %}

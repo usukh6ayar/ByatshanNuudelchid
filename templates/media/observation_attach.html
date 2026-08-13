@@ -1,0 +1,39 @@
+{% extends base_template %}
+{% comment %} RFP §5.1 — "нотлох зураг". One at a time in Phase 1; multi-upload and the
+   §5.3 side-by-side comparison are Phase 2. {% endcomment %}
+
+{% block title %}Зураг хавсаргах{% endblock %}
+{% block heading %}Зураг хавсаргах — {{ child.full_name }}{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width:620px">
+    <p class="brand__sub" style="margin-top:0">
+      {{ observation.summary }} · {{ observation.observed_on|date:"Y.m.d" }}
+    </p>
+
+    {% if error %}<p class="msg msg--error" role="alert">{{ error }}</p>{% endif %}
+
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+
+      <label for="id_photo">Зураг сонгох</label>
+      <input type="file" name="photo" id="id_photo" accept="image/jpeg,image/png"
+             required>
+      <p class="brand__sub">
+        JPEG эсвэл PNG, {{ max_mb }} МБ хүртэл.
+        Байршлын мэдээлэл автоматаар устгагдана.
+      </p>
+
+      <label for="id_caption">Тайлбар</label>
+      <input type="text" name="caption" id="id_caption" maxlength="255">
+
+      <div class="btn-row">
+        <button type="submit" class="btn">Хавсаргах</button>
+        <a class="btn btn--ghost"
+           href="{% url 'observations:detail' child.pk observation.pk %}">
+          Болих
+        </a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

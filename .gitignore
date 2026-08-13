@@ -1,4 +1,4 @@
-# Нууц тохиргоо — ТЗ §690, §14
+# Secrets — RFP §690, §14
 .env
 .env.*
 !.env.example
@@ -26,17 +26,24 @@ db.sqlite3
 /mediafiles/
 /media/
 
-# Хүүхдийн бодит өгөгдөл хөгжүүлэлтийн орчинд орохгүй — ТЗ §707
+# Real child data never enters a development environment — RFP §707
 /local_data/
 *.dump
 *.sql.gz
+/backups/
 
-# Node (frontend build хэрэгсэл)
+# Generated artifacts
+spike.pdf
+
+# Node (frontend build tooling)
 node_modules/
 /static/dist/
 
-# Засварлагч, OS
+# Editors and OS
 .DS_Store
 .idea/
 .vscode/
 *.swp
+!staticfiles/.gitkeep
+!static/.gitkeep
+

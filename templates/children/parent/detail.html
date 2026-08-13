@@ -1,0 +1,72 @@
+{% extends "base_parent.html" %}
+
+{% block title %}{{ child.full_name }}{% endblock %}
+{% block heading %}{{ child.full_name }}{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <div style="display:flex; gap:16px; align-items:flex-start">
+      {% if child.photo %}
+        <img class="avatar avatar--lg"
+             src="{% url 'media:serve' child.photo.public_id 'full' %}"
+             alt="{{ child.full_name }}-ийн зураг">
+      {% else %}
+        <span class="avatar avatar--lg" aria-hidden="true">
+          {{ child.first_name|slice:":1" }}
+        </span>
+      {% endif %}
+      <dl class="facts">
+        <dt>Цэцэрлэг</dt><dd>{{ child.kindergarten.name }}</dd>
+        <dt>Бүлэг</dt>
+        <dd>
+          {% if enrollment %}
+            {{ enrollment.group.name }} · {{ enrollment.school_year.name }}
+          {% else %}—{% endif %}
+        </dd>
+        <dt>Төрсөн огноо</dt><dd>{{ child.date_of_birth|date:"Y.m.d" }}</dd>
+        <dt>Хүйс</dt><dd>{{ child.get_sex_display }}</dd>
+        <dt>Элссэн огноо</dt>
+        <dd>{{ child.enrolled_on|date:"Y.m.d"|default:"—" }}</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Цэцэрлэгийн түүх</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Хичээлийн жил</th>
+            <th scope="col">Цэцэрлэг</th>
+            <th scope="col">Бүлэг</th>
+            <th scope="col">Эхэлсэн</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in history %}
+            <tr>
+              <td>{{ row.school_year.name }}</td>
+              <td>{{ row.kindergarten.name }}</td>
+              <td>{{ row.group.name }}</td>
+              <td>{{ row.started_on|date:"Y.m.d" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <a class="btn" href="{% url 'portfolio:overview' child.pk %}">
+      Хувийн хавтас үзэх
+    </a>
+    <a class="btn btn--ghost" href="{% url 'observations:list' child.pk %}">
+      Багшийн ажиглалт
+    </a>
+    <a class="btn btn--ghost" href="{% url 'assessment:child' child.pk %}">
+      Хөгжлийн үнэлгээ
+    </a>
+    <a class="btn btn--ghost" href="{% url 'children:parent_home' %}">← Нүүр хуудас</a>
+  </div>
+{% endblock %}

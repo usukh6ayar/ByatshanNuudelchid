@@ -1,0 +1,12 @@
+{% extends "base_auth.html" %}
+
+{% block title %}Бүртгэл идэвхжлээ{% endblock %}
+
+{% block content %}
+  <h1>Бүртгэл идэвхжлээ</h1>
+  <p class="sub">Шинэ нууц үгээрээ нэвтэрч орно уу.</p>
+
+  <p class="links">
+    <a href="{% url 'accounts:login' %}">Нэвтрэх</a>
+  </p>
+{% endblock %}

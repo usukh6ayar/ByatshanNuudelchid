@@ -1,0 +1,69 @@
+{% extends "base_teacher.html" %}
+
+{% block title %}Шинэ хүүхэд бүртгэх{% endblock %}
+{% block heading %}Шинэ хүүхэд бүртгэх{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width:720px">
+    {% if error %}<p class="msg msg--error" role="alert">{{ error }}</p>{% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <label for="id_group">Бүлэг</label>
+      <select name="group" id="id_group" required>
+        <option value="">— сонгоно уу —</option>
+        {% for group in groups %}
+          <option value="{{ group.pk }}"
+            {% if form.group == group.pk|stringformat:"s" %}selected{% endif %}>
+            {{ group.name }} · {{ group.school_year.name }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <div class="grid grid--2" style="gap:0 16px">
+        <div>
+          <label for="id_last_name">Овог</label>
+          <input type="text" name="last_name" id="id_last_name"
+                 value="{{ form.last_name|default:'' }}" required>
+        </div>
+        <div>
+          <label for="id_first_name">Нэр</label>
+          <input type="text" name="first_name" id="id_first_name"
+                 value="{{ form.first_name|default:'' }}" required>
+        </div>
+      </div>
+
+      <label for="id_national_id">Регистр эсвэл дотоод код</label>
+      <input type="text" name="national_id" id="id_national_id"
+             value="{{ form.national_id|default:'' }}" required>
+
+      <div class="grid grid--2" style="gap:0 16px">
+        <div>
+          <label for="id_sex">Хүйс</label>
+          <select name="sex" id="id_sex" required>
+            <option value="">— сонгоно уу —</option>
+            {% for value, label in sexes %}
+              <option value="{{ value }}"
+                {% if form.sex == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="id_date_of_birth">Төрсөн огноо</label>
+          <input type="date" name="date_of_birth" id="id_date_of_birth"
+                 value="{{ form.date_of_birth|default:'' }}" required>
+        </div>
+      </div>
+
+      <label for="id_health_notes">Эрүүл мэндийн товч тэмдэглэл</label>
+      <textarea name="health_notes" id="id_health_notes"
+                placeholder="Харшил, анхаарах шаардлагатай мэдээлэл">{{ form.health_notes|default:'' }}</textarea>
+
+      <div class="btn-row">
+        <button type="submit" class="btn">Бүртгэх</button>
+        <a class="btn btn--ghost" href="{% url 'children:list' %}">Цуцлах</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

@@ -1,0 +1,161 @@
+{% extends "base_teacher.html" %}
+{% comment %} Modelled on docs/design/screens/teacher-child-profile-360.jpeg.
+   Only the sections backed by data that exists today are rendered. {% endcomment %}
+
+{% block title %}{{ child.full_name }}{% endblock %}
+{% block heading %}{{ child.full_name }}{% endblock %}
+
+{% block content %}
+  {% comment %} The hero card, full width, as teacher-child-profile-360.jpeg
+     draws it: photograph on the left, the registration facts spread across
+     the whole width rather than squeezed into a half-width column. {% endcomment %}
+  <div class="card">
+    <div class="hero">
+      {% comment %} RFP §3.4. Served through the permission check, never linked
+         directly (spec section 7.1). The initial stands in when there is
+         no photo — an empty box reads as a broken page. {% endcomment %}
+      {% if child.photo %}
+        <img class="hero__photo"
+             src="{% url 'media:serve' child.photo.public_id 'full' %}"
+             alt="{{ child.full_name }}-ийн зураг">
+      {% else %}
+        <span class="avatar hero__photo" aria-hidden="true">
+          {{ child.first_name|slice:":1" }}
+        </span>
+      {% endif %}
+
+      <div class="hero__body">
+        <h2 class="hero__name">
+          {{ child.full_name }}
+          <span class="badge {% if child.status == 'active' %}badge--ok{% else %}badge--muted{% endif %}">
+            {{ child.get_status_display }}
+          </span>
+        </h2>
+
+        <dl class="facts--cols">
+          <div><dt>Код</dt><dd>{{ child.national_id }}</dd></div>
+          <div><dt>Хүйс</dt><dd>{{ child.get_sex_display }}</dd></div>
+          <div>
+            <dt>Төрсөн огноо</dt>
+            <dd>{{ child.date_of_birth|date:"Y.m.d" }} ({{ child.age }} нас)</dd>
+          </div>
+          <div><dt>Цэцэрлэг</dt><dd>{{ child.kindergarten.name }}</dd></div>
+          <div>
+            <dt>Бүлэг</dt>
+            <dd>
+              {% if enrollment %}
+                {{ enrollment.group.name }} · {{ enrollment.school_year.name }}
+              {% else %}—{% endif %}
+            </dd>
+          </div>
+          <div>
+            <dt>Элссэн огноо</dt>
+            <dd>{{ child.enrolled_on|date:"Y.m.d"|default:"—" }}</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+
+    {% if child.health_notes %}
+      <p class="msg msg--error" style="margin:16px 0 0" role="note">
+        <strong>Анхаарах:</strong> {{ child.health_notes }}
+      </p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card__head">
+      <h2>Эцэг эх, асран хамгаалагч</h2>
+      <a href="{% url 'children:guardian_add' child.pk %}">Нэмэх</a>
+    </div>
+
+    {% if guardianships %}
+      {% comment %} One row per guardian with their contact details, the way
+         the mockup lists them — a name with no telephone number beside it is
+         not much use to a teacher who needs to ring them. {% endcomment %}
+      <div class="feed">
+        {% for link in guardianships %}
+          <div class="feed__item">
+            <span class="avatar avatar--sm" aria-hidden="true">
+              {{ link.guardian_user.first_name|first|default:"·" }}
+            </span>
+            <div class="feed__body">
+              <div class="feed__title">
+                {{ link.guardian_user }}
+                <span class="badge badge--muted">{{ link.get_relation_display }}</span>
+                {% if link.is_primary %}<span class="badge badge--ok">Үндсэн</span>{% endif %}
+              </div>
+              <div class="feed__meta">
+                {{ link.guardian_user.phone|default:"" }}
+                {% if link.guardian_user.phone and link.guardian_user.email %} · {% endif %}
+                {{ link.guardian_user.email|default:"" }}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty" style="padding:18px 0">
+        <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
+        Асран хамгаалагч холбогдоогүй байна.
+      </p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card__head">
+      <h2>Бүртгэлийн түүх</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Хичээлийн жил</th>
+            <th scope="col">Цэцэрлэг</th>
+            <th scope="col">Бүлэг</th>
+            <th scope="col">Эхэлсэн</th>
+            <th scope="col">Дууссан</th>
+            <th scope="col">Төлөв</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in history %}
+            <tr>
+              <td>{{ row.school_year.name }}</td>
+              <td>{{ row.kindergarten.name }}</td>
+              <td>{{ row.group.name }}</td>
+              <td>{{ row.started_on|date:"Y.m.d" }}</td>
+              <td>{{ row.ended_on|date:"Y.m.d"|default:"—" }}</td>
+              <td>
+                <span class="badge {% if row.status == 'active' %}badge--ok{% else %}badge--muted{% endif %}">
+                  {{ row.get_status_display }}
+                </span>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <a class="btn" href="{% url 'portfolio:overview' child.pk %}">
+      Хувийн хавтас үзэх
+    </a>
+    {% comment %} Staff only — RFP §2.2. This template also renders for a
+       guardian, and a link that answers 404 teaches the reader that the page
+       exists and that they are being refused. Showing nothing says less. {% endcomment %}
+    {% if can_record %}
+      <a class="btn btn--ghost" href="{% url 'children:edit' child.pk %}">
+        Мэдээлэл засах
+      </a>
+    {% endif %}
+    <a class="btn btn--ghost" href="{% url 'observations:list' child.pk %}">
+      Ажиглалт
+    </a>
+    <a class="btn btn--ghost" href="{% url 'assessment:child' child.pk %}">
+      Хөгжлийн үнэлгээ
+    </a>
+    <a class="btn btn--ghost" href="{% url 'children:list' %}">← Жагсаалт руу буцах</a>
+  </div>
+{% endblock %}

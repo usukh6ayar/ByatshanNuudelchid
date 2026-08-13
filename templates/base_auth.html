@@ -1,0 +1,64 @@
+{% load static %}{# Shared shell for unauthenticated pages. RFP §13, §629-635. #}
+<!doctype html>
+<html lang="mn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Хүүхдийн хөгжлийн хавтас{% endblock %}</title>
+  <style>
+    :root { --ink:#1a1a1a; --muted:#6b6b6b; --green:#4a7c59; --bg:#faf8f5;
+            --line:#e0ddd8; --error:#b3261e; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; display:grid; place-items:center;
+           padding:24px; background:var(--bg); color:var(--ink);
+           font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+           line-height:1.5; }
+    main { width:100%; max-width:400px; background:#fff; padding:32px 28px;
+           border-radius:14px; border:1px solid var(--line); }
+    /* auth-login-and-password-reset.jpeg centres the mark above the title.
+       Height-constrained rather than width-constrained: the wordmark below
+       the arc makes the image taller than it is wide. */
+    .logo { display:block; height:82px; width:auto; margin:0 auto 14px; }
+    h1 { font-size:1.4rem; margin:0 0 4px; }
+    .sub { color:var(--muted); font-size:.9rem; margin:0 0 24px; }
+    label { display:block; font-weight:600; font-size:.9rem; margin:16px 0 6px; }
+    input { width:100%; padding:12px 14px; font-size:1rem; border-radius:9px;
+            border:1px solid var(--line); background:#fff; color:var(--ink); }
+    input:focus { outline:2px solid var(--green); outline-offset:1px;
+                  border-color:var(--green); }
+    button { width:100%; margin-top:24px; padding:14px; font-size:1rem;
+             font-weight:600; color:#fff; background:var(--green);
+             border:0; border-radius:9px; cursor:pointer; }
+    button:hover { background:#3d6849; }
+    .error { margin:0 0 4px; padding:12px 14px; border-radius:9px;
+             background:#fdecea; color:var(--error); font-size:.9rem; }
+    .hint { color:var(--muted); font-size:.85rem; margin-top:6px; }
+    .tabs { display:flex; gap:4px; margin:0 0 20px; padding:4px;
+            background:var(--bg); border-radius:10px; }
+    .tab { flex:1; padding:9px 4px; text-align:center; font-size:.9rem;
+           font-weight:600; color:var(--muted); text-decoration:none;
+           border-radius:7px; }
+    .tab--active { background:#fff; color:var(--green);
+                   box-shadow:0 1px 3px rgba(0,0,0,.08); }
+    .rules { margin:0 0 4px; padding-left:1.1rem; color:var(--muted);
+             font-size:.85rem; }
+    .rules li { margin:3px 0; }
+    .links { margin-top:20px; padding-top:18px; border-top:1px solid var(--line);
+             font-size:.9rem; }
+    a { color:var(--green); }
+    @media (prefers-color-scheme: dark) {
+      :root { --ink:#ececec; --muted:#a0a0a0; --bg:#1a1a1a; --line:#3a3a3a;
+              --error:#f2b8b5; }
+      main, input, .tab--active { background:#242424; }
+      .error { background:#3a2321; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <img class="logo" src="{% static 'img/logo-160.png' %}"
+         alt="Бяцхан нүүдэлчид" width="149" height="160">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{% extends "base_auth.html" %}
+
+{% block title %}Урилга хүчингүй{% endblock %}
+
+{% block content %}
+  <h1>Урилга хүчингүй байна</h1>
+  <p class="sub">
+    Энэ урилгын хугацаа дууссан, эсвэл аль хэдийн ашиглагдсан байна.
+    Цэцэрлэгийн багш эсвэл администратортаа хандаж шинэ урилга авна уу.
+  </p>
+
+  <p class="links">
+    <a href="{% url 'accounts:activate' %}">Кодоор идэвхжүүлэх</a>
+    <br><br>
+    <a href="{% url 'accounts:login' %}">Нэвтрэх хуудас руу буцах</a>
+  </p>
+{% endblock %}

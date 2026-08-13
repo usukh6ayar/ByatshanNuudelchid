@@ -1,0 +1,485 @@
+/* Shared design system, taken from the approved mockups in docs/design/.
+
+   The mockups draw two sidebar treatments — white on `teacher-dashboard` and
+   `parent-home`, dark indigo on `teacher-children-list`. White wins two to
+   one, and it is the one the parent screens use, so it is the one built.
+
+   Mobile-first: the sidebar collapses to a scrolling top bar under 900px —
+   RFP §13, §619, §17. */
+
+:root {
+  --ink: #1f2430;
+  --muted: #6b7280;
+  --faint: #9aa1ad;
+  --brand: #5b4bd6;
+  --brand-ink: #4a3cc0;
+  --brand-soft: #eeecfd;
+  --bg: #f6f7fb;
+  --card: #ffffff;
+  --line: #e6e8ef;
+  --ok: #15803d;
+  --ok-soft: #e7f6ec;
+  --warn: #b45309;
+  --warn-soft: #fdf3e3;
+  --danger: #b3261e;
+  --danger-soft: #fdecea;
+  --radius: 16px;
+  --shadow: 0 1px 2px rgba(20, 22, 40, .04), 0 6px 16px rgba(20, 22, 40, .045);
+
+  /* The mockups tint each statistic a different colour so a teacher can find
+     the one they want by shape rather than by reading all six. */
+  --c-blue: #3b82f6;   --c-blue-soft: #e8f0fe;
+  --c-green: #16a34a;  --c-green-soft: #e6f6ec;
+  --c-amber: #ea8c1a;  --c-amber-soft: #fdf1e0;
+  --c-sky: #0ea5e9;    --c-sky-soft: #e4f4fd;
+  --c-pink: #e0518c;   --c-pink-soft: #fceaf2;
+  --c-teal: #0d9488;   --c-teal-soft: #e0f5f2;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+  /* Nothing in this application is meant to be read by scrolling the page
+     sideways. Wide content — the §6.3 grid, long registration numbers —
+     scrolls inside its own container instead. */
+  overflow-x: hidden;
+}
+
+a { color: var(--brand); }
+
+/* Icons come from the sprite in templates/_icons.html and inherit the
+   surrounding text colour, so one definition serves every state. */
+.ic {
+  width: 20px; height: 20px; flex-shrink: 0;
+  vertical-align: -.25em;
+}
+.ic--sm { width: 16px; height: 16px; }
+
+/* ---------------------------------------------------------------- shell */
+
+.shell { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 244px;
+  flex-shrink: 0;
+  background: var(--card);
+  border-right: 1px solid var(--line);
+  padding: 18px 14px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+
+.brand { display: flex; gap: 11px; align-items: center; }
+/* The mockups tuck the logo into a tinted rounded square rather than letting
+   it sit on the sidebar directly — the mark is drawn on white, and against
+   the dark theme's panel it would otherwise float. The tint is light in both
+   themes for the same reason. */
+.brand__mark {
+  width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+  display: grid; place-items: center;
+  background: #f1efff; padding: 2px;
+}
+/* The mark is 1.38:1, so in a square tile the width is what runs out first.
+   Width leads and the height follows; object-fit is the guard against a
+   future logo with different proportions being stretched (§10.3's "зураг
+   суналт, гажилтгүй" applies on screen too). */
+.brand__mark img { width: 100%; height: auto; object-fit: contain; }
+.brand__name { display: block; font-weight: 700; font-size: .9rem; line-height: 1.25; }
+.brand__sub { color: var(--muted); font-size: .75rem; }
+
+.nav { display: flex; flex-direction: column; gap: 2px; }
+.nav a {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 12px; border-radius: 11px;
+  color: var(--muted); text-decoration: none; font-size: .92rem;
+  font-weight: 500;
+}
+.nav a:hover { background: var(--bg); color: var(--ink); }
+.nav a[aria-current] {
+  background: var(--brand-soft); color: var(--brand); font-weight: 600;
+}
+.nav .count {
+  margin-left: auto; background: var(--danger); color: #fff;
+  font-size: .7rem; font-weight: 700; line-height: 1;
+  padding: 4px 7px; border-radius: 999px;
+}
+
+/* The context block the mockups put at the foot of the sidebar: which group
+   and which school year the numbers on screen belong to. */
+.sidebar__foot {
+  margin-top: auto; padding: 12px 13px;
+  background: var(--bg); border-radius: 12px;
+  font-size: .8rem; color: var(--muted);
+}
+.sidebar__foot strong { display: block; color: var(--ink); font-size: .88rem; }
+
+.main { flex: 1; min-width: 0; padding: 22px 26px 48px; }
+
+/* ------------------------------------------------------------- page head */
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; margin-bottom: 22px; flex-wrap: wrap;
+}
+.topbar h1 { font-size: 1.5rem; margin: 0; letter-spacing: -.01em; }
+.topbar .lede { color: var(--muted); font-size: .9rem; margin: 3px 0 0; }
+.topbar .who {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 999px; padding: 6px 14px 6px 6px;
+}
+.topbar .who__name { font-weight: 600; font-size: .87rem; line-height: 1.2; }
+
+.page-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+@media (max-width: 900px) {
+  .shell { flex-direction: column; }
+  .sidebar {
+    width: auto; border-right: 0; border-bottom: 1px solid var(--line);
+    padding: 12px 14px; gap: 12px;
+  }
+  .nav { flex-direction: row; overflow-x: auto; gap: 6px; }
+  /* 44px minimum on anything tapped with a thumb (RFP §629–635). The
+     desktop 10px padding gives about 37px, which is a miss often enough to
+     be noticed on a nav bar that also scrolls sideways. */
+  .nav a {
+    white-space: nowrap;
+    display: flex; align-items: center; min-height: 44px;
+  }
+  .btn { padding: 13px 18px; min-height: 44px; }
+  .main { padding: 18px 14px 40px; }
+  /* Which group and year is context, not navigation — it costs a whole row
+     on a phone and the page header already says where you are. */
+  .sidebar__foot { display: none; }
+}
+
+/* ---------------------------------------------------------------- pieces */
+
+.card {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 18px;
+  box-shadow: var(--shadow);
+}
+.card h2 { font-size: 1.05rem; margin: 0 0 14px; }
+
+/* Everything stacked in the content column sits the same distance apart,
+   whatever kind of block it is.
+
+   `.card + .card` alone was not enough and the child page showed it: that
+   screen puts a two-column grid above a full-width card, and a grid is not
+   a card, so the enrolment history butted straight into the panel above it
+   with no gap at all. Adjacent margins collapse, so the page header's own
+   larger spacing still wins underneath it. */
+.main > * + * { margin-top: 16px; }
+
+/* Title on the left, "see all" on the right — the mockups repeat this on
+   every panel, and it is the only thing that makes a dashboard of ten cards
+   navigable. */
+.card__head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 12px; margin-bottom: 14px;
+}
+.card__head h2 { margin: 0; }
+.card__head a { font-size: .84rem; font-weight: 600; text-decoration: none; }
+.card__head a:hover { text-decoration: underline; }
+
+.grid { display: grid; gap: 16px; }
+.grid--2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.grid--tiles { grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); }
+
+/* --------------------------------------------------------------- tiles */
+
+.tile {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 15px 16px;
+  box-shadow: var(--shadow);
+  display: flex; align-items: center; gap: 13px; flex-wrap: wrap;
+}
+
+/* Making the tile a flex row for the icon turned every other tile's contents
+   into columns: the label beside the value on the administrator dashboard,
+   and on the portfolio an age heading, a definition list and an edit link
+   all fighting for one line.
+
+   So stacking is the default and sitting beside something is the exception.
+   Only the icon opts out, and only the element immediately after it shares
+   its row. Any tile written any other way stacks, which is what a tile
+   looks like, and no template has to know. */
+.tile > * { flex: 1 0 100%; min-width: 0; }
+.tile > .tile__icon { flex: 0 0 auto; }
+.tile > .tile__icon + * { flex: 1 1 auto; }
+.tile__icon {
+  width: 44px; height: 44px; border-radius: 13px; flex-shrink: 0;
+  display: grid; place-items: center;
+  background: var(--brand-soft); color: var(--brand);
+}
+.tile__label { color: var(--muted); font-size: .8rem; line-height: 1.3; }
+.tile__value { font-size: 1.65rem; font-weight: 700; line-height: 1.1; margin-top: 2px; }
+.tile__meta { color: var(--faint); font-size: .74rem; }
+
+.tile--blue  .tile__icon { background: var(--c-blue-soft);  color: var(--c-blue); }
+.tile--green .tile__icon { background: var(--c-green-soft); color: var(--c-green); }
+.tile--amber .tile__icon { background: var(--c-amber-soft); color: var(--c-amber); }
+.tile--sky   .tile__icon { background: var(--c-sky-soft);   color: var(--c-sky); }
+.tile--pink  .tile__icon { background: var(--c-pink-soft);  color: var(--c-pink); }
+.tile--teal  .tile__icon { background: var(--c-teal-soft);  color: var(--c-teal); }
+
+.badge {
+  display: inline-block; padding: 3px 9px; border-radius: 999px;
+  font-size: .78rem; font-weight: 600;
+}
+.badge--ok { background: var(--ok-soft); color: var(--ok); }
+.badge--warn { background: var(--warn-soft); color: var(--warn); }
+.badge--muted { background: var(--bg); color: var(--muted); }
+.badge--brand { background: var(--brand-soft); color: var(--brand); }
+
+.avatar {
+  width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+  background: var(--brand-soft); color: var(--brand);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: .9rem; flex-shrink: 0;
+}
+.avatar--sm { width: 32px; height: 32px; font-size: .78rem; }
+.avatar--lg { width: 96px; height: 96px; font-size: 1.8rem; }
+
+/* A name with its picture — the mockups never show a child as text alone. */
+.person { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.person__name { font-weight: 600; line-height: 1.25; }
+.person__sub { color: var(--muted); font-size: .8rem; }
+
+/* A row of items in a card: recent observations, upcoming events. */
+.feed { display: flex; flex-direction: column; gap: 2px; }
+.feed__item {
+  display: flex; gap: 11px; align-items: flex-start;
+  padding: 10px 8px; border-radius: 11px;
+  text-decoration: none; color: inherit;
+}
+a.feed__item:hover { background: var(--bg); }
+.feed__body { min-width: 0; flex: 1; }
+.feed__title { font-weight: 600; font-size: .91rem; }
+.feed__meta { color: var(--muted); font-size: .79rem; margin-top: 1px; }
+
+/* Per-domain progress, as drawn on both the teacher dashboard and the
+   parent home. The bar carries the same colour as its label. */
+.meter { display: flex; flex-direction: column; gap: 4px; }
+.meter__top {
+  display: flex; justify-content: space-between; gap: 10px;
+  font-size: .85rem;
+}
+.meter__name { color: var(--muted); }
+.meter__value { font-weight: 700; }
+.meter__track {
+  height: 8px; border-radius: 999px; background: var(--bg);
+  overflow: hidden;
+}
+.meter__fill { height: 100%; border-radius: 999px; background: var(--brand); }
+.meter-list { display: flex; flex-direction: column; gap: 13px; }
+
+/* ---------------------------------------------------------------- table */
+
+/* `min-width: 0` is what makes the scrolling actually work. A grid or flex
+   item defaults to `min-width: auto`, which is its content's width, so
+   without this the wrapper grows to fit the table and the *page* scrolls
+   sideways instead of the table. The §6.3 group grid is the widest table in
+   the app and the one that shows it. */
+.table-wrap { overflow-x: auto; min-width: 0; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th, td { padding: 11px 12px; text-align: left; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; font-size: .82rem;
+     white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover { background: var(--bg); }
+td .name { font-weight: 600; }
+
+.empty { padding: 40px 12px; text-align: center; color: var(--muted); }
+.empty .ic { width: 34px; height: 34px; color: var(--faint); display: block;
+             margin: 0 auto 10px; }
+
+/* ---------------------------------------------------------------- forms */
+
+label { display: block; font-weight: 600; font-size: .86rem; margin: 14px 0 5px; }
+input[type=text], input[type=email], input[type=tel], input[type=date],
+input[type=search], input[type=number], select, textarea {
+  /* 16px, not .95rem. Mobile Safari zooms the viewport whenever a focused
+     control is under 16px and does not zoom back out afterwards, so a
+     teacher filling in an observation on a phone ends up panning a form
+     that no longer fits the screen. This is the single most consequential
+     number in the file for RFP §17 — CLAUDE.md §5 says it has to work on a
+     phone before it works anywhere else. */
+  width: 100%; padding: 10px 12px; font-size: 16px; font-family: inherit;
+  border: 1px solid var(--line); border-radius: 11px;
+  background: var(--card); color: var(--ink);
+}
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--brand); outline-offset: 1px; border-color: var(--brand);
+}
+textarea { min-height: 90px; resize: vertical; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px 18px; border: 0; border-radius: 11px;
+  background: var(--brand); color: #fff; font-size: .93rem; font-weight: 600;
+  cursor: pointer; text-decoration: none; font-family: inherit;
+}
+.btn:hover { background: var(--brand-ink); }
+.btn--ghost { background: var(--card); color: var(--ink); border: 1px solid var(--line); }
+.btn--ghost:hover { background: var(--bg); }
+.btn--sm { padding: 8px 13px; font-size: .85rem; }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+
+.filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+.filters label { margin: 0 0 5px; }
+.filters > div { flex: 1 1 150px; min-width: 0; }
+
+.msg { padding: 12px 14px; border-radius: 11px; margin-bottom: 16px;
+       font-size: .9rem; }
+.msg--error { background: var(--danger-soft); color: var(--danger); }
+.msg--ok { background: var(--ok-soft); color: var(--ok); }
+
+.pagination { display: flex; gap: 8px; align-items: center; margin-top: 18px;
+              font-size: .88rem; color: var(--muted); flex-wrap: wrap; }
+
+.code-box {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  /* Six digits at 2rem plus .28em tracking is about 300px, which overflows
+     a 375px screen once the card padding is counted. clamp() keeps it as
+     large as fits — the code is read aloud off the screen, so legibility
+     matters more than the exact size. */
+  font-size: clamp(1.35rem, 7vw, 2rem);
+  font-weight: 700; letter-spacing: .28em;
+  background: var(--brand-soft); color: var(--brand);
+  padding: 16px 20px; border-radius: 12px; text-align: center;
+  /* The tracking adds a trailing gap after the last digit; without this the
+     text sits visibly left of centre. */
+  text-indent: .28em;
+  overflow-wrap: anywhere;
+}
+
+/* The child switcher — RFP §2.3. A guardian with one child sees one card. */
+.switcher { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+.switcher a {
+  display: flex; gap: 10px; align-items: center; padding: 9px 15px 9px 9px;
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 999px; text-decoration: none; color: var(--ink);
+}
+.switcher a[aria-current] { border-color: var(--brand); background: var(--brand-soft); }
+.switcher .sub { color: var(--muted); font-size: .8rem; }
+
+/* The grid of shortcuts on the parent home. */
+.quick { display: grid; gap: 10px;
+         grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); }
+.quick a {
+  display: flex; flex-direction: column; align-items: center; gap: 7px;
+  padding: 15px 8px; border-radius: 13px; text-align: center;
+  background: var(--card); border: 1px solid var(--line);
+  text-decoration: none; color: var(--ink); font-size: .82rem;
+  font-weight: 600; line-height: 1.25;
+  min-height: 44px;
+}
+.quick a:hover { border-color: var(--brand); background: var(--brand-soft); }
+.quick .ic { color: var(--brand); width: 22px; height: 22px; }
+
+dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px;
+           margin: 0; font-size: .92rem; }
+dl.facts dt { color: var(--muted); }
+dl.facts dd { margin: 0; }
+
+/* The child's hero card — teacher-child-profile-360.jpeg puts the photograph
+   on the left and spreads the registration facts across the full width. The
+   earlier half-width card squeezed the same six facts into about 200px, so
+   "Бяцхан цэцэрлэг" wrapped onto two lines and the panel read as broken. */
+.hero { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+.hero__photo {
+  width: 132px; height: 132px; border-radius: 16px; object-fit: cover;
+  flex-shrink: 0; font-size: 2.4rem;
+}
+.hero__body { flex: 1 1 320px; min-width: 0; }
+.hero__name { margin: 0 0 8px; font-size: 1.3rem; }
+
+/* Label above value, as many columns as fit. Each pair is wrapped in a div —
+   HTML allows that inside a dl, and without it the dt and dd become separate
+   grid items and stop lining up with each other. */
+dl.facts--cols {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px 22px; margin: 0; font-size: .92rem;
+}
+dl.facts--cols > div { min-width: 0; }
+dl.facts--cols dt { color: var(--muted); font-size: .79rem; }
+dl.facts--cols dd { margin: 2px 0 0; font-weight: 600; }
+
+@media (max-width: 560px) {
+  /* `max-content` sizes the label column to the longest label, which on a
+     narrow screen pushes the value column off the right edge — the child
+     detail page has "Бүртгэлийн дугаар" and "Эрүүл мэндийн тэмдэглэл" in
+     the same list. Stacking is the only thing that always fits. */
+  dl.facts { grid-template-columns: 1fr; gap: 2px; }
+  dl.facts dt { margin-top: 10px; }
+  dl.facts dt:first-child { margin-top: 0; }
+}
+
+/* Visible to a screen reader only. The §6.3 grid has one select per child;
+   the column header alone does not say whose row it is (RFP §629–635). */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- theme */
+
+/* Light is the default, and deliberately not tied to the operating system.
+   The approved mockups are light; a teacher opening the system on a laptop
+   set to dark would otherwise see something that does not match the design
+   the client signed off (RFP §21.15), and would have no way to get back.
+
+   Dark stays available, because the mockup's own sidebar carries a
+   "Гэрэлтэй горим" switch — the design expects the choice to be the user's.
+   It applies only when they ask for it. */
+:root[data-theme="dark"] {
+  --ink: #e9ebf0; --muted: #9aa1ad; --faint: #6b7280;
+  --bg: #14161c; --card: #1c1f27; --line: #2c303b;
+  --brand: #7c6cf0; --brand-ink: #6a58e8; --brand-soft: #262244;
+  --ok-soft: #16301f; --warn-soft: #33260f; --danger-soft: #3a2321;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .35);
+  --c-blue-soft: #16233b; --c-green-soft: #12301d; --c-amber-soft: #33260f;
+  --c-sky-soft: #10293a; --c-pink-soft: #331a26; --c-teal-soft: #0e2b28;
+}
+/* Kept light in the dark theme on purpose: the logo is a full-colour mark
+   drawn on white, so a dark tile behind it reads as a hole in the sidebar. */
+:root[data-theme="dark"] .brand__mark { background: #edeaff; }
+
+/* The switch itself, drawn as the mockup draws it: an icon, a label and a
+   track that slides. A real checkbox underneath, so it is reachable by
+   keyboard and announces its state without any ARIA (RFP §629-635). */
+.theme {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 12px; background: var(--bg);
+  cursor: pointer; font-size: .84rem; font-weight: 600; color: var(--muted);
+  min-height: 44px;
+}
+.theme:hover { color: var(--ink); }
+.theme input { position: absolute; opacity: 0; width: 0; height: 0; }
+.theme .ic { color: var(--c-amber); }
+.theme__track {
+  margin-left: auto; width: 38px; height: 22px; border-radius: 999px;
+  background: var(--line); position: relative; flex-shrink: 0;
+  transition: background .15s;
+}
+.theme__track::after {
+  content: ""; position: absolute; top: 3px; left: 3px;
+  width: 16px; height: 16px; border-radius: 50%; background: var(--card);
+  transition: transform .15s;
+}
+.theme input:checked + .theme__track { background: var(--brand); }
+.theme input:checked + .theme__track::after { transform: translateX(16px); }
+.theme input:focus-visible + .theme__track {
+  outline: 2px solid var(--brand); outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  /* The switch rides along with the nav rather than taking its own row. */
+  .theme { padding: 8px 12px; }
+}

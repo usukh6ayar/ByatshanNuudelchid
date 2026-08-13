@@ -1,0 +1,28 @@
+-r base.txt
+
+pytest==8.4.2
+pytest-django==4.11.1
+pytest-cov==6.2.1
+factory-boy==3.3.3
+
+# Run the suite across cores. The `world` fixture rebuilds two kindergartens
+# per test and the profile puts most of the time in setup rather than in the
+# tests themselves, so the work parallelises almost linearly. Each worker
+# gets its own test database — which also makes a second concurrent run safe,
+# instead of two runs colliding on one database as they did on 2026-08-13.
+pytest-xdist==3.6.1
+
+# Inspect generated PDFs — RFP §10.3. WeasyPrint writes object streams, so
+# byte-level greps do not work; the file has to be parsed.
+pypdf==6.1.1
+
+# Catch N+1 queries — CLAUDE.md §3.5
+django-debug-toolbar==6.0.0
+
+# Build a JPEG that really carries GPS coordinates, and read back that the
+# upload pipeline removed them — spec section 7. Pillow can read EXIF but
+# cannot conveniently write a nested GPS IFD, and a test that cannot create
+# the dangerous input proves nothing. Test-only; never imported by the app.
+piexif==1.1.3
+
+ruff==0.13.1

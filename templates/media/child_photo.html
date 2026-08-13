@@ -1,0 +1,46 @@
+{% extends base_template %}
+{% comment %} RFP §3.4. The image is shown through /media/<uuid>/full/, which runs the
+   permission check before it hands back anything — never a direct link. {% endcomment %}
+
+{% block title %}Хүүхдийн зураг{% endblock %}
+{% block heading %}Зураг — {{ child.full_name }}{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width:620px">
+    {% if error %}<p class="msg msg--error" role="alert">{{ error }}</p>{% endif %}
+
+    {% if child.photo %}
+      <p>
+        <img src="{% url 'media:serve' child.photo.public_id 'full' %}"
+             alt="{{ child.full_name }}-ийн зураг"
+             style="max-width:220px; border-radius:14px">
+      </p>
+      <form method="post"
+            action="{% url 'media:delete' child.pk child.photo.public_id %}"
+            onsubmit="return confirm('Зургийг архивлах уу?')">
+        {% csrf_token %}
+        <button type="submit" class="btn btn--ghost">Зургийг архивлах</button>
+      </form>
+      <h2 style="margin-top:24px">Зураг солих</h2>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+
+      <label for="id_photo">Зураг сонгох</label>
+      <input type="file" name="photo" id="id_photo" accept="image/jpeg,image/png"
+             required>
+      <p class="brand__sub">
+        JPEG эсвэл PNG, {{ max_mb }} МБ хүртэл.
+        Байршлын мэдээлэл автоматаар устгагдана.
+      </p>
+
+      <div class="btn-row">
+        <button type="submit" class="btn">Хадгалах</button>
+        <a class="btn btn--ghost" href="{% url 'portfolio:overview' child.pk %}">
+          Болих
+        </a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

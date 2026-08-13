@@ -1,0 +1,123 @@
+{% extends "base_parent.html" %}
+{% comment %} Modelled on docs/design/screens/parent-home.jpeg: a greeting, the
+   child's card with their picture, and a grid of shortcuts.
+
+   Only the panels backed by data that exists today are rendered. The mockup
+   also draws a teacher post feed, a daily summary with temperature and mood,
+   upcoming events, a payment card and an app-store banner — those are
+   Phase 2 and 3, and a card that renders empty on the family's home screen
+   teaches them the system is broken. {% endcomment %}
+
+{% block title %}Нүүр хуудас{% endblock %}
+{% block heading %}Сайн байна уу, {{ request.user.first_name|default:request.user }}! 💜{% endblock %}
+{% block lede %}
+  <p class="lede">
+    {{ child.first_name }}-ийн хөгжлийн мэдээллийг эндээс харна уу.
+  </p>
+{% endblock %}
+
+{% block content %}
+  {% if children|length > 1 %}
+    {% comment %} RFP §2.3 — choose a child. Plain links, so it works with no
+       JavaScript and survives a page reload. {% endcomment %}
+    <nav class="switcher" aria-label="Хүүхдээ сонгох">
+      {% for item in children %}
+        <a href="?child={{ item.pk }}"
+           {% if item.pk == child.pk %}aria-current="true"{% endif %}>
+          {% if item.photo %}
+            <img class="avatar avatar--sm"
+                 src="{% url 'media:serve' item.photo.public_id 'full' %}"
+                 alt="{{ item.full_name }}">
+          {% else %}
+            <span class="avatar avatar--sm" aria-hidden="true">{{ item.first_name|slice:":1" }}</span>
+          {% endif %}
+          <span>
+            {{ item.first_name }}<br>
+            <span class="sub">{{ item.kindergarten.name }}</span>
+          </span>
+        </a>
+      {% endfor %}
+    </nav>
+  {% endif %}
+
+  <div class="grid grid--2">
+    <div class="card">
+      <div style="display:flex; gap:16px; align-items:flex-start">
+        {% if child.photo %}
+          <img class="avatar avatar--lg"
+               src="{% url 'media:serve' child.photo.public_id 'full' %}"
+               alt="{{ child.full_name }}">
+        {% else %}
+          <span class="avatar avatar--lg" aria-hidden="true">
+            {{ child.first_name|slice:":1" }}
+          </span>
+        {% endif %}
+        <div style="min-width:0">
+          <h2 style="margin-bottom:8px">{{ child.full_name }}</h2>
+          <p style="margin:0 0 12px">
+            <span class="badge badge--brand">{{ child.age }} нас</span>
+            {% if enrollment %}
+              <span class="badge badge--muted">{{ enrollment.group.name }}</span>
+            {% endif %}
+          </p>
+          <dl class="facts">
+            <dt>Цэцэрлэг</dt><dd>{{ child.kindergarten.name }}</dd>
+            <dt>Бүлэг</dt>
+            <dd>
+              {% if enrollment %}
+                {{ enrollment.group.name }} · {{ enrollment.school_year.name }}
+              {% else %}—{% endif %}
+            </dd>
+            <dt>Төрсөн огноо</dt><dd>{{ child.date_of_birth|date:"Y.m.d" }}</dd>
+            <dt>Элссэн огноо</dt>
+            <dd>{{ child.enrolled_on|date:"Y.m.d"|default:"—" }}</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <a class="btn" href="{% url 'children:parent_child_detail' child.pk %}">
+          Хүүхдийн хуудас үзэх
+        </a>
+        <a class="btn btn--ghost" href="{% url 'portfolio:overview' child.pk %}">
+          Хувийн хавтас
+        </a>
+      </div>
+    </div>
+
+    {% comment %} "Түргэн холбоос" in the mockup. Every tile here goes
+       somewhere that exists — the drawn grid of nine includes Ирц, Эрүүл
+       мэнд, Хоол and Төлбөр, which do not. {% endcomment %}
+    <div class="card">
+      <div class="card__head">
+        <h2>Түргэн холбоос</h2>
+      </div>
+      <div class="quick">
+        <a href="{% url 'portfolio:overview' child.pk %}">
+          <svg class="ic" aria-hidden="true"><use href="#i-portfolio"></use></svg>
+          Хувийн хавтас
+        </a>
+        <a href="{% url 'observations:list' child.pk %}">
+          <svg class="ic" aria-hidden="true"><use href="#i-observation"></use></svg>
+          Ажиглалт
+        </a>
+        <a href="{% url 'assessment:child' child.pk %}">
+          <svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg>
+          Хөгжлийн үнэлгээ
+        </a>
+        <a href="{% url 'comms:list' %}">
+          <svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg>
+          Мэдэгдэл
+        </a>
+        <a href="{% url 'reports:request' child.pk %}">
+          <svg class="ic" aria-hidden="true"><use href="#i-report"></use></svg>
+          Тайлан татах
+        </a>
+        <a href="{% url 'accounts:profile' %}">
+          <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
+          Миний бүртгэл
+        </a>
+      </div>
+    </div>
+  </div>
+{% endblock %}

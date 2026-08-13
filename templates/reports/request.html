@@ -1,0 +1,79 @@
+{% extends base_template %}
+{# RFP §10.1 — "нэгдсэн тайланд дараах мэдээллийг сонгон оруулах". #}
+
+{% block title %}PDF тайлан{% endblock %}
+{% block heading %}PDF тайлан — {{ child.full_name }}{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width:720px">
+    {% if error %}<p class="msg msg--error" role="alert">{{ error }}</p>{% endif %}
+
+    <p class="brand__sub" style="margin-top:0">
+      Тайланд оруулах хэсгээ сонгоно уу. Бэлдэх хугацаанд системийг
+      үргэлжлүүлэн ашиглаж болно.
+    </p>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <label for="id_report_type">Тайлангийн төрөл</label>
+      <select name="report_type" id="id_report_type">
+        <option value="child_portfolio">Хүүхдийн хувийн хавтас</option>
+        {% if terms %}<option value="term_report">Улирлын тайлан</option>{% endif %}
+      </select>
+
+      {% if terms %}
+        <label for="id_term">Улирал — улирлын тайлан сонгосон бол</label>
+        <select name="term" id="id_term">
+          {% for term in terms %}
+            <option value="{{ term.pk }}">{{ term.name }}</option>
+          {% endfor %}
+        </select>
+      {% endif %}
+
+      {% for code, label in sections %}
+        <div style="display:flex; gap:10px; align-items:center; margin-top:10px">
+          <input type="checkbox" name="sections" value="{{ code }}"
+                 id="id_section_{{ code }}" style="width:auto" checked>
+          <label for="id_section_{{ code }}" style="margin:0">{{ label }}</label>
+        </div>
+      {% endfor %}
+
+      <div class="btn-row">
+        <button type="submit" class="btn">PDF бэлдэх</button>
+        <a class="btn btn--ghost" href="{% url 'portfolio:overview' child.pk %}">
+          Болих
+        </a>
+      </div>
+    </form>
+  </div>
+
+  {% if recent %}
+    <div class="card">
+      <h2>Сүүлд бэлдсэн</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Огноо</th><th>Төлөв</th><th>Хуудас</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for job in recent %}
+              <tr>
+                <td>{{ job.requested_at|date:"Y.m.d H:i" }}</td>
+                <td>
+                  <span class="badge {% if job.status == 'done' %}badge--ok{% elif job.status == 'failed' %}badge--warn{% else %}badge--muted{% endif %}">
+                    {{ job.get_status_display }}
+                  </span>
+                </td>
+                <td>{{ job.page_count|default:"—" }}</td>
+                <td>
+                  <a href="{% url 'reports:status' child.pk job.pk %}">Үзэх</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}

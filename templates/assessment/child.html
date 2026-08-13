@@ -1,0 +1,173 @@
+{% extends base_template %}
+{% comment %} RFP §6.4 — the domains down the side, the four terms across the top. The
+   guardian sees the same table with only the published terms in it; the
+   filtering happened in the selector, not here. {% endcomment %}
+
+{% block title %}Хөгжлийн үнэлгээ{% endblock %}
+{% block heading %}Хөгжлийн үнэлгээ — {{ child.full_name }}{% endblock %}
+
+{% block content %}
+  {% if no_enrollment %}
+    <div class="card">
+      <p class="empty">
+        Хүүхэд идэвхтэй бүлэгт бүртгэлгүй байгаа тул үнэлгээ хийх боломжгүй.
+      </p>
+    </div>
+  {% elif not terms %}
+    <div class="card">
+      <p class="empty">
+        {{ school_year.name }} хичээлийн жилд улирал тохируулаагүй байна.
+        Цэцэрлэгийн администратор улирлыг үүсгэсний дараа үнэлгээ хийнэ.
+      </p>
+    </div>
+  {% else %}
+    <div class="card">
+      <h2>{{ school_year.name }} · {{ group.name }}</h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Хөгжлийн чиглэл</th>
+              {% for term in terms %}<th>{{ term.name }}</th>{% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in matrix.rows %}
+              <tr>
+                <td class="name">
+                  <span class="badge" style="background:{{ row.domain.color }}1a; color:{{ row.domain.color }}">
+                    {{ row.domain.name }}
+                  </span>
+                </td>
+                {% for cell in row.cells %}
+                  <td>
+                    {% if cell %}
+                      <strong>{{ cell.level.value }}</strong> — {{ cell.level.label }}
+                      {% if cell.comment %}
+                        <br><span class="brand__sub">{{ cell.comment }}</span>
+                      {% endif %}
+                    {% else %}
+                      <span class="brand__sub">—</span>
+                    {% endif %}
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if can_record %}
+      {% comment %} One domain at a time from the child screen; the whole group at once
+         is the §6.3 grid. {% endcomment %}
+      <div class="card" style="max-width:820px">
+        <h2>Үнэлгээ бүртгэх</h2>
+
+        <form method="post" action="{% url 'assessment:child_save' child.pk %}">
+          {% csrf_token %}
+
+          <div class="grid grid--2" style="gap:0 16px">
+            <div>
+              <label for="id_term">Улирал</label>
+              <select name="term" id="id_term" required>
+                {% for term in terms %}<option value="{{ term.pk }}">{{ term.name }}</option>{% endfor %}
+              </select>
+            </div>
+            <div>
+              <label for="id_domain">Хөгжлийн чиглэл</label>
+              <select name="domain" id="id_domain" required>
+                {% for row in matrix.rows %}
+                  <option value="{{ row.domain.pk }}">{{ row.domain.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <label for="id_level">Үнэлгээний түвшин</label>
+          <select name="level" id="id_level" required>
+            {% for level in levels %}
+              <option value="{{ level.pk }}">{{ level.value }}. {{ level.label }}</option>
+            {% endfor %}
+          </select>
+
+          <label for="id_comment">Тайлбар</label>
+          <textarea name="comment" id="id_comment"></textarea>
+
+          <div class="btn-row">
+            <button type="submit" class="btn">Хадгалах</button>
+            <a class="btn btn--ghost"
+               href="{% url 'assessment:group_grid' group.pk %}">
+              Бүлгээр түргэн үнэлэх
+            </a>
+          </div>
+        </form>
+      </div>
+
+      {% comment %} RFP §6.4 — the narrative report per term. Finalizing one is also
+         what opens that term to the guardians, so this replaces the old
+         separate "publish" control. {% endcomment %}
+      <div class="card" style="max-width:820px">
+        <h2>Улирлын тайлан</h2>
+        <p class="brand__sub" style="margin-top:-8px">
+          Улирал бүрийн дүгнэлт. Дуусгасны дараа эцэг эхэд харагдана.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Улирал</th><th>Төлөв</th><th></th></tr>
+            </thead>
+            <tbody>
+              {% for term, report in term_reports %}
+                <tr>
+                  <td class="name">{{ term.name }}</td>
+                  <td>
+                    {% if report.is_final %}
+                      <span class="badge badge--ok">Дууссан</span>
+                    {% elif report %}
+                      <span class="badge badge--muted">Ноорог</span>
+                    {% else %}
+                      <span class="badge badge--muted">Бичээгүй</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a href="{% url 'assessment:term_report' child.pk term.pk %}">
+                      Нээх
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if not can_record %}
+      {% for term, report in term_reports %}
+        {% if report %}
+          <div class="card" style="max-width:820px">
+            <h2>{{ term.name }} — багшийн дүгнэлт</h2>
+            {% if report.strengths %}
+              <h3>Давуу тал</h3><p>{{ report.strengths|linebreaksbr }}</p>
+            {% endif %}
+            {% if report.needs_support %}
+              <h3>Дэмжих шаардлагатай чадвар</h3>
+              <p>{{ report.needs_support|linebreaksbr }}</p>
+            {% endif %}
+            {% if report.next_goals %}
+              <h3>Дараагийн улирлын зорилго</h3>
+              <p>{{ report.next_goals|linebreaksbr }}</p>
+            {% endif %}
+            {% if report.advice_for_parents %}
+              <h3>Эцэг эхэд өгөх зөвлөмж</h3>
+              <p>{{ report.advice_for_parents|linebreaksbr }}</p>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  {% endif %}
+{% endblock %}

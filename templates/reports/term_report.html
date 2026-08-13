@@ -1,0 +1,117 @@
+{% comment %} RFP §10.2's term report, §6.4's content.
+
+   Shares the portfolio's @page rules deliberately, so §10.3's A4, page
+   numbers and Cyrillic hold here by construction rather than by being
+   remembered twice. builder.py scoped every value to whoever requested the
+   report; this template only lays out what it is given. {% endcomment %}
+<style>
+  @page {
+    size: A4;
+    margin: 20mm 16mm 18mm 16mm;
+    @top-right {
+      content: "{{ kindergarten.name }}";
+      font-family: "DejaVu Sans", sans-serif;
+      font-size: 8pt;
+      color: #8a8a8a;
+    }
+    @bottom-center {
+      content: "Хуудас " counter(page) " / " counter(pages);
+      font-family: "DejaVu Sans", sans-serif;
+      font-size: 9pt;
+      color: #666;
+    }
+  }
+  @page :first { @top-right { content: ""; } }
+
+  body {
+    font-family: "DejaVu Sans", sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.5;
+    color: #1a1a1a;
+  }
+
+  h1 { font-size: 18pt; margin: 0 0 2mm; }
+  h2 { font-size: 13pt; margin: 8mm 0 3mm; color: #2f5d45;
+       border-bottom: 1.5pt solid #cfe0d6; padding-bottom: 2mm; }
+
+  .head { text-align: center; margin-bottom: 10mm; }
+  /* Block, or it shares a line with anything inline after it — the
+     portfolio cover shipped that way once. object-fit keeps §10.3's
+     "зураг суналт, гажилтгүй" true whatever aspect ratio a future
+     per-kindergarten logo arrives in. */
+  .head .logo {
+    display: block; height: 20mm; width: auto; max-width: 50mm;
+    object-fit: contain; margin: 0 auto 5mm;
+  }
+  .head .sub { color: #666; font-size: 10pt; margin: 1mm 0; }
+
+  table { width: 100%; border-collapse: collapse; margin-bottom: 5mm; }
+  th, td { border: 0.5pt solid #d8d8d8; padding: 2.2mm 3mm;
+           text-align: left; font-size: 9.5pt; vertical-align: top; }
+  th { background: #f4f7f5; font-weight: 600; }
+
+  p { margin: 0 0 3mm; }
+  .stamp { margin-top: 12mm; color: #8a8a8a; font-size: 9pt;
+           text-align: center; }
+</style>
+
+<div class="head">
+  {% if logo_data_uri %}
+    <img class="logo" src="{{ logo_data_uri }}" alt="Бяцхан нүүдэлчид">
+  {% endif %}
+  <h1>{{ child.full_name }}</h1>
+  <p class="sub">{{ term.name }} — улирлын тайлан</p>
+  <p class="sub">{{ kindergarten.name }}</p>
+  {% if enrollment %}
+    <p class="sub">{{ enrollment.group.name }} · {{ enrollment.school_year.name }}</p>
+  {% endif %}
+  <p class="sub">
+    {{ term.starts_on|date:"Y.m.d" }} – {{ term.ends_on|date:"Y.m.d" }}
+  </p>
+</div>
+
+{% if assessments %}
+  <h2>Хөгжлийн үнэлгээ</h2>
+  <table>
+    <thead>
+      <tr><th>Хөгжлийн чиглэл</th><th>Үнэлгээ</th><th>Багшийн тайлбар</th></tr>
+    </thead>
+    <tbody>
+      {% for row in assessments %}
+        <tr>
+          <td>{{ row.domain.name }}</td>
+          <td>{{ row.level.label }}</td>
+          <td>{{ row.comment|default:"—" }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+
+{% comment %} Each section is guarded: an unfilled one prints nothing rather
+   than a heading over blank space. That is D5's rule, applied here.
+{% endcomment %}
+{% if report.strengths %}
+  <h2>Давуу тал</h2>
+  <p>{{ report.strengths|linebreaksbr }}</p>
+{% endif %}
+
+{% if report.needs_support %}
+  <h2>Дэмжих шаардлагатай чадвар</h2>
+  <p>{{ report.needs_support|linebreaksbr }}</p>
+{% endif %}
+
+{% if report.next_goals %}
+  <h2>Дараагийн улирлын зорилго</h2>
+  <p>{{ report.next_goals|linebreaksbr }}</p>
+{% endif %}
+
+{% if report.advice_for_parents %}
+  <h2>Эцэг эхэд өгөх зөвлөмж</h2>
+  <p>{{ report.advice_for_parents|linebreaksbr }}</p>
+{% endif %}
+
+<p class="stamp">
+  {% if report.author %}Багш: {{ report.author.get_full_name|default:report.author.username }} · {% endif %}
+  {% if report.finalized_at %}{{ report.finalized_at|date:"Y.m.d" }}{% endif %}
+</p>

@@ -1,0 +1,48 @@
+{% extends "base_auth.html" %}
+{# All user-facing text is in Mongolian — RFP §611 #}
+
+{% block title %}Нэвтрэх{% endblock %}
+
+{% block content %}
+  <h1>Нэвтрэх</h1>
+  <p class="sub">Хүүхдийн хөгжлийн цахим хувийн хавтас</p>
+
+  {% comment %} Tabs come from the approved design. They only change which identifier
+     the field asks for — see LOGIN_TABS in views.py. Plain links, so they
+     work without JavaScript. {% endcomment %}
+  <nav class="tabs" aria-label="Хэрэглэгчийн төрөл">
+    {% for key, label in tabs %}
+      <a href="?role={{ key }}"
+         class="tab{% if key == active_tab %} tab--active{% endif %}"
+         {% if key == active_tab %}aria-current="page"{% endif %}>{{ label }}</a>
+    {% endfor %}
+  </nav>
+
+  {% if error %}
+    <p class="error" role="alert">{{ error }}</p>
+    {% if retries_left %}
+      <p class="hint">Үлдсэн оролдлого: {{ retries_left }}</p>
+    {% endif %}
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="role" value="{{ active_tab }}">
+
+    <label for="id_username">{{ identifier_label }}</label>
+    <input type="text" name="username" id="id_username"
+           value="{{ identifier|default:'' }}"
+           autocomplete="username" autocapitalize="none"
+           autofocus required>
+
+    <label for="id_password">Нууц үг</label>
+    <input type="password" name="password" id="id_password"
+           autocomplete="current-password" required>
+
+    <button type="submit">Нэвтрэх</button>
+  </form>
+
+  <p class="links">
+    <a href="{% url 'accounts:password_reset' %}">Нууц үгээ мартсан уу?</a>
+  </p>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "base_teacher.html" %}
+{% comment %} RFP §12.2. Uses the staff layout: an administrator is staff, and a third
+   chrome for one screen would be a third thing to keep in step.
+
+   The figures come from the cache a Celery beat task fills (CLAUDE.md §6),
+   so the timestamp is shown — a number without an "as of" invites someone
+   to treat a fifteen-minute-old count as live. {% endcomment %}
+
+{% block title %}Удирдлагын самбар{% endblock %}
+{% block heading %}Удирдлагын самбар{% endblock %}
+
+{% block content %}
+  <div class="grid grid--tiles">
+    {% if is_superadmin %}
+      <div class="tile">
+        <div class="tile__label">Цэцэрлэг</div>
+        <div class="tile__value">{{ figures.kindergartens }}</div>
+      </div>
+    {% endif %}
+    <div class="tile">
+      <div class="tile__label">Бүлэг</div>
+      <div class="tile__value">{{ figures.groups }}</div>
+    </div>
+    <div class="tile">
+      <div class="tile__label">Багш</div>
+      <div class="tile__value">{{ figures.teachers }}</div>
+    </div>
+    <div class="tile">
+      <div class="tile__label">Хүүхэд</div>
+      <div class="tile__value">{{ figures.children }}</div>
+    </div>
+    <div class="tile">
+      <div class="tile__label">Идэвхтэй эцэг эх</div>
+      <div class="tile__value">{{ figures.active_guardians }}</div>
+    </div>
+  </div>
+
+  <div class="grid grid--2">
+    <div class="card">
+      <h2>Системийн ашиглалт</h2>
+      <dl class="facts">
+        <dt>Ажиглалт</dt><dd>{{ figures.observations }}</dd>
+        <dt>Хөгжлийн үнэлгээ</dt><dd>{{ figures.assessments }}</dd>
+        <dt>Мэдэгдэл</dt><dd>{{ figures.announcements }}</dd>
+        <dt>Бүртгэл</dt><dd>{{ figures.enrollments }}</dd>
+        <dt>Сүүлийн 7 хоногийн нэвтрэлт</dt><dd>{{ figures.logins_7d }}</dd>
+      </dl>
+    </div>
+
+    <div class="card">
+      <h2>Хадгалалт ба тайлан</h2>
+      <dl class="facts">
+        <dt>Файлын тоо</dt><dd>{{ figures.file_count }}</dd>
+        <dt>Эзлэх хэмжээ</dt><dd>{{ figures.storage_bytes|filesizeformat }}</dd>
+        <dt>Үүсгэсэн тайлан</dt><dd>{{ figures.reports_total }}</dd>
+        <dt>Амжилтгүй тайлан</dt>
+        <dd>
+          {{ figures.reports_failed }}
+          {% if figures.reports_failed %}
+            <span class="badge badge--warn">шалгах</span>
+          {% endif %}
+        </dd>
+      </dl>
+    </div>
+  </div>
+
+  {# §12.2 — "алдаа болон сэжигтэй үйлдлийн мэдээлэл" #}
+  <div class="card">
+    <h2>Аюулгүй байдал</h2>
+    <p>
+      Сүүлийн 7 хоногт амжилтгүй нэвтрэх оролдлого:
+      <strong>{{ figures.failed_logins_7d }}</strong>
+      {% if figures.failed_logins_7d > 20 %}
+        <span class="badge badge--warn">Ер бусын их байна</span>
+      {% endif %}
+    </p>
+    <p class="brand__sub">
+      5 удаа буруу оролдвол бүртгэл 15 минут түгжигдэнэ. Дэлгэрэнгүйг
+      үйлдлийн бүртгэлээс харна уу.
+    </p>
+    <div class="btn-row">
+      <a class="btn btn--ghost" href="/udirdlaga/">Удирдлагын хэсэг</a>
+    </div>
+  </div>
+
+  <p class="brand__sub">
+    Тоон үзүүлэлт {{ figures.computed_at|date:"Y.m.d H:i" }}-ийн байдлаар.
+  </p>
+{% endblock %}

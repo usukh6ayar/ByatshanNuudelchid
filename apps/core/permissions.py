@@ -1,0 +1,215 @@
+"""The single source of truth for access to child data.
+
+CLAUDE.md §1.1: every view, service and (later) API endpoint that touches a
+child's information calls into this module. Nothing here may be duplicated
+or reimplemented elsewhere — RFP §21.2, §21.3 and §21.4 are acceptance
+criteria, and they all reduce to the same question:
+
+    "May this user see this child?"
+
+Design note (spec section 4.2). The kindergarten is derived from the child's
+``Enrollment`` history, not from ``Child.kindergarten_id``. That field changes
+when a child transfers, which would silently revoke a teacher's access to
+observations they wrote themselves.
+"""
+
+from django.db.models import Q
+from django.http import Http404
+
+from apps.accounts.models import Role
+from apps.children.models import Child, Enrollment, Guardianship
+from apps.tenants.models import GroupTeacher
+
+__all__ = [
+    "child_kindergarten_history",
+    "is_guardian_of",
+    "can_access_child",
+    "can_record_for_child",
+    "assert_can_access_child",
+    "assert_can_record_for_child",
+    "visible_kindergartens",
+    "visible_children",
+]
+
+
+def child_kindergarten_history(child) -> set[int]:
+    """Every kindergarten this child has ever been enrolled at."""
+    ids = set(
+        Enrollment.objects.filter(child=child).values_list(
+            "kindergarten_id", flat=True
+        )
+    )
+    if not ids:
+        # A just-registered child has no enrollment yet, so the staff who
+        # registered them would otherwise be locked out. This is the ONLY
+        # place Child.kindergarten_id influences an authorization decision,
+        # and it applies only while the enrollment set is empty — after a
+        # transfer there are always enrollments, so the field is never read.
+        ids.add(child.kindergarten_id)
+    return ids
+
+
+def is_guardian_of(user, child) -> bool:
+    """RFP §3.5. The Guardianship row is itself the authorization.
+
+    Deliberately independent of kindergarten: a transfer does not change
+    who the parent is.
+    """
+    return Guardianship.objects.filter(
+        child=child, guardian_user=user, can_view=True
+    ).exists()
+
+
+def _is_assigned_teacher(user, child) -> bool:
+    """Assigned via GroupTeacher to any group the child has ever been in.
+
+    Assignments are historical rather than overwritten, so a teacher keeps
+    access to the records they created in previous school years.
+    """
+    return GroupTeacher.objects.filter(
+        teacher_membership__user=user,
+        teacher_membership__is_active=True,
+        group__enrollments__child=child,
+    ).exists()
+
+
+def can_access_child(user, child) -> bool:
+    """May this user see this child at all?
+
+    Note this is not the same as "may they see every record about this
+    child" — for that, filter with :func:`visible_kindergartens`.
+    """
+    if user is None or not user.is_authenticated or not user.is_active:
+        return False
+
+    if is_guardian_of(user, child):
+        return True
+
+    if _is_assigned_teacher(user, child):
+        return True
+
+    return user.has_membership_in(
+        child_kindergarten_history(child),
+        roles=[Role.ADMIN, Role.SUPERADMIN],
+    )
+
+
+def can_record_for_child(user, child) -> bool:
+    """May this user write a *staff* record about this child?
+
+    Reading and writing are not the same permission. A guardian passes
+    ``can_access_child`` — they may read the portfolio and write their own
+    half of it (§2.3) — but observations and assessments are the teacher's
+    professional record (§5.1, §6.3). A guardian's own contribution goes in
+    as ``source=parent`` and is reviewed by a teacher (§5.4); it never
+    enters through this door.
+
+    This is deliberately ``can_access_child`` *minus the guardian branch*,
+    not "has access, and holds a staff role somewhere". The difference
+    matters for a teacher whose own child attends the same kindergarten: the
+    weaker rule would let them file a teacher observation about their own
+    child while teaching a different group, and that record then reads as
+    professional judgement in the portfolio the family receives. The
+    authorization has to come from the working relationship with the child,
+    which is what §2.2 means by "өөрийн хариуцсан бүлэг".
+    """
+    if user is None or not user.is_authenticated or not user.is_active:
+        return False
+
+    if _is_assigned_teacher(user, child):
+        return True
+
+    return user.has_membership_in(
+        child_kindergarten_history(child),
+        roles=[Role.ADMIN, Role.SUPERADMIN],
+    )
+
+
+def assert_can_access_child(user, child) -> None:
+    """Raise 404 when access is denied.
+
+    404 rather than 403 on purpose: a 403 confirms the record exists, which
+    is itself a disclosure. RFP §21.4.
+    """
+    if not can_access_child(user, child):
+        raise Http404
+
+
+def assert_can_record_for_child(user, child) -> None:
+    """Raise 404 when this user may not write a staff record — RFP §21.4."""
+    if not can_record_for_child(user, child):
+        raise Http404
+
+
+def _admin_kindergarten_ids(user) -> set[int]:
+    return set(
+        user.memberships.filter(
+            is_active=True, role=Role.ADMIN, kindergarten__isnull=False
+        ).values_list("kindergarten_id", flat=True)
+    )
+
+
+def _is_superadmin(user) -> bool:
+    return user.memberships.filter(is_active=True, role=Role.SUPERADMIN).exists()
+
+
+def visible_children(user):
+    """Every child this user may see, as a queryset.
+
+    The list-level counterpart to :func:`can_access_child`. The two must
+    agree: a child that appears in a list but 404s when opened is a bug, and
+    the reverse is a disclosure. ``test_permissions.py`` asserts the
+    equivalence over every user and child in the fixtures rather than
+    trusting that these two functions were kept in step by hand.
+    """
+    if user is None or not user.is_authenticated or not user.is_active:
+        return Child.objects.none()
+
+    if _is_superadmin(user):
+        return Child.objects.all()
+
+    # Guardian — the Guardianship row is the authorization.
+    condition = Q(guardianships__guardian_user=user,
+                  guardianships__can_view=True)
+
+    # Teacher — assigned to any group the child has ever been enrolled in.
+    condition |= Q(
+        enrollments__group__teacher_assignments__teacher_membership__user=user,
+        enrollments__group__teacher_assignments__teacher_membership__is_active=True,
+    )
+
+    # Admin — any kindergarten in the child's enrollment history, plus the
+    # newly-registered case with no enrollment yet (see
+    # child_kindergarten_history).
+    admin_ids = _admin_kindergarten_ids(user)
+    if admin_ids:
+        condition |= Q(enrollments__kindergarten_id__in=admin_ids)
+        condition |= Q(kindergarten_id__in=admin_ids, enrollments__isnull=True)
+
+    return Child.objects.filter(condition).distinct()
+
+
+def visible_kindergartens(user, child) -> set[int]:
+    """Which kindergartens' records about this child may this user see?
+
+    Access to a child is not access to every record about that child. After
+    a transfer, staff at the previous kindergarten keep their own history but
+    must not see what is written at the new one. Every tenant-scoped table
+    carries ``kindergarten_id`` (CLAUDE.md §3.2), so callers filter with:
+
+        Observation.objects.filter(
+            child=child,
+            kindergarten_id__in=visible_kindergartens(request.user, child),
+        )
+    """
+    history = child_kindergarten_history(child)
+
+    if is_guardian_of(user, child):
+        # Guardians see the child's whole history across kindergartens.
+        # RFP §961 treats the portfolio as the family's record.
+        return history
+
+    if user.memberships.filter(is_active=True, role=Role.SUPERADMIN).exists():
+        return history
+
+    return history & user.kindergarten_ids

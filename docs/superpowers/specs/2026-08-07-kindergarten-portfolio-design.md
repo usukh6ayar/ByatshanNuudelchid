@@ -1,167 +1,196 @@
-# Хүүхдийн хөгжлийн цахим хувийн хавтас — Архитектур ба өгөгдлийн сангийн загвар
+# Child Development Digital Portfolio — Architecture & Data Model
 
-**Огноо:** 2026-08-07
-**Эх баримт:** `Project_Info.md` (ТЗ)
-**Төлөв:** Батлагдсан загвар. Хэрэгжүүлэлтийн төлөвлөгөө дараагийн алхам.
+**Date:** 2026-08-07 · **Last revised:** 2026-08-09
+**Source document:** `Project_Info.md` (client RFP, in Mongolian)
+**Schedule:** `ROADMAP.md`
+**Status:** In build. Days 1–4 complete; see section 14.
 
-Энэ баримт нь ТЗ-г **хэрхэн** барих тухай. ТЗ өөрөө **юу** барихыг тодорхойлсон. Зөрчилдвөл ТЗ давамгайлна.
+This document covers **how** to build what the RFP specifies. The RFP defines
+**what**, and `ROADMAP.md` defines **when**. On conflict: RFP > ROADMAP > this
+document.
 
----
-
-## 1. Хамрах хүрээ
-
-### 1.1 Энэ загварт багтсан (ТЗ §20-II MVP)
-
-- Админ / багш / эцэг эхийн нэвтрэх ба эрхийн систем
-- Цэцэрлэг, хичээлийн жил, бүлэг, багшийн удирдлага
-- Хүүхдийн бүртгэл, эцэг эхтэй холбох
-- Хүүхдийн хавтас: Миний тухай, 2–5 насны мэдээлэл, онцгой үйл явдал, зургийн цомог
-- Багшийн ажиглалт, эцэг эхийн ажиглалт
-- Хөгжлийн үнэлгээ, улирлын ба жилийн тайлан
-- Өсөлтийн бүртгэл ба график
-- Мэдэгдэл, мэдээллийн нийтлэл
-- Баримт бичгийн сан
-- PDF тайлан (background дараалалаар)
-- Audit log, зөвшөөрлийн бүртгэл
-- Backup
-
-### 1.2 Санаатай хойшлуулсан
-
-Дараах нь **бүтцийн хувьд хүлээж авахад бэлэн**, гэхдээ энэ шатанд хэрэгжихгүй:
-
-| Хойшлуулсан зүйл | ТЗ-ний эх сурвалж |
-|---|---|
-| Судалгаа, асуулга, аналитик | Модуль 1 |
-| Аюулгүй байдал, эрүүл мэндийн тэмдэглэл | Модуль 2 |
-| Ирц, эмийн сануулга, харшил/цэсний хяналт | Нэмэлт хэсэг |
-| QR / пин кодоор хүүхэд авах | Нэмэлт хэсэг |
-| Дуут тэмдэглэл (speech-to-text) | Нэмэлт хэсэг |
-| Тайлан баталгаажуулах (цахим гарын үсэг) | Нэмэлт хэсэг |
-| Сургалтын төлбөр, QPay/SocialPay | Нэмэлт хэсэг |
-| Excel импорт/экспорт, багц тайлан, бүтээлийн харьцуулалт | §20-III |
-| Mobile app (Android/iOS) | §20-IV |
-| Олон хэл | §20-IV |
-
-**Шалтгаан:** ТЗ дотор гурван өөр хэмжээний бүтээгдэхүүн холилдсон. Ялангуяа төлбөр, ирц, pickup нь бие даасан систем. Бүгдийг зэрэг эхлэх нь хамгийн түгээмэл бүтэлгүйтлийн шалтгаан. §20 өөрөө үе шатыг тогтоосон.
+RFP section references appear as §N throughout.
 
 ---
 
-## 2. Технологийн сонголт
+## 1. Scope
 
-| Давхарга | Сонголт | Шалтгаан |
+`ROADMAP.md` is the authority on **what ships when**. This document covers
+**how** it is built. Where the two disagreed, the roadmap won — see 1.5.
+
+### 1.1 Phase 1 — the paid MVP
+
+- Login and authorization for admin / teacher / guardian, with password reset
+- Kindergarten, school year, group and teacher management
+- Child registration and editing, linking children to guardians
+- Child portfolio: About Me, birthday information, per-age pages (2–5),
+  basic photos
+- Teacher observations, and basic parent-submitted observations
+- Basic development assessment: domains, four levels, comment, progress
+- Notifications from teacher to guardian, with read status
+- Basic teacher and administrator dashboards
+- Search and filtering
+- Simple secure image upload — profile photo and observation attachments
+- A simple child PDF, generated on the background queue
+- Audit log
+- Deployment: HTTPS, production database, backup, health check
+
+### 1.2 Phase 2
+
+Full digital portfolio (complete 2–5 history, timeline, milestones) · advanced
+gallery (albums, captions, categories, ordering, multi-upload, HEIC,
+compression) · growth measurements and charts · full reporting (term, annual,
+development profile, growth, group, batch) · advanced PDF · document library ·
+Excel import and export · improved dashboards · activity posts · consent
+records.
+
+### 1.3 Phase 3
+
+Surveys and analytics (RFP Module 1) · health, safety, attendance, allergies,
+vaccinations (Module 2) · medication management · daily highlights, voice
+notes, speech-to-text · WebP, thumbnails, CDN · tuition billing and
+QPay/SocialPay · report acknowledgement · QR pickup · multi-language.
+
+### 1.4 Never in this project
+
+Native mobile applications in any form. The service layer is structured so a
+mobile client can be added later without rewriting business logic (RFP
+§20-IV), but no mobile work happens here.
+
+### 1.5 What changed, and why
+
+This section originally put **growth tracking, the document library, term and
+annual reports, milestones, photo albums, activity posts and consent records**
+in the MVP. The roadmap places them in Phase 2, and that is now the plan.
+
+Each is self-contained, and none is needed for the core workflow — a teacher
+recording an observation and a guardian seeing it. Moving them is the
+difference between a tight ten days and an impossible one.
+
+The deferred tables are still described in section 6 and marked with their
+phase. The schema conventions they rely on — `kindergarten_id` everywhere,
+soft delete, school-year scoping — have to be right from the first migration,
+so designing them now costs nothing. Building them now costs the delivery.
+
+---
+
+## 2. Technology choices
+
+| Layer | Choice | Rationale |
 |---|---|---|
-| Backend | **Django (Python)** | Одоогийн Flask прототип Python дээр — логик шилжинэ. ORM + migration + эрхийн систем + админ суурь бэлэн. §14-ийн шаардлагыг бүрэн хангана |
-| Өгөгдлийн сан | **PostgreSQL** | §14 "SQLite ашиглахгүй" |
-| Дараалал / ажилчин | **Celery + Redis** | §549 "тайлан үүсгэх үед систем гацахгүй" — PDF, зураг боловсруулалт |
-| Нүүр тал | **Django template + HTMX + Alpine.js** | §17 3 секундын шаардлага, §13 энгийн интерфэйс. Тусдаа SPA-гүй |
-| PDF | **WeasyPrint** | §10.3 монгол кирилл — фонт суулгах бүрэн хяналттай |
-| Зураг | **Pillow / pillow-heif** | §4.4 HEIC дэмжлэг, §968 WebP |
-| Файл хадгалалт | **S3 нийцтэй object storage** (Cloudflare R2 санал болгож буй) | §14, §968 CDN |
-| Ажиллуулах | **Docker + docker-compose** | §14 |
-| Түүхийн бүртгэл | **django-simple-history** | §4.1 "хэн, хэзээ зассан түүх" |
+| Backend | **Django (Python)** | The existing Flask prototype is Python, so domain logic ports over. ORM + migrations + permission layer + admin scaffolding included. Covers §14 in full |
+| Database | **PostgreSQL** | §14 forbids SQLite in production |
+| Queue / worker | **Celery + Redis** | §549 "the system must not freeze while generating reports" — PDFs and image processing |
+| Frontend | **Django templates + HTMX + Alpine.js** | §17 3-second page loads, §13 simple interface. No separate SPA |
+| PDF | **WeasyPrint** | §10.3 Mongolian Cyrillic — full control over font embedding |
+| Images | **Pillow / pillow-heif** | §4.4 HEIC support, §968 WebP |
+| File storage | **S3-compatible object storage** (Cloudflare R2 suggested) | §14, §968 CDN |
+| Runtime | **Docker + docker-compose** | §14 |
+| Row history | **django-simple-history** | §4.1 "record who changed what and when" |
 
-### 2.1 Repo бүтэц
+### 2.1 Repository layout
 
 ```
-kinder-web/       ← Django. models + services + веб + (дараа) API. НЭГ deploy
-kinder-mobile/    ← §20-IV шатанд эхэлнэ. API-аар холбогдоно
+kinder-web/       ← Django. models + services + web + (later) API. ONE deployment
+kinder-mobile/    ← starts in phase §20-IV. Connects over the API
 ```
 
-**Одоо API бичихгүй.** Service давхарга зөв тавигдсан тул mobile эхлэх үед DRF нэмэх нь хэдэн өдрийн ажил.
+**The API is not built now.** With the service layer in place, adding DRF when mobile starts is a matter of days.
 
 ---
 
-## 3. Архитектурын үндсэн зарчим
+## 3. Core architectural principles
 
-### 3.1 Давхаргын бүтэц
+### 3.1 Layering
 
 ```
-models/       өгөгдлийн бүтэц. Логик агуулахгүй
+models/       data structure. No logic
    │
-services/     ★ БҮХ бизнес дүрэм, эрхийн шалгалт, гүйлгээ
-   │          ганц эх сурвалж
-   ├── views/    (веб, Django template)   → services шууд дуудна
-   └── api/      (DRF, mobile-д, дараа)   → ЯГ ИЖИЛ services дуудна
+services/     ★ ALL business rules, authorization, transactions
+   │          single source of truth
+   ├── views/    (web, Django templates)  → call services directly
+   └── api/      (DRF, for mobile, later) → call THE SAME services
 ```
 
-**Хатуу дүрэм:** бизнес логик, эрхийн шалгалт view дотор бичигдэхгүй. Хэрэв "энэ эцэг эх энэ хүүхдийг харах эрхтэй юу" гэсэн дүрэм template view дотор нуугдвал mobile өөр хариу авна. §21.2–21.4 яг үүнийг барихаар бичигдсэн.
+**Hard rule:** business logic and authorization checks never live in views. If a rule like "may this guardian see this child" hides inside a template view, mobile will get a different answer. §21.2–21.4 exist to catch exactly that.
 
-**Веб нь өөрийн API руу HTTP-ээр залгахгүй.** Template нь `services/`-ийг санах ойд шууд дуудна. Өөрөө өөр рүүгээ сүлжээгээр хандвал хоцролт хоёр дахин нэмэгдэж §17-ийн 3 секундын зорилт эрсдэнэ.
+**The web layer never calls its own API over HTTP.** Templates call `services/` as in-process Python. A self-directed network round trip doubles latency and puts the §17 3-second target at risk for no benefit.
 
-### 3.2 URL бүсчлэл
+### 3.2 URL zones
 
 ```
-/                → нэвтрэх, нийтийн хуудас
-/bagsh/...       → багшийн дэлгэц      (base_teacher.html)
-/etseg-eh/...    → эцэг эхийн дэлгэц   (base_parent.html)
-/udirdlaga/...   → §2.1 админ дэлгэц   (base_admin.html)
-/media/...       → эрх шалгасны дараа signed URL
-/django-admin/   → зөвхөн superuser. Production-д IP хязгаартай эсвэл унтраасан
+/                → login, public pages
+/bagsh/...       → teacher screens       (base_teacher.html)
+/etseg-eh/...    → guardian screens      (base_parent.html)
+/udirdlaga/...   → §2.1 admin screens    (base_admin.html)
+/media/...       → signed URL, issued after the permission check
+/django-admin/   → superuser only. IP-restricted or disabled in production
 /healthz         → §14 health check
 ```
 
-Гурван layout тусдаа: §13-д багш "хурдан оруулах", эцэг эх "ойлгомжтой", админ нягт хүснэгт шаарддаг. Нэг загвар гурвуулд таарахгүй.
+Three separate layouts: §13 requires fast data entry for teachers, clarity for guardians, and dense tables for admins. One layout cannot serve all three.
 
-### 3.3 Админ систем
+### 3.3 The admin system
 
-- **Тусдаа repo биш, тусдаа deploy биш** — `can_access_child()` хоёр газар байж болохгүй
-- `/udirdlaga/` дотор энгийн CRUD (цэцэрлэг, бүлэг, багш, шалгуур тохиргоо) нь Django Admin суурьтай, Монголчлогдсон, загвар нэмэгдсэн
-- Хяналтын самбар (§12.2), audit log үзэх, нууц үг сэргээх, хэрэглэгч түгжих нь **захиалгаар** бичигдэнэ
-- Django Admin ашигласан хэсэгт `save_model()`, `delete_model()`-ийг дарж бичээд `services/` рүү чиглүүлнэ — эс тэгвээс audit log ба soft delete алгасагдана
+- **Not a separate repo, not a separate deployment** — `can_access_child()` must not exist in two places
+- Inside `/udirdlaga/`, plain CRUD (kindergartens, groups, teachers, criteria configuration) is built on Django Admin, translated to Mongolian and themed
+- Dashboards (§12.2), audit log browsing, password resets and account locking are **custom-built**
+- Where Django Admin is used, override `save_model()` and `delete_model()` to route through `services/`. Otherwise admin actions skip the audit log and soft delete
 
 ---
 
-## 4. Эрх ба олон цэцэрлэгийн загвар
+## 4. Authorization and the multi-kindergarten model
 
-### 4.1 Хэрэглэгч ба гишүүнчлэл
+### 4.1 Users and memberships
 
 ```
-User        нэвтрэх мэдээлэл (и-мэйл, утас, нууц үгийн hash). Эрхгүй.
-Membership  (user, kindergarten, role, is_active, эхэлсэн огноо)
+User        credentials (username, email, phone, password hash). No permissions.
+Membership  (user, kindergarten, role, is_active, start date)
 ```
 
-Нэг хүн олон Membership-тэй байж болно. Энэ нь дараах бодит тохиолдлуудыг шийднэ:
+One person can hold several memberships. This handles real cases:
 
-- Цэцэрлэгийн багшийн өөрийн хүүхэд тэр цэцэрлэгт сурдаг → нэг хүн `teacher` ба `guardian` хоёулаа
-- Нэг багш хоёр цэцэрлэгт ажилладаг
-- Нэг эцэг эх хоёр цэцэрлэгт хүүхэдтэй (ах дүү тусдаа, эсвэл хүүхэд шилжсэн)
+- A teacher whose own child attends the same kindergarten → both `teacher` and `guardian`
+- A teacher working at two kindergartens
+- A guardian with children at two kindergartens (siblings split, or a child transferred)
 
-**Эрхийн төрөл:**
+**Roles:**
 
-| role | Хамрах хүрээ | Тайлбар |
+| role | Scope | Notes |
 |---|---|---|
-| `superadmin` | Систем бүхэлд (`kindergarten` хоосон) | Цэцэрлэг бүртгэх, идэвхгүй болгох, нөөцлөлт, нийт хэрэглэгч |
-| `admin` | Нэг цэцэрлэг | Багш үүсгэх, бүлэг байгуулах, хуваарилах, тайлан, статистик |
-| `teacher` | Нэг цэцэрлэг | §2.2 |
-| `guardian` | Нэг цэцэрлэг | §2.3 |
+| `superadmin` | System-wide (`kindergarten` null) | Register kindergartens, deactivate them, backups, all users |
+| `admin` | One kindergarten | Create teachers, set up groups, assign staff, reports, statistics |
+| `teacher` | One kindergarten | §2.2 |
+| `guardian` | One kindergarten | §2.3 |
 
-§2.1-д администраторын жагсаалт дотор системийн ба цэцэрлэгийн түвшний үйлдэл холилдсон. Олон цэцэрлэгтэй систем дээр "Наран цэцэрлэгийн эрхлэгч" нь "Оч цэцэрлэг"-ийн багш үүсгэж чадах ёсгүй.
+§2.1 lists system-level and kindergarten-level actions together. In a multi-tenant system the director of kindergarten A must not be able to create teachers at kindergarten B.
 
-### 4.2 Эрхийн шалгалт — Enrollment түүхээс тооцно
+### 4.2 Authorization derives from enrollment history
 
-Хоёр тусдаа асуулт. Хольж болохгүй.
+Two separate questions. Do not conflate them.
 
 ```python
-# services/permissions.py — БҮХ хандалт эндүүр дамжина
+# services/permissions.py — every access goes through here
 
 def can_access_child(user, child) -> bool:
-    """Энэ хэрэглэгч энэ хүүхдийг ерөөсөө үзэж болох уу?"""
+    """May this user see this child at all?"""
 
-    # ЭЦЭГ ЭХ → Guardianship бичлэг өөрөө эрх мөн.
-    #           Цэцэрлэгээс хамаарахгүй — хүүхэд шилжсэн ч эцэг эх нь хэвээр.
+    # GUARDIAN → the Guardianship row is itself the authorization.
+    #            Independent of kindergarten: a transfer does not
+    #            change who the parent is.
     if Guardianship.objects.filter(child=child, guardian_user=user,
                                    can_view=True).exists():
         return True
 
-    # БАГШ → хүүхдийн Enrollment-үүдийн бүлгүүдийн аль нэгэнд
-    #        GroupTeacher-ээр хуваарилагдсан эсэх (аль ч жилийн)
+    # TEACHER → assigned via GroupTeacher to any group the child has
+    #           ever been enrolled in (any school year)
     if GroupTeacher.objects.filter(
             teacher_membership__user=user,
             group__enrollment__child=child).exists():
         return True
 
-    # АДМИН → хүүхэд харьяалагдаж БАЙСАН цэцэрлэгүүдийн аль нэгэнд
-    #         admin эрхтэй эсэх
+    # ADMIN → holds an admin membership in any kindergarten the child
+    #         has ever been enrolled at
     if user.has_membership_in(child_kindergarten_history(child),
                               roles=["admin", "superadmin"]):
         return True
@@ -170,193 +199,199 @@ def can_access_child(user, child) -> bool:
 
 
 def visible_kindergartens(user, child) -> set[int]:
-    """Аль цэцэрлэгийн бичлэгүүд харагдах вэ?"""
+    """Which kindergartens' records are visible?"""
     history = child_kindergarten_history(child)   # Enrollment → Group
                                                   #   → SchoolYear → Kindergarten
     if is_guardian_of(user, child):
-        return history          # эцэг эх бүх түүхийг хардаг  (§961)
-    return history & user.kindergarten_ids  # багш/админ зөвхөн өөрийнхөө хэсгийг
+        return history          # guardians see the whole history  (§961)
+    return history & user.kindergarten_ids  # staff see only their own part
 ```
 
-**Гурван дүрэм:**
+**Three rules:**
 
-1. **Цэцэрлэгийг `Child.kindergarten_id`-ээс биш, `Enrollment` түүхнээс тооцно.** `Child.kindergarten` талбар нь зөвхөн "одоо аль цэцэрлэгт байгаа" гэсэн жагсаалт/шүүлтийн зориулалттай. Эрхийн шийдвэрт ашиглагдахгүй. Ингэснээр хүүхэд шилжсэн ч хуучин багш өөрийн бичсэн ажиглалтдаа хандана.
+1. **The kindergarten is derived from `Enrollment` history, not from `Child.kindergarten_id`.** That field means only "currently attending" and exists for listing and filtering. It is never an authorization input. This is what lets a teacher keep access to observations they wrote after the child transfers away.
 
-2. **Хүүхдийг үзэх эрх ≠ бүх бичлэгийг үзэх эрх.** Наран цэцэрлэгийн багш Оч цэцэрлэгт бичигдсэн шинэ ажиглалтыг **харахгүй**. Бичлэг бүр өөрийн `kindergarten_id`-тай (5-р бүлгийн 1-р зарчим) — query бүр `visible_kindergartens()`-ээр шүүгдэнэ. Эндээс тэр зарчим яг ашиг өгч байна.
+2. **Access to a child is not access to every record about that child.** A teacher at kindergarten A does **not** see observations written later at kindergarten B. Every record carries its own `kindergarten_id` (principle 1 in section 5), and queries filter through `visible_kindergartens()`. This is where that principle pays off.
 
-3. **Session-д цэцэрлэг хадгалахгүй.** §21.4-ийн "URL солиод бусдын мэдээлэл харах" халдлага нь session-д итгэсэн үед амжилттай болдог: аль нэг хуудас session шалгахаа мартвал нэвтэрнэ. Өгөгдлөөс тооцдог бол шалгалт мартагдах боломжгүй.
+3. **Never store the kindergarten in the session.** The §21.4 attack ("change the URL, read someone else's data") succeeds precisely when a page forgets to re-check a session value. Deriving from data makes the check impossible to forget.
 
-**Эцэг эхийн нүүр** = бүх хүүхдийн жагсаалт, цэцэрлэгээр бүлэглэсэн, шошготой. Мэдэгдэл, нийтлэл олон цэцэрлэгээс нийлж ирвэл эх сурвалжийг шошгоор ялгана. §2.3-ын "нэгээс олон хүүхэдтэй бол хүүхдээ сонгох" шаардлагад нийцнэ.
+**The guardian home screen** lists all their children grouped by kindergarten, each tagged. Announcements and posts arriving from multiple kindergartens are labelled by source. This satisfies §2.3 ("choose your child if you have more than one").
 
-### 4.3 Нэвтрэлт
+### 4.3 Authentication
 
-- Веб: session cookie. §15-ийн дагуу `HttpOnly`, `Secure`, `SameSite=Lax`
-- Mobile (дараа): token. Хоёул нэг ижил `User` / `Membership` загварт очно
-- §3.1: хэрэглэгчийн нэр, и-мэйл, эсвэл утасны дугаарын аль нэгээр нэвтэрнэ. Хоёр өөр нэвтрэх систем биш — нэг `User` дээр гурван талбар, гурвуулаа давхцахгүй
+- Web: session cookie with `HttpOnly`, `Secure`, `SameSite=Lax` per §15
+- Mobile (later): token. Both resolve to the same `User` / `Membership` model
+- §3.1: log in with username, email or phone. Not three login systems — one `User` with three unique fields
 
 ---
 
-## 5. Өгөгдлийн сангийн 7 зарчим
+## 5. Seven database principles
 
-Бүх хүснэгтэд үйлчилнэ.
+These apply to every table.
 
-1. **Цэцэрлэгт хамаарах хүснэгт бүр `kindergarten_id` баганатай** — холбоосоор олдох байсан ч. §3.2-ын тусгаарлалтыг ганц шүүлтүүрээр хамгаална.
-2. **Soft delete** — `deleted_at`, `deleted_by`. §3.4. Default manager устгасныг нууна.
-3. **Мөр бүр `created_at`, `created_by`, `updated_at`, `updated_by`** — §4.1, §5.1.
-4. **Тохиргоо код дотор биш, өгөгдлийн санд** — §5.2, §6.1, §6.2 нь бүгд "администратор засварлана" гэсэн. Enum биш, хүснэгт.
-5. **Хичээлийн жил бол бүх зүйлийн хэмжээс** — §4.3, §6.4, §6.5. Хүүхдийн бүлэг нь `Enrollment` хүснэгтэд түүх болж хадгалагдана.
-6. **Зураг нэг л газар** — `MediaFile` нэг хүснэгт, ашиглалтыг холбоос хүснэгтээр илэрхийлнэ.
-7. **Файлын нэр таамаглах боломжгүй** — §15. `storage_key` санамсаргүй, жинхэнэ нэр тусдаа баганад зөвхөн харуулах зориулалттай.
+1. **Every tenant-scoped table carries `kindergarten_id`** even when it is reachable through a relation. One filter then enforces the isolation §3.2 requires.
+2. **Soft delete** — `deleted_at`, `deleted_by`. §3.4. The default manager hides deleted rows.
+3. **Every row records `created_at`, `created_by`, `updated_at`, `updated_by`** — §4.1, §5.1.
+4. **Configuration lives in the database, not in code** — §5.2, §6.1 and §6.2 all say "the administrator can edit this". Tables, not enums.
+5. **School year is a dimension running through everything** — §4.3, §6.4, §6.5. A child's group membership is stored as history in `Enrollment`.
+6. **Media lives in one table** — a single `MediaFile`, with join tables expressing where each file is used.
+7. **Filenames are unguessable** — §15. `storage_key` is random; the real name sits in a separate column for display only.
 
 ---
 
-## 6. Өгөгдлийн сангийн загвар
+## 6. Data model
 
-### 6.1 Суурь (9 хүснэгт + 2 профайл)
-
-```
-Kindergarten      нэр, лого, зураг, хаяг, утас, и-мэйл, танилцуулга, төлөв   §3.2
-SchoolYear        kindergarten, нэр "2025-2026", эхлэх, дуусах, is_current
-Group             kindergarten, school_year, нэр, насны ангилал, ангийн зураг,
-                  хичээлийн хуваарь, бүлгийн дүрэм, төлөв: идэвхтэй|архивлагдсан
-GroupTeacher      group, teacher_membership, төрөл: үндсэн|туслах, эхэлсэн, дууссан
-User              хэрэглэгчийн нэр, и-мэйл, утас, нууц үгийн hash,
-                  овог, нэр, профайл зураг, сүүлд нэвтэрсэн, идэвхтэй эсэх
-                  ⚠ §3.1: багш нэр эсвэл и-мэйлээр, эцэг эх утас эсвэл
-                    и-мэйлээр нэвтэрнэ → гурван талбар бүгд байх ёстой
-Membership        user, kindergarten(хоосон=системийн), role, идэвхтэй, огноо
-Child             kindergarten, овог, нэр, регистр/дотоод код(давхцахгүй), хүйс,
-                  төрсөн огноо, профайл зураг, элссэн огноо, гарсан огноо,
-                  эрүүл мэндийн товч тэмдэглэл, төлөв                        §3.4
-Guardianship      child, guardian_user, хамаарал(ээж|аав|эмээ|бусад),
-                  үндсэн эсэх, харах эрхтэй эсэх, огноо                      §3.5
-Enrollment        child, group, school_year, элссэн огноо, гарсан огноо,
-                  төлөв: идэвхтэй|шилжсэн|төгссөн|архивлагдсан    ★ гол хүснэгт
-```
-
-**`Enrollment` яагаад гол вэ:** `Child` хүснэгтэд "бүлэг" гэсэн багана байхгүй. Хүүхэд 2–5 нас хүртэл 3–4 жил системд байх бөгөөд жил бүр бүлэг солино. Тусдаа хүснэгтэд байлгаснаар:
-
-- §3.4 шилжүүлэх → хуучныг хааж шинийг нээнэ, түүх хэвээр
-- §6.5 жилээс жилд харьцуулах → өгөгдөл аль хэдийн жилээр хуваагдсан
-- §4.3 нас тус бүрийн хуудас → аль жилд хэдэн настай байсан нь мэдэгдэнэ
-- Багшийн эрх → тухайн жилийн `GroupTeacher` бичлэгээр тодорхойлогдоно
-
-Хэрэв бүлгийг `Child` дээр шууд бичвэл дараа жил шилжихэд өнгөрсөн жилийн бүх ажиглалт, үнэлгээ буруу бүлэгт харагдана. Засахад хамгийн үнэтэй алдаа.
-
-**`Group` нь хичээлийн жилд харьяалагдана.** "Цэцэг бүлэг 2025-2026" ба "Цэцэг бүлэг 2026-2027" бол хоёр өөр мөр. §3.2-т нэр, насны ангилал, хичээлийн жилийг хамт жагсаасан. Багшийн хуваарилалт, ангийн зураг, дүрэм жил бүр өөр байдаг.
-
-**Нэмэлт профайл:** `TeacherProfile` (мэргэжил, ажилласан жил, боловсрол, өөрийн тухай — §3.3), `GuardianProfile` (§3.5-ын нэмэлт талбарууд).
-
-### 6.2 Хүүхдийн хавтас (7 хүснэгт)
+### 6.1 Foundation (9 tables + 2 profiles) — Phase 1 ✅ built
 
 ```
-AboutMe           child, танилцуулга, нэрний утга, анхны гарын үсэг(media),
-                  сонирхолтой үг, мөрөөдөл, онцлог, өндөр, жин, огноо   §4.1
-
-ChildAgeProfile   child, нас(2|3|4|5), school_year,
-                  дуртай: өнгө, хоол, тоглоом, ном, дуу, үлгэр, кино,
-                          хувцас, үйл ажиллагаа,
-                  зан чанар, сэтгэл хөдлөлийн онцлог, гэр бүлийн гишүүд,
-                  суралцах сонирхол, шинээр эзэмшсэн чадвар,
-                  эцэг эхийн тэмдэглэл, багшийн тэмдэглэл              §4.3
-                  ⚠ unique(child, нас, school_year)
-
-MilestoneType     kindergarten(хоосон=системийн), нэр, дүрс, дараалал   §4.5
-Milestone         child, төрөл(эсвэл өөрийн нэр), огноо, тайлбар, бүртгэсэн
-Album             child, нэр, тайлбар, school_year, нүүр зураг, үүсгэсэн  §4.4
-AlbumPhoto        album, media_file, гарчиг, тайлбар, авсан огноо, нас,
-                  эзэмшигчийн төрөл: багш|эцэг эх|хамтын, дараалал
-BirthdayNote      child, жил, тэмдэглэл, media                          §4.2
+Kindergarten      name, logo, photo, address, phone, email, description, status   §3.2
+SchoolYear        kindergarten, name "2025-2026", start, end, is_current
+Group             kindergarten, school_year, name, age category, class photo,
+                  timetable, group rules, status: active|archived
+GroupTeacher      group, teacher_membership, role: primary|assistant, from, to
+User              username, email, phone, password hash, last name, first name,
+                  avatar, last login, is_active
+                  ⚠ §3.1: teachers log in by username or email, guardians by
+                    phone or email → all three fields must exist and be unique
+Membership        user, kindergarten(null = system-wide), role, is_active, since
+Child             kindergarten, last name, first name, national ID / internal
+                  code (unique), sex, date of birth, avatar, enrolled on,
+                  left on, brief health notes, status                        §3.4
+Guardianship      child, guardian_user, relation(mother|father|grandparent|other),
+                  is_primary, can_view, created                              §3.5
+Enrollment        child, group, school_year, started on, ended on,
+                  status: active|transferred|graduated|archived   ★ keystone table
 ```
 
-**Орд ба жилийн амьтныг хадгалахгүй.** §206-д "төрсөн огнооноос автоматаар тооцоолж болно". Тооцоолж болох зүйлийг хадгалбал төрсөн огноог зассан үед хуучин утга үлдэнэ. Функцээр тооцно.
+**Why `Enrollment` is the keystone:** `Child` has no "group" column. A child stays in the system for three to four years (ages 2–5) and changes group every year. Keeping this as a separate table gives us:
 
-**`ChildAgeProfile` дээр 17 багана, EAV биш.** §917-ийн бүлгийн аналитик ("бүх хүүхдийн дуртай өнгө") нэр-утга загвар дээр төвөгтэй болно. Багана болгосон нь query, тайлан, экспортод хялбар.
+- §3.4 transfers → close the old row, open a new one; history survives
+- §6.5 year-over-year comparison → data is already partitioned by year
+- §4.3 per-age pages → we know how old the child was in each school year
+- Teacher authorization → determined by that year's `GroupTeacher` record
 
-**§4.1-ийн "хэн, хэзээ зассан түүх"** — `django-simple-history`-ээр мөр бүрийн snapshot. `AboutMe`, `ChildAgeProfile`, `Assessment`, `Observation`, `Child` дээр идэвхжүүлнэ. Талбар тус бүрийн түүх биш, гэхдээ хоёр хувилбарыг зэрэгцүүлбэл өөрчлөлт харагдана.
+Writing the group directly onto `Child` would make every prior year's observations and assessments appear under the wrong group after a transfer. That is the most expensive mistake available here.
 
-### 6.3 Ажиглалт (4 хүснэгт)
+**`Group` belongs to a school year.** "Sunflower group 2025-2026" and "Sunflower group 2026-2027" are two rows. §3.2 lists name, age category and school year together. Staff assignment, class photo and group rules all change annually.
+
+**Profiles:** `TeacherProfile` (specialization, years of service, education, bio — §3.3) and `GuardianProfile` (§3.5 extras).
+
+### 6.2 Child portfolio (7 tables) — Phase 1 for AboutMe / ChildAgeProfile / BirthdayNote, Phase 2 for milestones and albums
 
 ```
-ObservationType     kindergarten, нэр, код, дараалал, идэвхтэй          §5.2
-                    → Өдөр тутмын | Бүтээл, зурган |
-                      Үйл ажиллагаанд суурилсан | Эцэг эхийн
+AboutMe           child, introduction, meaning of name, first signature (media),
+                  memorable sayings, dream, distinguishing traits,
+                  height, weight, recorded on                            §4.1
 
-Observation         child, enrollment, төрөл,
-                    source: багш|эцэг эх,                               §5.4
-                    ажигласан огноо, үйл ажиллагааны нэр, нөхцөл байдал,
-                    хүүхдийн хийсэн үйлдэл, хүүхдийн хэлсэн үг,
-                    багшийн тайлбар, дараагийн дэмжлэг/төлөвлөгөө,
-                    visible_to_parents,                                 §5.1
-                    review_status: хүлээгдэж буй|зөвшөөрсөн|засвар хүссэн,
+ChildAgeProfile   child, age(2|3|4|5), school_year,
+                  favorite: color, food, toy, book, song, story, movie,
+                            clothes, activity,
+                  personality, emotional traits, family members,
+                  learning interests, newly acquired skills,
+                  parent note, teacher note                              §4.3
+                  ⚠ unique(child, age, school_year)
+
+MilestoneType     kindergarten(null = system), name, icon, order          §4.5
+Milestone         child, type (or custom name), date, description, recorded by
+Album             child, name, description, school_year, cover, created by  §4.4
+AlbumPhoto        album, media_file, title, description, taken on, age,
+                  owner type: teacher|parent|shared, order
+BirthdayNote      child, year, note, media                                §4.2
+```
+
+**Zodiac sign and Mongolian year animal are not stored.** §206 says they may be computed from the date of birth. Storing a derived value means it goes stale when the birth date is corrected. Compute them in a function.
+
+**`ChildAgeProfile` uses 17 typed columns, not EAV.** The group analytics in §917 ("every child's favorite color") become awkward under a name/value model. Columns keep queries, reports and exports simple.
+
+**§4.1's "record who changed what and when"** is handled by `django-simple-history` snapshots, enabled on `AboutMe`, `ChildAgeProfile`, `Assessment`, `Observation` and `Child`. This is row-level rather than field-level history, but diffing two versions shows which field changed — sufficient in practice and far simpler to operate.
+
+### 6.3 Observations (4 tables) — Phase 1
+
+```
+ObservationType     kindergarten, name, code, order, is_active            §5.2
+                    → Daily | Work & drawing | Activity-based | Parent-submitted
+
+Observation         child, enrollment, type,
+                    source: teacher|parent,                               §5.4
+                    observed on, activity name, situation,
+                    what the child did, what the child said,
+                    teacher comment, next steps / support plan,
+                    visible_to_parents,                                   §5.1
+                    review_status: pending|approved|revision_requested,
                     reviewed_by, reviewed_at, review_note,
-                    include_in_report,                                  §5.4
-                    author, огноонууд
+                    include_in_report,                                    §5.4
+                    author, timestamps
 
-ObservationDomain   observation, хөгжлийн чиглэл, түвшин(сонголтоор)
-ObservationMedia    observation, media_file, тайлбар, авсан огноо, дараалал
+ObservationDomain   observation, development domain, level (optional)
+ObservationMedia    observation, media_file, caption, taken on, order
 ```
 
-**`ObservationDomain` тусдаа байх шалтгаан:** нэг ажиглалт ("блокоор цамхаг барьж, найздаа тайлбарлав") нь Бүтээлч сэтгэлгээ, Хэл яриа, Харилцаа гурван чиглэлд нэгэн зэрэг хамаарна. Нэг баганад нэг чиглэл бичвэл §12.3-ын "чиглэл тус бүрийн дундаж" буруу гарна.
+**Why `ObservationDomain` is its own table:** a single observation ("built a tower from blocks and explained it to a friend") belongs to Creativity, Language and Communication simultaneously. A single-column domain would make the §12.3 per-domain averages wrong.
 
-### 6.4 Үнэлгээ (8 хүснэгт)
+### 6.4 Assessment (8 tables) — Phase 1 except AnnualReport, which is Phase 2
 
-```
-DevelopmentDomain   kindergarten(хоосон=системийн үндсэн), нэр, өнгө,
-                    дараалал, идэвхтэй                                  §6.1
-                    → Бие бялдар, Хэл яриа, Танин мэдэхүй, Нийгэмшихүй,
-                      Сэтгэл хөдлөл, Бүтээлч сэтгэлгээ, Өөртөө үйлчлэх,
-                      Харилцаа, Дадал хэвшил
-
-DevelopmentIndicator domain, нэр, насны хязгаар, дараалал  (MVP-д хоосон)
-AssessmentScale     kindergarten, нэр, үндсэн эсэх                      §6.2
-AssessmentLevel     scale, утга(1..N), нэр, өнгө, тайлбар
-                    → 1 Дэмжлэг шаардлагатай | 2 Хөгжиж байгаа |
-                      3 Хүлээгдэж буй түвшинд | 4 Ахисан
-
-Term                school_year, дугаар(1-4), нэр, эхлэх, дуусах        §6.4
-
-Assessment          child, enrollment, чиглэл, indicator(хоосон болно),
-                    term, түвшин, тайлбар, үнэлсэн багш, үнэлсэн огноо
-                    ⚠ unique(child, enrollment, чиглэл, indicator, term)
-
-TermReport          child, enrollment, term, багшийн тайлбар, давуу тал,
-                    дэмжих шаардлагатай чадвар, дараагийн улирлын зорилго,
-                    эцэг эхэд өгөх зөвлөмж, author,
-                    төлөв: ноорог|эцэслэсэн, эцэслэсэн огноо            §6.4
-
-AnnualReport        child, school_year, ахиц, давуу тал, хөгжүүлэх чадвар,
-                    жилийн эцсийн дүгнэлт, эцэг эхэд өгөх зөвлөмж,
-                    author, төлөв, эцэслэсэн огноо                      §6.5
-```
-
-**`unique(child, enrollment, чиглэл, term)`** — §17-ийн "давхар дарснаас нэг мэдээлэл олон удаа хадгалагдахгүй" шаардлагыг өгөгдлийн сангийн түвшинд хангана. §6.3-ын түргэн үнэлгээний дэлгэц дээр яг энэ асуудал үүсдэг. Хязгаарлалтыг DB-д тавибал програмын алдаа ч давхардал үүсгэж чадахгүй.
-
-**Үнэлгээ чиглэлийн түвшинд.** §6.4, §6.5, §12.3, Модуль 1.4-ийн radar chart бүгд чиглэлээр. `DevelopmentIndicator` хүснэгт ба `Assessment.indicator` багана нь MVP-д хоосон — хожим илүү нарийн шалгуур гаргах хэрэг гарвал бэлэн байна. Хоосон багана нэмэх нь бараг үнэгүй, харин хожим `Assessment`-ийн бүтэц өөрчлөх нь бүх өгөгдлийг нүүлгэнэ.
-
-**`TermReport.төлөв`** — багш тайланг хэдэн өдөр бичнэ. Эцэслэхээс өмнө эцэг эхэд харагдахгүй. PDF үүсгэх, баталгаажуулах нь энэ төлвөөс хамаарна.
-
-### 6.5 Өсөлт (3 хүснэгт)
+`TermReport` moved into Phase 1 on 2026-08-12 — see
+`2026-08-11-term-report-design.md`, which also drops the `teacher comment`
+field listed below: `Assessment.comment` already holds the per-domain note,
+and a second general comment box would leave the teacher guessing which one
+the family reads.
 
 ```
-GrowthMeasurement     child, хэмжсэн огноо, нас(сараар), өндөр, жин,
-                      толгойн тойрог, тэмдэглэл, хэмжсэн хэрэглэгч      §7.1
-GrowthStandardSource  нэр, хувилбар, эх сурвалжийн холбоос, нийтэлсэн огноо
-GrowthStandardPoint   source, хүйс, нас(сараар), үзүүлэлт(өндөр|жин|толгой),
+DevelopmentDomain   kindergarten(null = system default), name, color,
+                    order, is_active                                      §6.1
+                    → Physical, Language, Cognitive, Social, Emotional,
+                      Creative, Self-care, Communication, Habits
+
+DevelopmentIndicator domain, name, age range, order   (unused in Phase 1)
+AssessmentScale     kindergarten, name, is_default                        §6.2
+AssessmentLevel     scale, value(1..N), label, color, description
+                    → 1 Needs support | 2 Developing |
+                      3 At expected level | 4 Above expected level
+
+Term                school_year, number(1-4), name, start, end            §6.4
+
+Assessment          child, enrollment, domain, indicator(nullable),
+                    term, level, comment, assessed_by, assessed_at
+                    ⚠ unique(child, enrollment, domain, indicator, term)
+
+TermReport          child, enrollment, term, strengths,
+                    areas needing support, goals for next term,
+                    advice for parents, author,
+                    status: draft|final, finalized at                     §6.4
+                    ⚠ unique(child, enrollment, term)
+
+AnnualReport        child, school_year, progress, strengths,
+                    skills to develop, year-end conclusion,
+                    advice for parents, author, status, finalized at      §6.5
+```
+
+**`unique(child, enrollment, domain, term)`** enforces §17's "a double-click must not save the same record twice" at the database level. The §6.3 quick-assessment screen is exactly where that happens. With the constraint in the database, even a bug in the application cannot create a duplicate.
+
+**Assessment is at the domain level.** §6.4, §6.5, §12.3 and the Module 1.4 radar chart all work per domain. The `DevelopmentIndicator` table and the `Assessment.indicator` column stay empty in Phase 1 — they are there so that finer-grained criteria can be added later. An unused nullable column is nearly free; restructuring `Assessment` later would require migrating all existing data.
+
+**`TermReport.status`** — teachers write a report over several days. It must not be visible to guardians before it is finalized. PDF generation and acknowledgement both key off this status.
+
+### 6.5 Growth (3 tables) — Phase 2
+
+```
+GrowthMeasurement     child, measured on, age in months, height, weight,
+                      head circumference, note, recorded by               §7.1
+GrowthStandardSource  name, version, source URL, published on
+GrowthStandardPoint   source, sex, age in months, metric(height|weight|head),
                       p3, p15, p50, p85, p97
 ```
 
-**`GrowthStandardSource` заавал.** §427: "Жишиг үзүүлэлтийн эх сурвалж, хувилбар болон шинэчлэгдсэн огноог тодорхой харуулна". Жишиг тоог код дотор бичвэл энэ хангагдахгүй, мөн шинэчлэхэд програм дахин байршуулна.
+**`GrowthStandardSource` is required.** §427: "clearly display the source, version and revision date of the reference values". Hard-coding the reference numbers fails that requirement and forces a redeploy whenever the standard is updated.
 
-§427-ийн "систем эмнэлгийн онош өгөхгүй" анхааруулга дэлгэц дээр гарна.
+The §427 disclaimer ("this system does not provide medical diagnoses") is displayed in the UI.
 
-### 6.6 Медиа (2 хүснэгт)
+### 6.6 Media (2 tables) — MediaFile is Phase 1, MediaVariant is Phase 3
 
 ```
-MediaFile     kindergarten, child(хоосон болно), uploaded_by,
-              storage_key      ← санамсаргүй UUID зам
-              original_name    ← зөвхөн харуулах
-              mime_type        ← ЖИНХЭНЭ агуулгаас илрүүлсэн, өргөтгөлөөс биш
+MediaFile     kindergarten, child(nullable), uploaded_by,
+              storage_key      ← random UUID path
+              original_name    ← display only
+              mime_type        ← detected from CONTENT, not the extension
               size_bytes, width, height, checksum(sha256),
               status: uploading|processing|ready|failed,
               uploaded_at, deleted_at
@@ -365,271 +400,307 @@ MediaVariant  media_file, kind: thumb|medium|full|webp_thumb|webp_medium,
               storage_key, width, height, size_bytes, format
 ```
 
-### 6.7 Харилцаа (8 хүснэгт)
+### 6.7 Communication (8 tables) — Announcement group is Phase 1, Post group is Phase 2
 
 ```
-Announcement            kindergarten, author, гарчиг, текст,
-                        эхлэх/дуусах огноо, is_important,
-                        төлөв: ноорог|нийтэлсэн, нийтэлсэн огноо      §8.1
-AnnouncementTarget      announcement, group(хоосон болно), child(хоосон болно)
+Announcement            kindergarten, author, title, body,
+                        starts at / ends at, is_important,
+                        status: draft|published, published at            §8.1
+AnnouncementTarget      announcement, group(nullable), child(nullable)
 AnnouncementAttachment  announcement, media_file
-AnnouncementRead        announcement, user, read_at   unique(announcement,user)
+AnnouncementRead        announcement, user, read_at  unique(announcement,user)
 
-Post                    kindergarten, group, author, гарчиг, тайлбар, огноо,
-                        visibility: бүлэг|сонгосон хүүхэд              §8.2
-PostMedia               post, media_file, дараалал
+Post                    kindergarten, group, author, title, body, date,
+                        visibility: whole group | selected children        §8.2
+PostMedia               post, media_file, order
 PostChild               post, child
 PostLike                post, user   unique
-PostView                post, user   unique  ← давтан үзэлт тоологдохгүй
+PostView                post, user   unique  ← repeat views not counted
 ```
 
-**`AnnouncementTarget` тусдаа байх шалтгаан:** §8.1-д "Хүлээн авах бүлэг" ба "Сонгосон хүүхдийн эцэг эх" хоёуланг жагсаасан. Нэг мэдэгдэл 3 бүлэг + 2 тусгай хүүхдэд зэрэг очиж болно.
+**Why `AnnouncementTarget` is separate:** §8.1 lists both "recipient group" and "guardians of selected children". One announcement can go to three groups plus two individual children at once. A single column cannot express that.
 
-### 6.8 Баримт бичиг (4 хүснэгт)
+### 6.8 Documents (4 tables) — Phase 2
 
 ```
-DocumentCategory  kindergarten, нэр, дараалал                          §9
-Document          kindergarten, нэр, ангилал, тайлбар, нүүр зураг,
-                  current_version, идэвхтэй
-DocumentVersion   document, хувилбарын дугаар, файл, хуудасны тоо,
-                  нийтэлсэн огноо, нийтэлсэн хэрэглэгч, тэмдэглэл
+DocumentCategory  kindergarten, name, order                               §9
+Document          kindergarten, title, category, description, cover,
+                  current_version, is_active
+DocumentVersion   document, version number, file, page count,
+                  published at, published by, note
 DocumentBookmark  document, user   unique
 ```
 
-### 6.9 Систем (6 хүснэгт)
+### 6.9 System (6 tables) — Phase 1 except Consent, which is Phase 2
 
 ```
-ReportJob             kindergarten, төрөл, params JSON, requested_by,
-                      төлөв: queued|running|done|failed|expired,
+ReportJob             kindergarten, type, params JSON, requested_by,
+                      status: queued|running|done|failed|expired,
                       progress_percent, result_media, file_size, page_count,
                       error_message, requested_at, started_at,
-                      completed_at, expires_at                        §10
+                      completed_at, expires_at                            §10
 
-AuditLog              kindergarten(хоосон болно), actor_user, actor_role,
-                      action, object_type, object_id, child(хоосон болно),
+AuditLog              kindergarten(nullable), actor_user, actor_role,
+                      action, object_type, object_id, child(nullable),
                       ip_address, user_agent, metadata JSON, created_at
-                      ★ зөвхөн НЭМЭГДЭНЭ. Засахгүй, устгахгүй       §15,§16
+                      ★ APPEND-ONLY. Never updated, never deleted     §15, §16
 
-ConsentType           kindergarten, код, нэр, тайлбар, заавал эсэх, хувилбар
-Consent               child, guardian_user, төрөл, хувилбар, granted,
-                      granted_at, revoked_at, ip_address                §16
+ConsentType           kindergarten, code, name, description, is_required, version
+Consent               child, guardian_user, type, version, granted,
+                      granted_at, revoked_at, ip_address                  §16
 
-LoginAttempt          identifier, ip, амжилттай эсэх, created_at        §3.1
-PasswordResetToken    user, token_hash, expires_at, used_at             §3.1
+LoginAttempt          identifier, ip, succeeded, created_at               §3.1
+PasswordResetToken    user, token_hash, expires_at, used_at               §3.1
 ```
 
-**Нийт ≈ 53 хүснэгт + History толин хүснэгтүүд.**
+**Total ≈ 53 tables plus history mirrors.**
 
-| Бүлэг | Тоо |
+| Group | Count |
 |---|---|
-| Суурь + профайл | 11 |
-| Хавтас | 7 |
-| Ажиглалт | 4 |
-| Үнэлгээ | 8 |
-| Өсөлт | 3 |
-| Медиа | 2 |
-| Харилцаа | 8 |
-| Баримт бичиг | 4 |
-| Систем | 6 |
+| Foundation + profiles | 11 |
+| Portfolio | 7 |
+| Observations | 4 |
+| Assessment | 8 |
+| Growth | 3 |
+| Media | 2 |
+| Communication | 8 |
+| Documents | 4 |
+| System | 6 |
 
 ---
 
-## 7. Файл боловсруулах урсгал
+## 7. File processing pipeline
+
+The full pipeline, with the phase each step belongs to:
 
 ```
-Утаснаас зураг → түр хадгална → ажилчинд шидээд хариу ШУУД буцна
-                                      │
-                                      ▼  Celery worker
-                    1. Жинхэнэ MIME төрөл шалгах        §15
-                       (.jpg нэртэй .exe биш эсэх)
-                    2. EXIF-ээс GPS байршил арилгах     ★
-                    3. HEIC → JPEG хөрвүүлэх            §4.4
-                    4. thumb / medium / full үүсгэх     §17
-                    5. WebP хувилбар үүсгэх             §968
-                    6. status = ready
+Photo upload
+   │
+   ├─ 1. Verify the real MIME type       §15    ── Phase 1
+   ├─ 2. Strip GPS coordinates from EXIF  ★     ── Phase 1
+   ├─ 3. Convert HEIC → JPEG             §4.4   ── Phase 2
+   ├─ 4. Generate thumb / medium / full  §17    ── Phase 3
+   └─ 5. Generate WebP variants          §968   ── Phase 3
 ```
 
-**★ EXIF GPS арилгах** — ТЗ-д шууд бичээгүй боловч заавал. Утсаар авсан зурагт байршлын координат суусан байдаг; хүүхдийн зураг гадагш гарвал тэр нь хүүхдийн гэрийн хаяг болно. §16-ийн нууцлалын зарчимд шууд хамаарна.
+**Phase 1 does steps 1 and 2 only**, and does them inline: checking a MIME
+type and stripping EXIF are millisecond operations on a single photo, so the
+queue would add latency and failure modes for nothing. From step 3 onward the
+work becomes slow enough to belong in Celery, at which point uploads switch to
+returning immediately with `status = processing`.
 
-### 7.1 Зураг харуулах — public URL байхгүй
+Phase 1 accepts JPEG and PNG. A guardian uploading a HEIC from an iPhone gets
+a clear message rather than a broken image — the conversion arrives in Phase 2.
+
+**★ Stripping EXIF GPS** is not stated in the RFP but is mandatory from the
+first upload. Phone photos embed location coordinates; a leaked child photo
+would otherwise carry the child's home address. This falls squarely under the
+§16 privacy principles, and it is not something to add later — by then the
+coordinates are already stored.
+
+### 7.1 Serving images — no public URLs
 
 ```
 GET /media/<uuid>/<variant>/
       │
       ▼  can_access_child(user, media.child)
       │
-   ✗ 404          ✓ S3 signed URL (TTL 5 мин) → redirect
+   ✗ 404          ✓ S3 signed URL (TTL 5 min) → redirect
 ```
 
-Гарын үсэг зурсан холбоос эрх шалгасны **дараа** үүснэ. §4.4, §21.10 хангагдана.
+The signed link is created **after** the permission check. Satisfies §4.4 and §21.10.
+
+This applies from Phase 1. The `<variant>` segment stays in the URL even while
+`full` is the only variant, so adding thumbnails in Phase 3 does not invalidate
+links already stored in reports and templates.
 
 ---
 
-## 8. Тайлангийн дараалал (PDF)
+## 8. Report queue (PDF)
 
-§549: "Тайлан үүсгэх үед систем гацахгүй байх."
+§549: "the system must not freeze while a report is being generated."
 
 ```
-Багш "PDF үүсгэх" дарна
-   → ReportJob (queued) үүснэ, хариу ~0.2 сек буцна
-   → Дэлгэц: "Бэлдэж байна... 40%"  (HTMX 2 сек тутам асууна)
-   → Ажилчин: HTML render → WeasyPrint → PDF → S3 → done
-   → "Татах" товч гарна
-   → Татахад: эрх шалгах → AuditLog(download) → signed URL
+Teacher clicks "Generate PDF"
+   → ReportJob created (queued), response returns in ~0.2s
+   → Screen: "Preparing... 40%"  (HTMX polls every 2s)
+   → Worker: render HTML → WeasyPrint → PDF → S3 → done
+   → "Download" button appears
+   → On download: permission check → AuditLog(download) → signed URL
 ```
 
-`params` JSON нь §10.1-ийн "сонгон оруулах" хэсгүүдийг агуулна.
+The `params` JSON holds the section selection from §10.1.
 
-**`expires_at`:** үүсгэсэн PDF 30 хоногийн дараа автоматаар устана. Шалтгаан — §12.2-т хадгалалтын хэмжээ хянагдана, мөн хүүхдийн бүрэн мэдээлэл агуулсан файл олон газар хэвтэх нь нууцлалын эрсдэл. Дахин хэрэгтэй бол дахин үүсгэнэ.
+**`expires_at`:** generated PDFs are deleted automatically after 30 days. §12.2 tracks storage usage, and a file containing a child's complete record should not sit around indefinitely. Regenerating is cheap.
 
-### 8.1 PDF-ийн техникийн шаардлага (§10.3)
+### 8.1 PDF technical requirements (§10.3)
 
-- Монгол кирилл дэмждэг фонтыг **контейнер дотор суулгаж, CSS-д `@font-face`-ээр шууд заана**. Системийн фонтод найдахгүй
-- A4, хуудасны дугаар, цэцэрлэгийн лого ба нэр
-- Зураг суналтгүй (`object-fit: contain`), medium хувилбар ашиглана — оригинал биш
-- Үүсгэсэн файлын хэмжээ ба хуудасны тоог `ReportJob`-д бүртгэнэ
+- A Cyrillic-capable font is **installed into the container and referenced via `@font-face` in CSS**. Never rely on system fonts
+- A4, page numbers, kindergarten logo and name
+- Images are not distorted (`object-fit: contain`) and use the `medium` variant, never the original
+- Output file size and page count are recorded on the `ReportJob`
 
 ---
 
-## 9. Audit log ба зөвшөөрөл
+## 9. Audit log and consent
 
 ### 9.1 AuditLog
 
-§971 тодорхой шаардсан: хүүхдийн мэдээллийг хэн хэзээ **үзсэн**, зассан, PDF тайланг хэн хэзээ **татсан**.
+§971 requires specifically: who viewed a child's data and when, who edited it, and who downloaded which PDF report and when.
 
-**Бүртгэх үйлдэл:**
+**Recorded actions:**
 `login`, `login_failed`, `logout`, `view`, `create`, `update`, `delete`, `restore`, `download`, `export`, `permission_change`, `password_reset`
 
-**`view`-г сонгож бичнэ.** Хуудас нээх бүрд бичвэл өдөрт хэдэн зуун мянган мөр үүснэ. Зөвхөн утга бүхий үйлдлийг бичнэ: хүүхдийн хавтас нээх, тайлан үзэх, файл татах. Жагсаалт гүйлгэх, цэс дарахыг бичихгүй.
+**`view` is recorded selectively.** Logging every page load would produce hundreds of thousands of rows per day. Only meaningful accesses are recorded: opening a child's portfolio, viewing a report, downloading a file. Scrolling a list or opening a menu is not.
 
-**Энэ хүснэгт бусдаас өөр дүрэмтэй:** soft delete байхгүй, `updated_at` байхгүй. Нэг бичигдсэн бол өөрчлөгдөхгүй — эс тэгвээс audit log-ийн утга алга болно.
+**This table follows different rules from the rest:** no soft delete, no `updated_at`. Once written a row never changes — otherwise the audit log means nothing.
 
-**Индекс:** `(child, created_at)`, `(actor_user, created_at)`, `(kindergarten, created_at)`. Хадгалах хугацааг §16-ийн дагуу админ тогтооно, дараа нь архивт зөөнө.
+**Indexes:** `(child, created_at)`, `(actor_user, created_at)`, `(kindergarten, created_at)`. Retention is set by administrator policy per §16, after which rows move to an archive.
 
 ### 9.2 Consent
 
-`ConsentType` жишээ: "Мэдээлэл ашиглах", "Зураг нийтлэх", "Гуравдагч талд харуулах".
+Example `ConsentType` values: "data processing", "photo publication", "sharing with third parties".
 
-**Хувилбар чухал:** нөхцөлөө хожим өөрчилвөл хуучин зөвшөөрөл шинэ нөхцөлд автоматаар шилжих ёсгүй. Хувилбарын дугаар үүнийг барина.
+**Versioning matters:** if the terms change later, an existing consent must not carry over to the new terms automatically. The version number enforces that.
 
-**Бодит нөлөө:** §8.2-ын нийтлэлд хүүхдийн зураг оруулахын өмнө систем "зураг нийтлэх зөвшөөрөл" байгаа эсэхийг шалгаж, байхгүй бол багшид анхааруулна.
-
----
-
-## 10. Жагсаалт, хайлт, индекс (§11, §17)
-
-ТЗ §11 бол бүтэн бүлэг — 9 төрлийн шүүлтүүр, 4 төрлийн эрэмбэ. §716 pagination, §720 "query-ууд оновчтой байх" шаарддаг. 3,000 хүүхэд, олон мянган ажиглалттай үед эдгээр нь төлөвлөөгүй бол удаашрах гол цэг.
-
-### 10.1 Дүрэм
-
-- **Бүх жагсаалтын хуудас pagination-тай** (§716). Хуудсанд 25–50 мөр
-- `Child`, `Observation` зэрэг том жагсаалт → offset pagination (3,000 мөрд хангалттай)
-- `AuditLog` → keyset (cursor) pagination. Энэ хүснэгт сая мөр рүү очно
-- **N+1 query хориотой.** Бүх жагсаалтын view-д `select_related` / `prefetch_related`. Гол дэлгэцүүдэд query тоог шалгах тест бичнэ (`assertNumQueries`)
-- Хөгжүүлэлтийн орчинд `django-debug-toolbar`
-
-### 10.2 §11-ийн шүүлтүүрээс гарах индексүүд
-
-| Шүүлтүүр (§11) | Индекс |
-|---|---|
-| Хүүхдийн нэрээр хайх | `Child` дээр `pg_trgm` GIN индекс (овог+нэр). Кирилл дэд мөр хайлтад ILIKE ганцаараа удаан |
-| Бүлгээр, хичээлийн жилээр | `Enrollment(group, status)`, `Enrollment(school_year, status)` |
-| Нас, хүйсээр | `Child(kindergarten, төрсөн_огноо)`, `Child(kindergarten, хүйс)` |
-| Ажиглалтын төрлөөр, огнооны интервалаар | `Observation(child, ажигласан_огноо)`, `Observation(type, ажигласан_огноо)` |
-| Хөгжлийн чиглэлээр | `ObservationDomain(domain)`, `Assessment(enrollment, чиглэл, term)` |
-| Үнэлгээний түвшнээр | `Assessment(term, түвшин)` |
-| Идэвхтэй / архивлагдсан | `Child(kindergarten, төлөв)` — soft delete-тэй хамт partial index |
-| Эрэмбэ: нэр / огноо / нас / шинэчлэгдсэн | нас = төрсөн огноогийн урвуу. `updated_at` индекс |
-
-Мөн 5-р бүлгийн 1-р зарчмын дагуу **бүх шүүлтэд `kindergarten_id` эхний багана** байна — composite индексийн эхэнд тавина.
-
-### 10.3 Хяналтын самбарын тооцоолол (§12)
-
-| Хэмжигдэхүүн | Аргачлал |
-|---|---|
-| §12.1 багшийн самбар — нэг бүлгийн 25 орчим хүүхэд | Шууд query. Кэш хэрэггүй |
-| "Үнэлгээ нь дутуу хүүхдүүд" | `Assessment` дээрх `unique` хязгаарлалтыг ашиглан LEFT JOIN. Индекс: `Assessment(enrollment, term)` |
-| §12.2 админы самбар — цэцэрлэг/систем хэмжээнд | Celery-ийн үечилсэн ажил (15 мин тутам) тооцоод кэшлэнэ. Хуудас нээх бүрд бодохгүй |
-| §12.3 график, чиглэлийн дундаж | Улирал дуусахад тооцоод `TermReport`-д хадгална. Түүхэн график дахин бодогдохгүй |
+**Practical effect:** before a child's photo appears in a §8.2 post visible beyond their own guardians, the system checks for photo-publication consent and warns the teacher if it is missing.
 
 ---
 
-## 11. Орчин ба deploy
+## 10. Lists, search and indexes (§11, §17)
+
+RFP §11 is a full chapter: nine filter types and four sort keys. §716 requires pagination and §720 requires efficient queries. With 3,000 children and thousands of observations, these are the first things to degrade if left unplanned.
+
+### 10.1 Rules
+
+- **Every list view is paginated** (§716). 25–50 rows per page
+- `Child` and `Observation` lists use offset pagination (fine at 3,000 rows)
+- `AuditLog` uses keyset (cursor) pagination — this table reaches millions of rows
+- **N+1 queries are forbidden.** Every list view uses `select_related` / `prefetch_related`. Key screens get `assertNumQueries` tests
+- `django-debug-toolbar` in development
+
+### 10.2 Indexes implied by the §11 filters
+
+| Filter (§11) | Index |
+|---|---|
+| Search by child name | `pg_trgm` GIN index on `Child` (last + first name). Plain ILIKE is too slow for Cyrillic substring search |
+| By group, by school year | `Enrollment(group, status)`, `Enrollment(school_year, status)` |
+| By age, by sex | `Child(kindergarten, date_of_birth)`, `Child(kindergarten, sex)` |
+| By observation type, by date range | `Observation(child, observed_on)`, `Observation(type, observed_on)` |
+| By development domain | `ObservationDomain(domain)`, `Assessment(enrollment, domain, term)` |
+| By assessment level | `Assessment(term, level)` |
+| Active vs archived | `Child(kindergarten, status)` — partial index alongside soft delete |
+| Sort by name / date / age / last updated | Age is inverse date of birth. Index on `updated_at` |
+
+Per principle 1 in section 5, **`kindergarten_id` leads every composite index**.
+
+### 10.3 Dashboard computation (§12)
+
+| Metric | Approach |
+|---|---|
+| §12.1 teacher dashboard — one group, ~25 children | Direct query. No caching needed |
+| "Children with missing assessments" | LEFT JOIN using the `Assessment` unique constraint. Index: `Assessment(enrollment, term)` |
+| §12.2 admin dashboard — kindergarten or system wide | Celery periodic task every 15 minutes, cached. Not computed per page load |
+| §12.3 charts, per-domain averages | Computed when a term closes and stored on `TermReport`. Historical charts are never recomputed |
+
+---
+
+## 11. Environments and deployment
 
 ```
-Хөгжүүлэлт   docker-compose: web, worker, postgres, redis, minio(S3 хуулбар)
-Staging      production-тай ижил бүтэц, тусдаа өгөгдлийн сан
-Production   web, worker, beat, postgres, redis + гадаад object storage
+Development   docker-compose: web, worker, postgres, redis, minio (S3 stand-in)
+Staging       same shape as production, separate database
+Production    web, worker, beat, postgres, redis + external object storage
 ```
 
-- Тохиргоо бүхэлдээ environment variable-аар (§14). `.env.example` файлтай
-- `/healthz` endpoint: DB, Redis, storage холболтыг шалгана (§14)
-- Өдөр тутмын автомат `pg_dump`, сэргээх заавар баримтжуулагдана (§14, §21.11)
-- §707: production өгөгдлийн сан ба бодит хүүхдийн зургийг хөгжүүлэлтийн орчинд ашиглахгүй. Туршилтын өгөгдөл үүсгэгч (seed) бичнэ
+- All configuration via environment variables (§14), with a committed `.env.example`
+- `/healthz` checks database, Redis and storage connectivity (§14)
+- Daily automated `pg_dump`; restore procedure documented (§14, §21.11)
+- §707: production data and real child photos are never used in development. A seed data generator is provided
 
 ---
 
-## 12. Тестийн стратеги
+## 12. Testing strategy
 
-§18-ийн жагсаалтыг дараах байдлаар бүлэглэнэ:
+Grouping the §18 checklist:
 
-| Түвшин | Юуг шалгах |
+| Level | What it covers |
 |---|---|
-| **Эрхийн тест (хамгийн өндөр ач холбогдол)** | §21.2, §21.3, §21.4. Багш өөр бүлгийн хүүхдэд ID-гаар хандах → 404. Эцэг эх өөр хүүхдийн хавтас, зураг, тайланд хандах → 404. Цэцэрлэг хооронд халдах → 404 |
-| Model / service тест | Enrollment шилжүүлэлт, үнэлгээний давхардал, soft delete, consent шалгалт |
-| Файлын тест | Буруу төрөл, том файл, HEIC хөрвүүлэлт, GPS арилгалт, signed URL хугацаа дуусах |
-| PDF тест | Кирилл үсэг, A4, зураг, хуудасны дугаар, том тайлан |
-| Интеграцийн тест | Хүүхэд нэмэх→ажиглалт→үнэлгээ→тайлан гэсэн бүрэн урсгал |
-| Гар аргаар | Chrome, Safari, Edge, Android browser; гар утас, tablet responsive |
+| **Authorization tests (highest priority)** | §21.2, §21.3, §21.4. A teacher accessing another group's child by ID → 404. A guardian accessing another child's portfolio, photos or reports → 404. Cross-kindergarten access → 404. **Written at two levels — see below** |
+| Model / service tests | Enrollment transfers, assessment uniqueness, soft delete, consent checks |
+| File tests | Wrong type, oversized file, HEIC conversion, GPS stripping, signed URL expiry |
+| PDF tests | Cyrillic rendering, A4, images, page numbers, large reports |
+| Integration tests | Full flow: add child → observation → assessment → report |
+| Manual | Chrome, Safari, Edge, Android browser; phone and tablet responsiveness |
+
+### 12.1 Authorization tests come in two layers
+
+**Function level** (`apps/core/tests/test_permissions.py`) — proves the rules
+in `permissions.py` are correct, including the transfer scenarios.
+
+**View level** — proves each view actually *calls* those rules. This is the
+layer §21.4 is really about: it describes what happens when someone edits a
+URL, which is a claim about request handling.
+
+The second layer is not optional. A view that never calls
+`can_access_child()` passes every function-level test. Every view touching
+child data ships with `client.get(url)` → `404` tests for a teacher from
+another group, a guardian of another child, and a user from another
+kindergarten.
 
 ---
 
-## 13. Эрсдэл ба эхний шатны туршилт
+## 13. Risks and the week-one spike
 
-### 13.1 Хамгийн өндөр эрсдэл: Монгол кирилл PDF
+### 13.1 Highest risk: Mongolian Cyrillic in PDF
 
-Ийм төслүүдийн хамгийн олон удаа бүдэрдэг газар. Гуравдугаар сард "PDF дээр үсэг □□□ болж байна" гэж мэдэх нь маш үнэтэй.
+This is where projects of this shape most often fail. Discovering in month three that "the PDF renders □□□ instead of letters" is very expensive.
 
-**Долоо хоног 1-д хийх туршилт:** хуурамч өгөгдөлтэй нэг хуудас PDF үүсгэнэ — монгол текст, хүүхдийн зураг, цэцэрлэгийн лого, хуудасны дугаартай. A4-т хэвлээд шалгана. Ажиллавал үлдсэн нь техникийн ажил; ажиллахгүй бол өөр аргад шилжих цаг бий.
+**Week-one spike:** generate a one-page PDF from fake data containing Mongolian text, a child photo, a kindergarten logo and a page number. Print it at A4 and check. If it works, the rest is routine engineering. If it does not, there is still time to change approach.
 
-### 13.2 Бусад эрсдэл
+### 13.2 Other risks
 
-| Эрсдэл | Бууруулах арга |
+| Risk | Mitigation |
 |---|---|
-| Эрхийн шалгалт хаа нэгтээ мартагдах | Бүх хандалт `services/permissions.py` дамжина. Эрхийн тестийг CI-д заавал ажиллуулна |
-| Django Admin audit/soft delete алгасах | `save_model()`, `delete_model()` дарж бичнэ |
-| Олон зурагтай тайлан удаан | Ажилчин ашиглана, `medium` хувилбар оруулна, `expires_at`-аар цэвэрлэнэ |
-| Audit log хэт томрох | `view`-г сонгож бичнэ, индекс, хадгалах хугацааны бодлого |
-| Хамрах хүрээ тэлэх | §1.2-ын хойшлуулсан жагсаалт. Шинэ хүсэлт → дараагийн үе шатанд |
-| Жагсаалтын хуудас удаашрах | 10-р бүлгийн индексүүд, `assertNumQueries` тест |
+| A permission check gets forgotten somewhere | All access flows through `services/permissions.py`. Authorization tests run in CI |
+| Django Admin bypasses audit / soft delete | Override `save_model()` and `delete_model()` |
+| Image-heavy reports are slow | Worker-based generation, `medium` variants, cleanup via `expires_at` |
+| Audit log grows unbounded | Selective `view` logging, indexes, retention policy |
+| Scope creep | The deferred list in §1.2. New requests go to a later phase |
+| List pages degrade | The indexes in section 10, plus `assertNumQueries` tests |
 
 ---
 
-## 14. Хэрэгжүүлэлтийн үе шат (ерөнхий)
+## 14. Implementation order
 
-Дэлгэрэнгүй төлөвлөгөө тусдаа баримтад гарна.
+Superseded by the day-by-day plan in `ROADMAP.md` section 10. Kept here as the
+mapping between this document's sections and that schedule.
 
-1. **Суурь** — Docker орчин, Django төсөл, `User`/`Membership`, нэвтрэлт, эрхийн давхарга, эрхийн тест, кирилл PDF туршилт
-2. **Байгууллагын өгөгдөл** — Kindergarten, SchoolYear, Group, GroupTeacher, админ дэлгэц
-3. **Хүүхэд** — Child, Guardianship, Enrollment, эцэг эхийн нүүр
-4. **Медиа** — MediaFile pipeline, signed URL, зургийн цомог
-5. **Хавтас** — AboutMe, ChildAgeProfile, Milestone, BirthdayNote
-6. **Ажиглалт** — Observation ба холбогдох хүснэгтүүд
-7. **Үнэлгээ** — тохиргооны хүснэгтүүд, Assessment, түргэн үнэлгээний дэлгэц
-8. **Тайлан** — ReportJob, TermReport, AnnualReport, PDF загварууд
-9. **Харилцаа** — Announcement, Post
-10. **Өсөлт, баримт бичиг, хяналтын самбар**
-11. **Бэхжүүлэлт** — audit log бүрэн, consent, backup, ачааллын тест, аюулгүй байдлын тест
+| Day | Work | Spec sections | Status |
+|---|---|---|---|
+| 1 | Docker, Django, `User`/`Membership`, auth, permission layer, Cyrillic PDF spike | 3, 4, 6.1, 13.1 | ✅ done |
+| 2 | Kindergarten, SchoolYear, Group, GroupTeacher, admin screens | 3.3, 6.1 | ✅ done |
+| 3 | Child, Enrollment, teacher screens | 6.1, 10 | ✅ done |
+| 4 | Guardianship, invitations, guardian home | 6.1, 4.2 | ✅ done |
+| 5 | AboutMe, BirthdayNote, ChildAgeProfile (ages 2–5) | 6.2 | ✅ done |
+| 6 | ObservationType, Observation, assessment config, Assessment | 6.3, 6.4 | ✅ done |
+| 7 | Parent observation, Announcement, MediaFile upload | 6.3, 6.7, 7 | ✅ done |
+| 8 | Dashboards, remaining filters, ReportJob and the simple child PDF | 8, 10.3 | ✅ done |
+| 9 | Security review, responsive fixes, deployment, backup | 11, 12, 13 | ⬜ next |
+| 10 | Integration, bug fixes, production build, documentation, handover | — | ⬜ |
+
+Phase 2 and Phase 3 work — growth, documents, full reporting, albums,
+milestones, consent, WebP — is scheduled in `ROADMAP.md`, not here.
 
 ---
 
-## 15. Нээлттэй асуулт
+## 15. Open questions
 
-| Асуулт | Хэзээ шийдэх шаардлагатай |
+| Question | Needed by |
 |---|---|
-| Хүүхэд шилжсэн үед хуучин цэцэрлэгийн багш/админ хэдэн жил хандах вэ? (4.2-т хугацааны хязгааргүй. §16-ийн хадгалалтын бодлогоор хязгаарлах эсэх) | 3-р үе шатаас өмнө |
-| Хөгжлийн чиглэлийн үндсэн жагсаалт — ТЗ §6.1-ийн 9 чиглэлийг системийн үндсэн болгох уу, эсвэл цэцэрлэг бүр өөрөө тодорхойлох уу? | 7-р үе шатаас өмнө |
-| Өсөлтийн жишиг үзүүлэлтийн эх сурвалж (ДЭМБ эсвэл үндэсний жишиг)? | 10-р үе шатаас өмнө |
-| Backup хаана хадгалагдах, хэн хандах эрхтэй? | 11-р үе шатаас өмнө |
-| **Hosting ба object storage** — VPS+Docker уу, managed PaaS уу? Cloudflare R2 нь §2.1-д зөвхөн **санал**, шийдвэр биш | 4-р үе шатаас өмнө (медиа) |
-| Домэйн нэр, SSL, серверийн байршил | Deploy-оос өмнө |
+| **Hosting and object storage** — VPS + Docker, or managed PaaS? Cloudflare R2 in section 2 is a **suggestion**, not a decision. No longer blocks upload: the code runs against any S3-compatible bucket and MinIO stands in locally. Still blocks **deployment** | **Day 9** |
+| Domain name, SSL certificate, server location | Day 9 |
+| Where do backups live and who can access them? | Day 9 |
+| ~~Are the nine development domains in §6.1 system defaults, or does each kindergarten define its own?~~ **Resolved 2026-08-09: system-wide defaults (`kindergarten = NULL`), with each kindergarten free to add its own rows. Same shape for the §6.2 scale and the §5.2 observation types.** | Day 6 |
+| After a transfer, how long do the previous kindergarten's staff retain access? (Section 4.2 sets no time limit. Should the §16 retention policy bound it?) | Phase 2 |
+| Which growth reference standard — WHO or a national one? | Phase 2 (growth tracking) |

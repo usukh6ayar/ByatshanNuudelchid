@@ -1,0 +1,111 @@
+{% extends base_template %}
+{% comment %} RFP §5.1 — the full entry form, field for field. The evidence photo and
+   the attachment (§5.1's last two rows) arrive with upload on Day 7. {% endcomment %}
+
+{% block title %}{% if observation %}Ажиглалт засах{% else %}Шинэ ажиглалт{% endif %}{% endblock %}
+{% block heading %}
+  {% if observation %}Ажиглалт засах{% else %}Шинэ ажиглалт{% endif %} — {{ child.full_name }}
+{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width:820px">
+    {% if error %}<p class="msg msg--error" role="alert">{{ error }}</p>{% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="grid grid--2" style="gap:0 16px">
+        <div>
+          <label for="id_observed_on">Ажиглалтын огноо</label>
+          <input type="date" name="observed_on" id="id_observed_on" required
+                 max="{{ today|date:'Y-m-d' }}"
+                 value="{{ observed_on_value }}">
+        </div>
+        <div>
+          <label for="id_type">Ажиглалтын төрөл</label>
+          <select name="type" id="id_type" required>
+            {% for type in types %}
+              <option value="{{ type.pk }}"
+                {% if form.type.pk == type.pk or form.type == type.pk|stringformat:"s" %}selected{% endif %}>
+                {{ type.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <label for="id_activity_name">Үйл ажиллагааны нэр</label>
+      <input type="text" name="activity_name" id="id_activity_name"
+             value="{{ form.activity_name|default:'' }}">
+
+      <label for="id_situation">Нөхцөл байдал</label>
+      <textarea name="situation" id="id_situation">{{ form.situation|default:'' }}</textarea>
+
+      <label for="id_child_did">Хүүхдийн хийсэн үйлдэл</label>
+      <textarea name="child_did" id="id_child_did">{{ form.child_did|default:'' }}</textarea>
+
+      <label for="id_child_said">Хүүхдийн хэлсэн үг</label>
+      <textarea name="child_said" id="id_child_said">{{ form.child_said|default:'' }}</textarea>
+
+      <label for="id_teacher_comment">Багшийн тайлбар</label>
+      <textarea name="teacher_comment" id="id_teacher_comment">{{ form.teacher_comment|default:'' }}</textarea>
+
+      <label for="id_next_steps">Дараагийн дэмжлэг, төлөвлөгөө</label>
+      <textarea name="next_steps" id="id_next_steps">{{ form.next_steps|default:'' }}</textarea>
+
+      {% comment %} §5.1 — a single observation may belong to several domains, each with
+         its own optional level. {% endcomment %}
+      <h2 style="margin-top:26px">Хөгжлийн чиглэл</h2>
+      <p class="brand__sub" style="margin-top:-8px">
+        Нэг ажиглалт хэд хэдэн чиглэлд хамаарч болно. Үнэлгээ заавал биш.
+      </p>
+
+      <div class="grid grid--2" style="gap:0 16px">
+        {% for row in domain_rows %}
+          <div style="display:flex; gap:10px; align-items:center; margin-top:10px">
+            <input type="checkbox" name="domains" value="{{ row.domain.pk }}"
+                   id="id_domain_{{ row.domain.pk }}" style="width:auto"
+                   {% if row.checked %}checked{% endif %}>
+            <label for="id_domain_{{ row.domain.pk }}" style="margin:0; flex:1">
+              {{ row.domain.name }}
+            </label>
+            <select name="level_{{ row.domain.pk }}"
+                    aria-label="{{ row.domain.name }} — үнэлгээ"
+                    style="width:auto; max-width:180px">
+              <option value="">Үнэлгээгүй</option>
+              {% for level in levels %}
+                <option value="{{ level.pk }}"
+                  {% if row.level_id == level.pk %}selected{% endif %}>
+                  {{ level.value }}. {{ level.label }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        {% endfor %}
+      </div>
+
+      <h2 style="margin-top:26px">Харагдац</h2>
+
+      <div style="display:flex; gap:10px; align-items:center; margin-top:10px">
+        <input type="checkbox" name="visible_to_parents" id="id_visible"
+               style="width:auto"
+               {% if not observation or form.visible_to_parents %}checked{% endif %}>
+        <label for="id_visible" style="margin:0">Эцэг эхэд харагдана</label>
+      </div>
+
+      <div style="display:flex; gap:10px; align-items:center; margin-top:10px">
+        <input type="checkbox" name="include_in_report" id="id_report"
+               style="width:auto"
+               {% if not observation or form.include_in_report %}checked{% endif %}>
+        <label for="id_report" style="margin:0">Нэгдсэн тайланд оруулна</label>
+      </div>
+
+      <div class="btn-row">
+        <button type="submit" class="btn">Хадгалах</button>
+        <a class="btn btn--ghost" href="{% url 'observations:list' child.pk %}">
+          Болих
+        </a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base_error.html" %}
+
+{% comment %} Rendered by django.views.defaults.server_error with an empty context.
+   Nothing here may depend on the request, the session or the database. {% endcomment %}
+
+{% block title %}Системд алдаа гарлаа{% endblock %}
+{% block mark %}⚠️{% endblock %}
+{% block code %}500{% endblock %}
+{% block heading %}Системд алдаа гарлаа{% endblock %}
+
+{% block body %}
+  <p>Уучлаарай, хүсэлтийг боловсруулах үед алдаа гарлаа.</p>
+  <p>Алдааг бүртгэлээ. Хэсэг хугацааны дараа дахин оролдоно уу.</p>
+{% endblock %}
+
+{# {% url %} resolves without a request, so the link is safe even here. #}

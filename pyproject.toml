@@ -1,0 +1,23 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.dev"
+python_files = ["test_*.py"]
+# -n 4 rather than 8: measured 2m56s against 2m51s on this machine, so the
+# database is the limit past four workers and the extra ones only cost memory.
+# --reuse-db keeps the schema between runs; add --create-db after a migration.
+addopts = "--reuse-db -q -n 4"
+markers = [
+    "slow: PDF rendering and seed_demo — the tests worth skipping on a quick loop",
+]
+testpaths = ["apps"]
+
+[tool.ruff]
+line-length = 95
+target-version = "py313"
+exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "DJ", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "config"]

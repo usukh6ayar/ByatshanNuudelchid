@@ -1,0 +1,16 @@
+{% extends "base_error.html" %}
+
+{% comment %} The wording covers both cases on purpose. A mistyped URL and a child the
+   viewer may not see produce the identical page, because saying "you do not
+   have permission" for the second one confirms the record exists — which is
+   exactly what RFP §21.4 forbids. CLAUDE.md §1.1: 404, never 403. {% endcomment %}
+
+{% block title %}Хуудас олдсонгүй{% endblock %}
+{% block mark %}🔍{% endblock %}
+{% block code %}404{% endblock %}
+{% block heading %}Хуудас олдсонгүй{% endblock %}
+
+{% block body %}
+  <p>Таны хайсан хуудас байхгүй байна.</p>
+  <p>Хаяг буруу бичигдсэн, эсвэл тухайн бичлэг устсан байж болзошгүй.</p>
+{% endblock %}
