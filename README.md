@@ -15,6 +15,7 @@ as a printable PDF covering ages 2 through 5.
 | [`docs/superpowers/specs/2026-08-07-kindergarten-portfolio-design.md`](docs/superpowers/specs/2026-08-07-kindergarten-portfolio-design.md) | Architecture and data model |
 | [`docs/design/INDEX.md`](docs/design/INDEX.md) | The client's UI mockups, screen by screen |
 | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Production procedure — configuration, first run, backups. Provider-neutral |
+| [`docs/HETZNER-SETUP.md`](docs/HETZNER-SETUP.md) | The same thing as a first-time walkthrough for Hetzner + iTools + R2, in Mongolian |
 | [`CLAUDE.md`](CLAUDE.md) | **Mandatory** coding rules. Read before writing code |
 
 Precedence on conflict: RFP > ROADMAP > spec > CLAUDE.md > existing code.
