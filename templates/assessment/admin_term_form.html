@@ -1,0 +1,42 @@
+{% extends base_template %}
+{% comment %} RFP §6.4 — a term's name and dates. The number and the school
+   year are not editable: the number is what orders the matrix columns and
+   the year is what ties the term to a kindergarten. {% endcomment %}
+
+{% block title %}Улирал засах{% endblock %}
+{% block heading %}{{ term.school_year.name }} — {{ term.name }}{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width:640px">
+    {% if error %}<p class="msg msg--error" role="alert">{{ error }}</p>{% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <label for="id_name">Улирлын нэр *</label>
+      <input type="text" name="name" id="id_name" required
+             value="{{ form.name|default:'' }}">
+
+      <div class="grid grid--2">
+        <div>
+          <label for="id_starts_on">Эхлэх огноо *</label>
+          <input type="date" name="starts_on" id="id_starts_on" required
+                 value="{{ form.starts_on|default:'' }}">
+        </div>
+        <div>
+          <label for="id_ends_on">Дуусах огноо *</label>
+          <input type="date" name="ends_on" id="id_ends_on" required
+                 value="{{ form.ends_on|default:'' }}">
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="submit" class="btn">Хадгалах</button>
+        <a class="btn btn--ghost"
+           href="{% url 'assessment:admin_term_list' %}?year={{ term.school_year_id }}">
+          Болих
+        </a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

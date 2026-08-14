@@ -1,0 +1,138 @@
+{% extends base_template %}
+{% comment %} RFP §6.1, §6.2 — the domains children are assessed against and
+   the scale they are assessed on.
+
+   The shared system list is shown greyed with a badge rather than hidden: a
+   director needs to see what they are extending, and the service refuses to
+   let them edit it (CLAUDE.md §2.3). {% endcomment %}
+
+{% block title %}Хөгжлийн шалгуур{% endblock %}
+{% block heading %}Хөгжлийн шалгуур{% endblock %}
+
+{% block content %}
+  <div class="page-actions" style="margin:-8px 0 16px">
+    <a class="btn" href="{% url 'assessment:admin_domain_create' %}">
+      <svg class="ic ic--sm" aria-hidden="true"><use href="#i-assessment"></use></svg>
+      Шинэ чиглэл нэмэх
+    </a>
+  </div>
+
+  {% if kindergartens|length > 1 %}
+    <div class="card">
+      <form method="get" class="filters">
+        <div>
+          <label for="id_kindergarten">Цэцэрлэг</label>
+          <select name="kindergarten" id="id_kindergarten"
+                  onchange="this.form.submit()">
+            {% for kg in kindergartens %}
+              <option value="{{ kg.pk }}"
+                {% if kindergarten.pk == kg.pk %}selected{% endif %}>{{ kg.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="filters__actions">
+          <button type="submit" class="btn btn--ghost">Харах</button>
+        </div>
+      </form>
+    </div>
+  {% endif %}
+
+  <div class="card">
+    <h2>Хөгжлийн чиглэлүүд</h2>
+    <p class="brand__sub" style="margin-top:-8px">
+      Ажиглалт болон улирлын үнэлгээ эдгээр чиглэлээр хийгдэнэ.
+    </p>
+
+    {% if domains %}
+      <div class="table-wrap">
+        <table>
+          <caption class="sr-only">Хөгжлийн чиглэлийн жагсаалт</caption>
+          <thead>
+            <tr>
+              <th scope="col">Нэр</th>
+              <th scope="col">Код</th>
+              <th scope="col">Эрэмбэ</th>
+              <th scope="col">Эх сурвалж</th>
+              <th scope="col">Төлөв</th>
+              <th scope="col"><span class="sr-only">Үйлдэл</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for domain in domains %}
+              <tr>
+                <td class="name">
+                  <span class="badge"
+                        style="background:{{ domain.color }}1a; color:{{ domain.color }}">
+                    {{ domain.name }}
+                  </span>
+                </td>
+                <td>{{ domain.code }}</td>
+                <td>{{ domain.order }}</td>
+                <td>
+                  {% if domain.is_system_default %}
+                    <span class="badge badge--muted">Системийн үндсэн</span>
+                  {% else %}
+                    <span class="badge badge--ok">Өөрийн</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge {% if domain.is_active %}badge--ok{% else %}badge--muted{% endif %}">
+                    {% if domain.is_active %}Идэвхтэй{% else %}Идэвхгүй{% endif %}
+                  </span>
+                </td>
+                <td style="white-space:nowrap">
+                  {% if not domain.is_system_default or is_superadmin %}
+                    <a class="btn btn--ghost btn--sm"
+                       href="{% url 'assessment:admin_domain_edit' domain.pk %}">Засах</a>
+                  {% else %}
+                    <span class="brand__sub">Засах боломжгүй</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="empty">Хөгжлийн чиглэл алга.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>Үнэлгээний түвшин</h2>
+    <p class="brand__sub" style="margin-top:-8px">
+      {% if scale %}{{ scale.name }}{% else %}Тохируулаагүй{% endif %}
+    </p>
+
+    {% if levels %}
+      <div class="table-wrap">
+        <table>
+          <caption class="sr-only">Үнэлгээний түвшин</caption>
+          <thead>
+            <tr>
+              <th scope="col">Утга</th>
+              <th scope="col">Нэр</th>
+              <th scope="col">Тайлбар</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for level in levels %}
+              <tr>
+                <td>{{ level.value }}</td>
+                <td>
+                  <span class="badge"
+                        style="background:{{ level.color }}1a; color:{{ level.color }}">
+                    {{ level.label }}
+                  </span>
+                </td>
+                <td>{{ level.description|default:"—" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="empty">Үнэлгээний шатлал тохируулаагүй байна.</p>
+    {% endif %}
+  </div>
+{% endblock %}

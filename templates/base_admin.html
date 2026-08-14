@@ -8,11 +8,11 @@
    Built from `docs/design/screens/admin-dashboard.jpeg`: the same sidebar
    shape as the staff layout, a different list inside it.
 
-   Kindergartens and groups are the project's own screens. The rest still
-   point into the admin site while they are replaced one at a time; those
-   entries are the ones that look like Django, and they are the remaining
-   work. Sections belonging to a later phase are deliberately absent — a
-   menu item that goes nowhere teaches people the system is broken.
+   Every entry is now the project's own screen. The admin site stays
+   mounted at /udirdlaga/ for the tables nobody has built a screen for yet,
+   but nothing in this menu points at it. Sections belonging to a later
+   phase are deliberately absent — a menu item that goes nowhere teaches
+   people the system is broken.
 {% endcomment %}
 <html lang="mn">
 <head>
@@ -67,12 +67,12 @@
         <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
         Хэрэглэгч ба эрх
       </a>
-      <a href="{% url 'udirdlaga:assessment_developmentdomain_changelist' %}"
+      <a href="{% url 'assessment:admin_domain_list' %}"
          {% if nav == 'domains' %}aria-current="page"{% endif %}>
         <svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg>
         Хөгжлийн шалгуур
       </a>
-      <a href="{% url 'udirdlaga:assessment_term_changelist' %}"
+      <a href="{% url 'assessment:admin_term_list' %}"
          {% if nav == 'terms' %}aria-current="page"{% endif %}>
         <svg class="ic" aria-hidden="true"><use href="#i-cake"></use></svg>
         Улирал, хичээлийн жил

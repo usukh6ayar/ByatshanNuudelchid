@@ -1,0 +1,74 @@
+{% extends base_template %}
+{% comment %} RFP §6.1 — a domain is a row, not a TextChoices member, exactly
+   so an administrator can add one (CLAUDE.md §2.3). {% endcomment %}
+
+{% block title %}{% if obj %}Чиглэл засах{% else %}Шинэ чиглэл{% endif %}{% endblock %}
+{% block heading %}
+  {% if obj %}{{ obj.name }}{% else %}Шинэ хөгжлийн чиглэл{% endif %}
+{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width:640px">
+    {% if error %}<p class="msg msg--error" role="alert">{{ error }}</p>{% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      {% if not obj %}
+        <label for="id_kindergarten">Цэцэрлэг *</label>
+        <select name="kindergarten" id="id_kindergarten" required>
+          <option value="">— сонгох —</option>
+          {% for kg in kindergartens %}
+            <option value="{{ kg.pk }}"
+              {% if form.kindergarten|stringformat:"s" == kg.pk|stringformat:"s" %}selected{% endif %}>
+              {{ kg.name }}
+            </option>
+          {% endfor %}
+        </select>
+        <p class="hint">
+          Чиглэл нь сонгосон цэцэрлэгт хамаарна. Системийн үндсэн жагсаалтад
+          нэмэхгүй.
+        </p>
+      {% endif %}
+
+      <label for="id_name">Чиглэлийн нэр *</label>
+      <input type="text" name="name" id="id_name" required
+             value="{{ form.name|default:'' }}">
+
+      <div class="grid grid--2">
+        <div>
+          <label for="id_code">Код *</label>
+          <input type="text" name="code" id="id_code" required
+                 placeholder="ж: creativity"
+                 value="{{ form.code|default:'' }}">
+          <p class="hint">Системийн доторх тогтмол нэр. Тайланд харагдахгүй.</p>
+        </div>
+        <div>
+          <label for="id_order">Эрэмбэ</label>
+          <input type="number" name="order" id="id_order" min="0"
+                 value="{{ form.order|default:0 }}">
+        </div>
+      </div>
+
+      <label for="id_color">Өнгө</label>
+      <input type="color" name="color" id="id_color"
+             value="{{ form.color|default:'#5b4bd6' }}" style="height:44px">
+
+      <label for="id_description">Тайлбар</label>
+      <textarea name="description" id="id_description" rows="3">{{ form.description|default:'' }}</textarea>
+
+      <div style="display:flex; gap:10px; align-items:center; margin-top:14px">
+        <input type="checkbox" name="is_active" id="id_is_active"
+               style="width:auto" {% if form.is_active %}checked{% endif %}>
+        <label for="id_is_active" style="margin:0">Идэвхтэй</label>
+      </div>
+
+      <div class="btn-row">
+        <button type="submit" class="btn">Хадгалах</button>
+        <a class="btn btn--ghost" href="{% url 'assessment:admin_domain_list' %}">
+          Болих
+        </a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

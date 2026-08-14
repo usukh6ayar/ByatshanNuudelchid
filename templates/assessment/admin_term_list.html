@@ -1,0 +1,91 @@
+{% extends base_template %}
+{% comment %} RFP §6.4 — "хичээлийн жилийг дөрвөн улиралд хуваана".
+
+   A year with no terms means nothing can be assessed at all, so the empty
+   state is a button that creates all four rather than an instruction to
+   add them one at a time. {% endcomment %}
+
+{% block title %}Улирал, хичээлийн жил{% endblock %}
+{% block heading %}Улирал, хичээлийн жил{% endblock %}
+
+{% block content %}
+  {% if not years %}
+    <div class="card">
+      <p class="empty">
+        <svg class="ic" aria-hidden="true"><use href="#i-cake"></use></svg>
+        Хичээлийн жил тохируулаагүй байна.
+      </p>
+    </div>
+  {% else %}
+    <div class="card">
+      <form method="get" class="filters">
+        <div>
+          <label for="id_year">Хичээлийн жил</label>
+          <select name="year" id="id_year" onchange="this.form.submit()">
+            {% for y in years %}
+              <option value="{{ y.pk }}" {% if year.pk == y.pk %}selected{% endif %}>
+                {{ y.name }} — {{ y.kindergarten.name }}
+                {% if y.is_current %}(одоогийн){% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="filters__actions">
+          <button type="submit" class="btn btn--ghost">Харах</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>{{ year.name }} — улирлууд</h2>
+      <p class="brand__sub" style="margin-top:-8px">
+        {{ year.starts_on|date:"Y.m.d" }} – {{ year.ends_on|date:"Y.m.d" }}
+      </p>
+
+      {% if terms %}
+        <div class="table-wrap">
+          <table>
+            <caption class="sr-only">Улирлын жагсаалт</caption>
+            <thead>
+              <tr>
+                <th scope="col">№</th>
+                <th scope="col">Нэр</th>
+                <th scope="col">Эхлэх</th>
+                <th scope="col">Дуусах</th>
+                <th scope="col"><span class="sr-only">Үйлдэл</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for term in terms %}
+                <tr>
+                  <td>{{ term.number }}</td>
+                  <td class="name">{{ term.name }}</td>
+                  <td>{{ term.starts_on|date:"Y.m.d" }}</td>
+                  <td>{{ term.ends_on|date:"Y.m.d" }}</td>
+                  <td style="white-space:nowrap">
+                    <a class="btn btn--ghost btn--sm"
+                       href="{% url 'assessment:admin_term_edit' term.pk %}">Засах</a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="empty">
+          Энэ хичээлийн жилд улирал тохируулаагүй байна. Улиралгүй бол
+          хөгжлийн үнэлгээ хийх боломжгүй.
+        </p>
+        <form method="post" action="{% url 'assessment:admin_term_defaults' %}">
+          {% csrf_token %}
+          <input type="hidden" name="year" value="{{ year.pk }}">
+          <button type="submit" class="btn">Дөрвөн улирлыг үүсгэх</button>
+        </form>
+        <p class="hint">
+          Огноог жилийн эхлэх, дуусах хугацаанаас тэнцүү хувааж тавина —
+          дараа нь засаж болно.
+        </p>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endblock %}
