@@ -1,0 +1,156 @@
+{% extends base_template %}
+{% comment %} RFP §5.2's "үйл ажиллагаанд суурилсан ажиглалт".
+
+   A teacher runs one activity with eight children and has the nap hour
+   (13:30–15:15 in the model daily routine) to write it up. The per-child
+   form asks for eleven fields; repeated eight times that is most of the
+   hour. Here the shared half is filled once and each child needs a tick
+   and, if there is anything to say, one line.
+
+   Same shape as the §6.3 quick-assessment grid, deliberately: a teacher who
+   has used one already knows this one.
+{% endcomment %}
+
+{% block title %}Бүлгээр ажиглалт бүртгэх{% endblock %}
+{% block heading %}Бүлгээр ажиглалт бүртгэх{% endblock %}
+{% block lede %}
+  <p class="lede">{{ group.name }} · {{ group.school_year.name }}</p>
+{% endblock %}
+
+{% block content %}
+  {% if error %}<p class="msg msg--error" role="alert">{{ error }}</p>{% endif %}
+
+  {% if not roster %}
+    <div class="card">
+      <p class="empty">
+        <svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg>
+        Энэ бүлэгт идэвхтэй хүүхэд бүртгэлгүй байна.
+      </p>
+    </div>
+  {% else %}
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="card">
+        <h2>Үйл ажиллагаа</h2>
+        <p class="brand__sub" style="margin-top:-8px">
+          Нэг удаа бөглөнө — сонгосон хүүхэд бүрд ажиглалт үүснэ.
+        </p>
+
+        <div class="grid grid--2">
+          <div>
+            <label for="id_activity_name">Үйл ажиллагааны нэр</label>
+            <input type="text" name="activity_name" id="id_activity_name"
+                   placeholder="ж: Блокоор барих"
+                   value="{{ form.activity_name|default:'' }}">
+          </div>
+          <div>
+            <label for="id_observed_on">Огноо *</label>
+            <input type="date" name="observed_on" id="id_observed_on" required
+                   value="{{ form.observed_on|default:today }}">
+          </div>
+        </div>
+
+        <label for="id_type">Ажиглалтын төрөл *</label>
+        <select name="type" id="id_type" required>
+          <option value="">— сонгох —</option>
+          {% for type in types %}
+            <option value="{{ type.pk }}"
+              {% if form.type|stringformat:"s" == type.pk|stringformat:"s" %}selected{% endif %}>
+              {{ type.name }}
+            </option>
+          {% endfor %}
+        </select>
+
+        <label for="id_situation">Нөхцөл байдал</label>
+        <textarea name="situation" id="id_situation" rows="2">{{ form.situation|default:'' }}</textarea>
+
+        <label for="id_teacher_comment">Багшийн тайлбар</label>
+        <textarea name="teacher_comment" id="id_teacher_comment" rows="2">{{ form.teacher_comment|default:'' }}</textarea>
+
+        <fieldset style="border:0; padding:0; margin:16px 0 0">
+          <legend style="font-weight:600; font-size:.86rem; margin-bottom:6px">
+            Хөгжлийн чиглэл
+          </legend>
+          <p class="hint" style="margin:0 0 8px">
+            Нэг үйл ажиллагаа хэд хэдэн чиглэлд хамаарч болно — §5.3.
+          </p>
+          <div class="grid grid--2" style="gap:0 16px">
+            {% for domain in domains %}
+              <div style="display:flex; gap:10px; align-items:center; margin-top:8px">
+                <input type="checkbox" name="domains" value="{{ domain.pk }}"
+                       id="id_domain_{{ domain.pk }}" style="width:auto">
+                <label for="id_domain_{{ domain.pk }}" style="margin:0">
+                  <span class="badge"
+                        style="background:{{ domain.color }}1a; color:{{ domain.color }}">
+                    {{ domain.name }}
+                  </span>
+                </label>
+              </div>
+            {% endfor %}
+          </div>
+        </fieldset>
+
+        <div style="display:flex; gap:10px; align-items:center; margin-top:16px">
+          <input type="checkbox" name="visible_to_parents"
+                 id="id_visible_to_parents" style="width:auto" checked>
+          <label for="id_visible_to_parents" style="margin:0">
+            Эцэг эхэд харагдана
+          </label>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__head">
+          <h2>Оролцсон хүүхэд</h2>
+          <span class="badge badge--muted">{{ roster|length }} хүүхэд</span>
+        </div>
+        <p class="brand__sub" style="margin-top:-8px">
+          Оролцсон хүүхдээ тэмдэглэнэ. Тэмдэглэл заавал биш — хоосон бол
+          зөвхөн оролцсон гэж бүртгэнэ.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <caption class="sr-only">Бүлгийн хүүхдүүд</caption>
+            <thead>
+              <tr>
+                <th scope="col" style="width:44px">
+                  <span class="sr-only">Оролцсон эсэх</span>
+                </th>
+                <th scope="col">Хүүхэд</th>
+                <th scope="col">Тухайн хүүхдийн тэмдэглэл</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for enrollment in roster %}
+                <tr>
+                  <td>
+                    <input type="checkbox" name="pick_{{ enrollment.pk }}"
+                           id="id_pick_{{ enrollment.pk }}" style="width:auto">
+                  </td>
+                  <td class="name">
+                    <label for="id_pick_{{ enrollment.pk }}"
+                           style="margin:0; cursor:pointer">
+                      {{ enrollment.child.full_name }}
+                    </label>
+                  </td>
+                  <td>
+                    <input type="text" name="note_{{ enrollment.pk }}"
+                           placeholder="ж: Найзтайгаа ээлжлэн барив"
+                           aria-label="{{ enrollment.child.full_name }} — тэмдэглэл">
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="btn-row">
+          <button type="submit" class="btn">Бүгдэд бүртгэх</button>
+          <a class="btn btn--ghost" href="{% url 'children:list' %}">Болих</a>
+        </div>
+      </div>
+    </form>
+  {% endif %}
+{% endblock %}

@@ -18,13 +18,20 @@ from django.core.paginator import Paginator
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 
 from apps.assessment.selectors import domains_for, levels_for
 from apps.children import selectors as child_selectors
+from apps.children.models import Enrollment
 from apps.core.layouts import layout_for
 from apps.core.models import AuditAction
-from apps.core.permissions import can_record_for_child, is_guardian_of
+from apps.core.permissions import (
+    can_record_for_child,
+    is_guardian_of,
+    visible_children,
+)
 from apps.core.services import audit
+from apps.tenants.selectors import assignable_groups
 
 from . import selectors, services
 from .models import Observation
@@ -489,3 +496,84 @@ def _message(exc) -> str:
         return " ".join(exc.messages)
     return str(exc)
 
+
+
+@login_required
+def group_observation(request, group_id):
+    """RFP §5.2 — one activity, the children who took part, written once.
+
+    Teacher-only by construction: ``assignable_groups`` returns the groups
+    this user is assigned to, so a group id outside it is not found (§21.4)
+    — the same guard the §6.3 grid next door uses.
+    """
+    group = assignable_groups(request.user).filter(pk=group_id).first()
+    if group is None:
+        raise Http404
+
+    types = selectors.types_for(group.kindergarten_id)
+    domains = domains_for(group.kindergarten_id)
+    roster = (
+        Enrollment.objects.filter(
+            group=group, status=Enrollment.Status.ACTIVE,
+            child__in=visible_children(request.user),
+        )
+        .select_related("child")
+        .order_by("child__last_name", "child__first_name")
+    )
+
+    context = {
+        "group": group,
+        "types": types,
+        "domains": domains,
+        "roster": roster,
+        "today": timezone.localdate().isoformat(),
+        "base_template": layout_for(request.user),
+        "nav": "children",
+        "form": {},
+    }
+
+    if request.method == "POST":
+        context["form"] = request.POST
+        chosen_type = types.filter(pk=request.POST.get("type") or 0).first()
+        if chosen_type is None:
+            context["error"] = "Ажиглалтын төрлийг сонгоно уу."
+            return render(request, "observations/group_form.html", context)
+
+        # Only the children whose box is ticked; the note rides along.
+        entries = {
+            enrollment.pk: request.POST.get(f"note_{enrollment.pk}", "")
+            for enrollment in roster
+            if request.POST.get(f"pick_{enrollment.pk}")
+        }
+        if not entries:
+            context["error"] = "Оролцсон хүүхдээ сонгоно уу."
+            return render(request, "observations/group_form.html", context)
+
+        try:
+            made = services.create_group_observation(
+                actor=request.user,
+                group=group,
+                type=chosen_type,
+                observed_on=parse_date(request.POST.get("observed_on", "")),
+                # Resolved against this kindergarten's own list, as
+                # ``_domains`` does for the single form: an id from
+                # elsewhere then matches nothing rather than being trusted.
+                # No level here — one activity's level is a per-child
+                # judgement and belongs on the §6.3 grid.
+                domains=[(d, None) for d in domains
+                         if str(d.pk) in request.POST.getlist("domains")],
+                visible_to_parents=request.POST.get("visible_to_parents") == "on",
+                activity_name=request.POST.get("activity_name", "").strip(),
+                situation=request.POST.get("situation", "").strip(),
+                teacher_comment=request.POST.get("teacher_comment", "").strip(),
+                entries=entries,
+                request=request,
+            )
+        except (PermissionDenied, ValidationError) as exc:
+            context["error"] = _message(exc)
+            return render(request, "observations/group_form.html", context)
+
+        messages.success(request, f"{len(made)} хүүхдэд ажиглалт бүртгэгдлээ.")
+        return redirect("observations:group", group_id=group.pk)
+
+    return render(request, "observations/group_form.html", context)

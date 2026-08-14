@@ -68,6 +68,25 @@
     </div>
   {% endif %}
 
+  {% comment %} The two things a teacher starts from, on the screen they land
+     on. Recording an activity for the whole group is §5.2's daily case and
+     was four clicks deep behind a child; the §6.3 grid was the same.
+  {% endcomment %}
+  {% if groups %}
+    <div class="page-actions" style="margin:-6px 0 4px">
+      {% for group in groups %}
+        <a class="btn" href="{% url 'observations:group' group.pk %}">
+          <svg class="ic ic--sm" aria-hidden="true"><use href="#i-observation"></use></svg>
+          {{ group.name }} — бүлгээр ажиглалт
+        </a>
+        <a class="btn btn--ghost" href="{% url 'assessment:group_grid' group.pk %}">
+          <svg class="ic ic--sm" aria-hidden="true"><use href="#i-assessment"></use></svg>
+          Түргэн үнэлгээ
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
   {% comment %} The four kindergarten bands — Бага, Дунд, Ахлах, Бэлтгэл —
      and the year this cohort meets each one. A group moves up every
      September, so its band this year fixes the rest by counting.

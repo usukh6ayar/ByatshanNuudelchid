@@ -25,4 +25,8 @@ urlpatterns = [
          views.observation_delete, name="delete"),
     path("hawtas/<int:child_id>/ajiglalt/<int:observation_id>/hyanah/",
          views.observation_review, name="review"),
+    # RFP §5.2 — one activity, the whole group, written once. Teacher-only,
+    # so it lives under /bagsh/ beside the §6.3 grid.
+    path("bagsh/bulge/<int:group_id>/ajiglalt/", views.group_observation,
+         name="group"),
 ]

@@ -25,6 +25,7 @@ from .selectors import types_for
 __all__ = [
     "assert_own_record",
     "create_observation",
+    "create_group_observation",
     "update_observation",
     "delete_observation",
     "review_observation",
@@ -313,3 +314,77 @@ def set_domains(*, actor, observation, domains, request=None) -> list:
         )
 
     return links
+
+
+@transaction.atomic
+def create_group_observation(*, actor, group, type, observed_on, entries,
+                             domains=None, visible_to_parents=None,
+                             include_in_report=True, request=None,
+                             **fields) -> list[Observation]:
+    """RFP §5.2's "үйл ажиллагаанд суурилсан ажиглалт", written once.
+
+    A teacher runs one activity — "Блокоор барих" — with eight children and
+    then has the nap hour to record it. Writing the same activity, date and
+    domains eight times is most of that hour; the §6.3 grid already solved
+    the same shape for assessments and this is its counterpart.
+
+    ``entries`` maps an enrollment id to that child's own note, which is the
+    part that genuinely differs per child. Everything else is shared.
+
+    Ids the teacher may not reach are dropped rather than raising, matching
+    ``save_group_assessments``: a form submitted while another teacher moved
+    a child should record the rest instead of failing whole.
+    """
+    from apps.assessment.services import _as_id
+    from apps.children.models import Enrollment
+    from apps.core.permissions import visible_children
+
+    if not entries:
+        return []
+
+    # Both halves are attacker-supplied — the keys are form field names and
+    # the values are free text. Parse before anything reaches the ORM.
+    wanted = {}
+    for enrollment_id, note in entries.items():
+        parsed = _as_id(enrollment_id)
+        if parsed:
+            wanted[parsed] = (note or "").strip()
+
+    if not wanted:
+        return []
+
+    enrollments = (
+        Enrollment.objects.filter(
+            pk__in=wanted,
+            group=group,
+            status=Enrollment.Status.ACTIVE,
+            child__in=visible_children(actor),
+        )
+        .select_related("child")
+        .order_by("child__last_name", "child__first_name")
+    )
+
+    created = []
+    for enrollment in enrollments:
+        note = wanted[enrollment.pk]
+        # The per-child note lands in child_did — §5.1's "хүүхдийн хийсэн
+        # үйлдэл" is what a teacher writes about one child in a shared
+        # activity. A blank note still records that the child took part.
+        per_child = dict(fields)
+        if note:
+            per_child["child_did"] = note
+
+        created.append(create_observation(
+            actor=actor,
+            child=enrollment.child,
+            enrollment=enrollment,
+            type=type,
+            observed_on=observed_on,
+            domains=domains,
+            visible_to_parents=visible_to_parents,
+            include_in_report=include_in_report,
+            request=request,
+            **per_child,
+        ))
+
+    return created
