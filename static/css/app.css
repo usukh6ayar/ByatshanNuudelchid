@@ -483,3 +483,73 @@ dl.facts--cols dd { margin: 2px 0 0; font-weight: 600; }
   /* The switch rides along with the nav rather than taking its own row. */
   .theme { padding: 8px 12px; }
 }
+
+/* ---------------------------------------------------------------- auth
+   The unauthenticated screens. These lived in base_auth.html's own <style>
+   until 2026-08-14, which is why they used a different green and looked
+   like another product. Here instead, so the login page and the pages
+   behind it share one set of tokens.
+
+   Drawn from docs/design/screens/auth-login-and-password-reset.jpeg. */
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 0 0 18px;
+  padding: 4px;
+  background: var(--bg);
+  border-radius: 12px;
+}
+.tab {
+  flex: 1;
+  padding: 10px 4px;
+  text-align: center;
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  border-radius: 9px;
+}
+.tab:hover { color: var(--ink); }
+/* The selected tab is filled, as the mockup draws it — a tinted background
+   reads as "chosen" at a glance where a colour change alone does not. */
+.tab--active,
+.tab--active:hover {
+  background: var(--brand);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(20, 22, 40, .12);
+}
+
+.hint {
+  margin: 6px 0 0;
+  font-size: .82rem;
+  color: var(--muted);
+}
+
+.rules {
+  margin: 0 0 4px;
+  padding-left: 1.1rem;
+  color: var(--muted);
+  font-size: .84rem;
+}
+.rules li { margin: 3px 0; }
+
+/* Distinct from .msg--error, which is a banner inside a page. This one sits
+   under a field on a form that has nothing else on it. */
+.auth-error {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: .88rem;
+}
+
+.links {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  font-size: .88rem;
+}
+.links a { font-weight: 600; text-decoration: none; }
+.links a:hover { text-decoration: underline; }

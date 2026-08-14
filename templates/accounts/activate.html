@@ -3,7 +3,7 @@
 {% block title %}Бүртгэл идэвхжүүлэх{% endblock %}
 
 {% block content %}
-  <h1>Бүртгэл идэвхжүүлэх</h1>
+  <h2 class="auth__title">Бүртгэл идэвхжүүлэх</h2>
 
   {% if by_code %}
     <p class="sub">
@@ -16,7 +16,7 @@
     </p>
   {% endif %}
 
-  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  {% if error %}<p class="auth-error" role="alert">{{ error }}</p>{% endif %}
 
   <form method="post" novalidate>
     {% csrf_token %}

@@ -4,8 +4,7 @@
 {% block title %}Нэвтрэх{% endblock %}
 
 {% block content %}
-  <h1>Нэвтрэх</h1>
-  <p class="sub">Хүүхдийн хөгжлийн цахим хувийн хавтас</p>
+  <h2 class="auth__title">Нэвтрэх</h2>
 
   {% comment %} Tabs come from the approved design. They only change which identifier
      the field asks for — see LOGIN_TABS in views.py. Plain links, so they
@@ -19,7 +18,7 @@
   </nav>
 
   {% if error %}
-    <p class="error" role="alert">{{ error }}</p>
+    <p class="auth-error" role="alert">{{ error }}</p>
     {% if retries_left %}
       <p class="hint">Үлдсэн оролдлого: {{ retries_left }}</p>
     {% endif %}

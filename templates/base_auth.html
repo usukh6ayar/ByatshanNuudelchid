@@ -1,64 +1,151 @@
-{% load static %}{# Shared shell for unauthenticated pages. RFP §13, §629-635. #}
-<!doctype html>
+{% load static %}{% comment %} Shell for the unauthenticated screens — RFP §13, §629-635.
+
+   These are the first thing anyone sees, and until 2026-08-14 they were the
+   only screens outside the design system: their own inline CSS, their own
+   green, no logo, nothing shared with the application behind them. Someone
+   logging in met one product and then landed in another.
+
+   Now they load app.css like every other screen and use the same tokens.
+   Laid out from `docs/design/screens/auth-login-and-password-reset.jpeg`:
+   a card on the left with the mark beside the title, an illustration panel
+   on the right that folds away under 900px.
+{% endcomment %}<!doctype html>
 <html lang="mn">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Хүүхдийн хөгжлийн хавтас{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% include "_theme_head.html" %}
   <style>
-    :root { --ink:#1a1a1a; --muted:#6b6b6b; --green:#4a7c59; --bg:#faf8f5;
-            --line:#e0ddd8; --error:#b3261e; }
-    * { box-sizing: border-box; }
-    body { margin:0; min-height:100vh; display:grid; place-items:center;
-           padding:24px; background:var(--bg); color:var(--ink);
-           font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-           line-height:1.5; }
-    main { width:100%; max-width:400px; background:#fff; padding:32px 28px;
-           border-radius:14px; border:1px solid var(--line); }
-    /* auth-login-and-password-reset.jpeg centres the mark above the title.
-       Height-constrained rather than width-constrained: the wordmark below
-       the arc makes the image taller than it is wide. */
-    .logo { display:block; height:82px; width:auto; margin:0 auto 14px; }
-    h1 { font-size:1.4rem; margin:0 0 4px; }
-    .sub { color:var(--muted); font-size:.9rem; margin:0 0 24px; }
-    label { display:block; font-weight:600; font-size:.9rem; margin:16px 0 6px; }
-    input { width:100%; padding:12px 14px; font-size:1rem; border-radius:9px;
-            border:1px solid var(--line); background:#fff; color:var(--ink); }
-    input:focus { outline:2px solid var(--green); outline-offset:1px;
-                  border-color:var(--green); }
-    button { width:100%; margin-top:24px; padding:14px; font-size:1rem;
-             font-weight:600; color:#fff; background:var(--green);
-             border:0; border-radius:9px; cursor:pointer; }
-    button:hover { background:#3d6849; }
-    .error { margin:0 0 4px; padding:12px 14px; border-radius:9px;
-             background:#fdecea; color:var(--error); font-size:.9rem; }
-    .hint { color:var(--muted); font-size:.85rem; margin-top:6px; }
-    .tabs { display:flex; gap:4px; margin:0 0 20px; padding:4px;
-            background:var(--bg); border-radius:10px; }
-    .tab { flex:1; padding:9px 4px; text-align:center; font-size:.9rem;
-           font-weight:600; color:var(--muted); text-decoration:none;
-           border-radius:7px; }
-    .tab--active { background:#fff; color:var(--green);
-                   box-shadow:0 1px 3px rgba(0,0,0,.08); }
-    .rules { margin:0 0 4px; padding-left:1.1rem; color:var(--muted);
-             font-size:.85rem; }
-    .rules li { margin:3px 0; }
-    .links { margin-top:20px; padding-top:18px; border-top:1px solid var(--line);
-             font-size:.9rem; }
-    a { color:var(--green); }
-    @media (prefers-color-scheme: dark) {
-      :root { --ink:#ececec; --muted:#a0a0a0; --bg:#1a1a1a; --line:#3a3a3a;
-              --error:#f2b8b5; }
-      main, input, .tab--active { background:#242424; }
-      .error { background:#3a2321; }
+    /* Only what the two-column split needs. Everything inside the card —
+       inputs, buttons, badges, messages — is app.css doing its job. */
+    .auth {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      background: var(--bg);
+    }
+    .auth__panel {
+      display: grid;
+      place-items: center;
+      padding: 32px 24px;
+    }
+    .auth__card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 32px 28px;
+    }
+
+    .auth__brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .auth__brand img { width: 54px; height: auto; flex-shrink: 0; }
+    .auth__brand h1 {
+      font-size: 1.05rem;
+      line-height: 1.3;
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: .01em;
+    }
+    .auth__brand p {
+      margin: 4px 0 0;
+      font-size: .82rem;
+      color: var(--muted);
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    /* The decorative half. Hidden rather than shrunk on a phone: a teacher
+       signing in on a bus needs the form, not the picture (RFP §619). */
+    .auth__art {
+      background: linear-gradient(160deg, #eef1fd, #e6ecfb 55%, #dfe7fa);
+      display: grid;
+      place-items: center;
+      padding: 40px;
+      text-align: center;
+    }
+    .auth__art img { width: min(78%, 380px); height: auto; }
+    .auth__art p {
+      margin: 22px 0 0;
+      color: var(--muted);
+      font-size: .9rem;
+      max-width: 34ch;
+    }
+
+    .auth__title {
+      font-size: 1.35rem;
+      margin: 0 0 6px;
+      letter-spacing: -.01em;
+    }
+    /* Long words in a Mongolian label must not push the card wider than its
+       column — the inputs then run off the right edge. */
+    .auth__card { overflow-wrap: anywhere; }
+    .auth__card input,
+    .auth__card select,
+    .auth__card textarea,
+    .auth__card .btn { width: 100%; max-width: 100%; }
+
+    .auth__foot {
+      margin-top: 22px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 14px;
+      justify-content: center;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 900px) {
+      .auth { grid-template-columns: 1fr; }
+      .auth__art { display: none; }
+      .auth__card { box-shadow: none; }
+    }
+
+    :root[data-theme="dark"] .auth__art {
+      background: linear-gradient(160deg, #23252f, #1e2029);
     }
   </style>
 </head>
 <body>
-  <main>
-    <img class="logo" src="{% static 'img/logo-160.png' %}"
-         alt="Бяцхан нүүдэлчид" width="149" height="160">
-    {% block content %}{% endblock %}
-  </main>
+<div class="auth">
+  <div class="auth__panel">
+    <main class="auth__card">
+      <div class="auth__brand">
+        <img src="{% static 'img/logo-160.png' %}" alt="Бяцхан нүүдэлчид">
+        <div>
+          <h1>{% block brand %}Хүүхдийн хөгжлийн<br>цахим хувийн хавтас{% endblock %}</h1>
+          <p>{% block brand_sub %}Багш, эцэг эх, администраторт зориулсан
+             аюулгүй нэвтрэх систем.{% endblock %}</p>
+        </div>
+      </div>
+
+      {% block content %}{% endblock %}
+
+      <div class="auth__foot">
+        <span>Аюулгүй нэвтрэлт</span>
+        <span>·</span>
+        <span>HTTPS</span>
+        <span>·</span>
+        <span>Нууц үг хамгаалагдсан</span>
+      </div>
+    </main>
+  </div>
+
+  <aside class="auth__art" aria-hidden="true">
+    <img src="{% static 'img/logo-160.png' %}" alt="">
+    <p>Хүүхэд бүрийн өсөлт, хөгжлийн түүхийг багш, эцэг эх хамтдаа
+       бүртгэж, хадгална.</p>
+  </aside>
+</div>
 </body>
 </html>
