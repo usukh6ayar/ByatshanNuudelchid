@@ -1,0 +1,12 @@
+{
+  "name": "byatshan-nuudelchid-tools",
+  "private": true,
+  "type": "module",
+  "description": "Development tooling only. The application is Django; this exists so scripts/screenshots can drive a real browser.",
+  "scripts": {
+    "shot": "node scripts/screenshots/shoot.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}
