@@ -72,12 +72,21 @@
       padding: 40px;
       text-align: center;
     }
-    .auth__art img { width: min(78%, 380px); height: auto; }
+    /* Capped at the source's own width. The file is 160px tall and
+       scaling it to 380 was visibly soft — a blurred logo on the first
+       screen anyone sees is worse than a small sharp one. */
+    .auth__art img { width: auto; max-width: 210px; height: auto; }
     .auth__art p {
-      margin: 22px 0 0;
+      margin: 10px auto 0;
       color: var(--muted);
       font-size: .9rem;
       max-width: 34ch;
+    }
+    .auth__art-lead {
+      margin-top: 24px !important;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--ink);
     }
 
     .auth__title {
@@ -142,9 +151,12 @@
   </div>
 
   <aside class="auth__art" aria-hidden="true">
-    <img src="{% static 'img/logo-160.png' %}" alt="">
-    <p>Хүүхэд бүрийн өсөлт, хөгжлийн түүхийг багш, эцэг эх хамтдаа
-       бүртгэж, хадгална.</p>
+    <div>
+      <img src="{% static 'img/logo-160.png' %}" alt="">
+      <p class="auth__art-lead">Хүүхэд бүрийн хөгжлийн түүх</p>
+      <p>Багшийн ажиглалт, эцэг эхийн оролцоо, улирлын үнэлгээ — бүгд
+         нэг дор, хүүхэд тус бүрийн цахим хувийн хавтаст.</p>
+    </div>
   </aside>
 </div>
 </body>

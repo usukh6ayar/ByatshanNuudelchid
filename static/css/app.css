@@ -303,7 +303,7 @@ td .name { font-weight: 600; }
 
 label { display: block; font-weight: 600; font-size: .86rem; margin: 14px 0 5px; }
 input[type=text], input[type=email], input[type=tel], input[type=date],
-input[type=search], input[type=number], select, textarea {
+input[type=search], input[type=number], input[type=password], select, textarea {
   /* 16px, not .95rem. Mobile Safari zooms the viewport whenever a focused
      control is under 16px and does not zoom back out afterwards, so a
      teacher filling in an observation on a phone ends up panning a form

@@ -12,28 +12,53 @@
 {% block heading %}Удирдлагын самбар{% endblock %}
 
 {% block content %}
+  {% comment %} Tinted, one colour per statistic, as admin-dashboard.jpeg
+     draws them and as the teacher's dashboard already did. A director scans
+     six numbers by shape rather than by reading every label. {% endcomment %}
   <div class="grid grid--tiles">
     {% if is_superadmin %}
-      <div class="tile">
-        <div class="tile__label">Цэцэрлэг</div>
-        <div class="tile__value">{{ figures.kindergartens }}</div>
+      <div class="tile tile--sky">
+        <span class="tile__icon"><svg class="ic" aria-hidden="true"><use href="#i-home"></use></svg></span>
+        <div>
+          <div class="tile__label">Цэцэрлэг</div>
+          <div class="tile__value">{{ figures.kindergartens }}</div>
+        </div>
       </div>
     {% endif %}
-    <div class="tile">
-      <div class="tile__label">Бүлэг</div>
-      <div class="tile__value">{{ figures.groups }}</div>
+    <div class="tile tile--green">
+      <span class="tile__icon"><svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg></span>
+      <div>
+        <div class="tile__label">Бүлэг</div>
+        <div class="tile__value">{{ figures.groups }}</div>
+      </div>
     </div>
-    <div class="tile">
-      <div class="tile__label">Багш</div>
-      <div class="tile__value">{{ figures.teachers }}</div>
+    <div class="tile tile--amber">
+      <span class="tile__icon"><svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg></span>
+      <div>
+        <div class="tile__label">Багш</div>
+        <div class="tile__value">{{ figures.teachers }}</div>
+      </div>
     </div>
-    <div class="tile">
-      <div class="tile__label">Хүүхэд</div>
-      <div class="tile__value">{{ figures.children }}</div>
+    <div class="tile tile--blue">
+      <span class="tile__icon"><svg class="ic" aria-hidden="true"><use href="#i-portfolio"></use></svg></span>
+      <div>
+        <div class="tile__label">Хүүхэд</div>
+        <div class="tile__value">{{ figures.children }}</div>
+      </div>
     </div>
-    <div class="tile">
-      <div class="tile__label">Идэвхтэй эцэг эх</div>
-      <div class="tile__value">{{ figures.active_guardians }}</div>
+    <div class="tile tile--pink">
+      <span class="tile__icon"><svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg></span>
+      <div>
+        <div class="tile__label">Идэвхтэй эцэг эх</div>
+        <div class="tile__value">{{ figures.active_guardians }}</div>
+      </div>
+    </div>
+    <div class="tile tile--teal">
+      <span class="tile__icon"><svg class="ic" aria-hidden="true"><use href="#i-report"></use></svg></span>
+      <div>
+        <div class="tile__label">Үүсгэсэн тайлан</div>
+        <div class="tile__value">{{ figures.reports_total }}</div>
+      </div>
     </div>
   </div>
 
