@@ -1,0 +1,105 @@
+{% extends base_template %}
+{% comment %} RFP §3.2's kindergarten management, in the product's own chrome.
+
+   Same shape as the children list — search and filters in a card, the table
+   below, the primary action beside the title — because a director moving
+   between the two screens should not have to relearn where anything is.
+   Modelled on docs/design/screens/teacher-children-list.jpeg.
+{% endcomment %}
+
+{% block title %}Цэцэрлэгийн удирдлага{% endblock %}
+{% block heading %}Цэцэрлэгийн удирдлага{% endblock %}
+{% block lede %}
+  <p class="lede">Нийт {{ total }} цэцэрлэг</p>
+{% endblock %}
+
+{% block content %}
+  <div class="page-actions" style="margin:-8px 0 16px">
+    <a class="btn" href="{% url 'tenants:kindergarten_create' %}">
+      <svg class="ic ic--sm" aria-hidden="true"><use href="#i-home"></use></svg>
+      Шинэ цэцэрлэг нэмэх
+    </a>
+  </div>
+
+  <div class="card">
+    <form method="get" class="filters">
+      <div>
+        <label for="id_q">Хайх</label>
+        <input type="search" name="q" id="id_q" value="{{ filters.q }}"
+               placeholder="Нэр эсвэл хаяг">
+      </div>
+      <div>
+        <label for="id_status">Төлөв</label>
+        <select name="status" id="id_status">
+          <option value="">Бүгд</option>
+          <option value="active" {% if filters.status == 'active' %}selected{% endif %}>Идэвхтэй</option>
+          <option value="inactive" {% if filters.status == 'inactive' %}selected{% endif %}>Идэвхгүй</option>
+        </select>
+      </div>
+      <div class="filters__actions">
+        <button type="submit" class="btn">Шүүх</button>
+        <a class="btn btn--ghost" href="{% url 'tenants:kindergarten_list' %}">Цэвэрлэх</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    {% if page.object_list %}
+      <div class="table-wrap">
+        <table>
+          <caption class="sr-only">Цэцэрлэгийн жагсаалт</caption>
+          <thead>
+            <tr>
+              <th scope="col">Нэр</th>
+              <th scope="col">Хаяг</th>
+              <th scope="col">Утас</th>
+              <th scope="col">Бүлэг</th>
+              <th scope="col">Хүүхэд</th>
+              <th scope="col">Төлөв</th>
+              <th scope="col"><span class="sr-only">Үйлдэл</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for kg in page.object_list %}
+              <tr>
+                <td class="name">
+                  <a href="{% url 'tenants:kindergarten_edit' kg.pk %}"
+                     style="text-decoration:none; color:inherit">{{ kg.name }}</a>
+                </td>
+                <td>{{ kg.address|default:"—" }}</td>
+                <td>{{ kg.phone|default:"—" }}</td>
+                <td>{{ kg.group_count|default:0 }}</td>
+                <td>{{ kg.child_count|default:0 }}</td>
+                <td>
+                  <span class="badge {% if kg.is_active %}badge--ok{% else %}badge--muted{% endif %}">
+                    {% if kg.is_active %}Идэвхтэй{% else %}Идэвхгүй{% endif %}
+                  </span>
+                </td>
+                <td style="white-space:nowrap">
+                  <a class="btn btn--ghost btn--sm"
+                     href="{% url 'tenants:kindergarten_edit' kg.pk %}">Засах</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <span>Нийт {{ page.paginator.count }} цэцэрлэг</span>
+        {% if page.has_previous %}
+          <a href="?{{ request.GET.urlencode }}&page={{ page.previous_page_number }}">← Өмнөх</a>
+        {% endif %}
+        <span>{{ page.number }} / {{ page.paginator.num_pages }}</span>
+        {% if page.has_next %}
+          <a href="?{{ request.GET.urlencode }}&page={{ page.next_page_number }}">Дараах →</a>
+        {% endif %}
+      </div>
+    {% else %}
+      <p class="empty">
+        <svg class="ic" aria-hidden="true"><use href="#i-home"></use></svg>
+        Цэцэрлэг олдсонгүй.
+      </p>
+    {% endif %}
+  </div>
+{% endblock %}

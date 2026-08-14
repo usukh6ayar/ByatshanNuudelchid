@@ -1,0 +1,72 @@
+{% extends base_template %}
+{% comment %} RFP §3.2 — name, age band, school year, timetable, rules, status.
+
+   The kindergarten is not on the form: the service derives it from the
+   school year, so a crafted post cannot file the group in another tenant.
+   Class photo is Phase 2.
+{% endcomment %}
+
+{% block title %}{% if obj %}Бүлэг засах{% else %}Шинэ бүлэг{% endif %}{% endblock %}
+{% block heading %}
+  {% if obj %}{{ obj.name }}{% else %}Шинэ бүлэг{% endif %}
+{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width:720px">
+    {% if error %}<p class="msg msg--error" role="alert">{{ error }}</p>{% endif %}
+
+    {% if not years %}
+      <p class="empty">
+        Хичээлийн жил тохируулаагүй байна. Эхлээд хичээлийн жил үүсгэнэ үү.
+      </p>
+    {% else %}
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <label for="id_name">Бүлгийн нэр *</label>
+        <input type="text" name="name" id="id_name" required
+               value="{{ form.name|default:'' }}">
+
+        <div class="grid grid--2">
+          <div>
+            <label for="id_age_category">Насны ангилал</label>
+            <input type="text" name="age_category" id="id_age_category"
+                   placeholder="ж: 3–4 насны бүлэг"
+                   value="{{ form.age_category|default:'' }}">
+          </div>
+          <div>
+            <label for="id_school_year">Хичээлийн жил *</label>
+            <select name="school_year" id="id_school_year" required>
+              <option value="">— сонгох —</option>
+              {% for year in years %}
+                <option value="{{ year.pk }}"
+                  {% if form.school_year|stringformat:"s" == year.pk|stringformat:"s" %}selected{% endif %}>
+                  {{ year.name }} — {{ year.kindergarten.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <label for="id_timetable">Хичээлийн хуваарь</label>
+        <textarea name="timetable" id="id_timetable" rows="3">{{ form.timetable|default:'' }}</textarea>
+
+        <label for="id_rules">Бүлгийн дүрэм</label>
+        <textarea name="rules" id="id_rules" rows="3">{{ form.rules|default:'' }}</textarea>
+
+        <label for="id_status">Төлөв</label>
+        <select name="status" id="id_status">
+          {% for value, label in statuses %}
+            <option value="{{ value }}"
+              {% if form.status == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+
+        <div class="btn-row">
+          <button type="submit" class="btn">Хадгалах</button>
+          <a class="btn btn--ghost" href="{% url 'tenants:group_list' %}">Болих</a>
+        </div>
+      </form>
+    {% endif %}
+  </div>
+{% endblock %}

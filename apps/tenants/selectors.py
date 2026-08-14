@@ -65,3 +65,102 @@ def school_years_for(user):
         .select_related("kindergarten")
         .order_by("-starts_on")
     )
+
+
+def administered_kindergartens(user):
+    """The kindergartens this user may manage — RFP §2.1.
+
+    A superadmin manages all of them; a director only the ones their
+    ``Membership`` names. This is the read side of the same rule
+    ``TenantScopedAdmin`` enforces, written once so the new screens and the
+    admin site cannot drift (CLAUDE.md §1.1).
+    """
+    from apps.tenants.models import Kindergarten
+
+    if user is None or not user.is_authenticated or not user.is_active:
+        return Kindergarten.objects.none()
+
+    memberships = user.memberships.filter(is_active=True)
+    if memberships.filter(role=Role.SUPERADMIN).exists():
+        return Kindergarten.objects.all().order_by("name")
+
+    ids = set(
+        memberships.filter(role=Role.ADMIN, kindergarten__isnull=False)
+        .values_list("kindergarten_id", flat=True)
+    )
+    return Kindergarten.objects.filter(pk__in=ids).order_by("name")
+
+
+def kindergarten_rows(user, *, q="", status=""):
+    """The administrator's kindergarten list — RFP §3.2.
+
+    Counts come from one annotated query rather than a property per row:
+    the list is small, but "children per kindergarten" in a template loop is
+    the N+1 CLAUDE.md §3.5 forbids and the habit is what matters.
+    """
+    from django.db.models import (
+        Count,
+        IntegerField,
+        OuterRef,
+        Q,
+        Subquery,
+    )
+
+    from apps.children.models import Child
+
+    rows = administered_kindergartens(user)
+    if q:
+        rows = rows.filter(Q(name__icontains=q) | Q(address__icontains=q))
+    if status == "active":
+        rows = rows.filter(is_active=True)
+    elif status == "inactive":
+        rows = rows.filter(is_active=False)
+
+    # ``TenantScopedModel.kindergarten`` uses related_name="+", so there is
+    # no reverse accessor to aggregate over — deliberate, since a reverse
+    # manager that ignores soft deletes is a trap. Subqueries instead.
+    return rows.annotate(
+        group_count=Subquery(
+            Group.objects.filter(kindergarten=OuterRef("pk"))
+            .values("kindergarten")
+            .annotate(n=Count("pk"))
+            .values("n")[:1],
+            output_field=IntegerField(),
+        ),
+        child_count=Subquery(
+            Child.objects.filter(kindergarten=OuterRef("pk"),
+                                 status=Child.Status.ACTIVE)
+            .values("kindergarten")
+            .annotate(n=Count("pk"))
+            .values("n")[:1],
+            output_field=IntegerField(),
+        ),
+    )
+
+
+def group_rows(user, *, q="", kindergarten=None, school_year=None, status=""):
+    """The administrator's group list — RFP §3.2's group management."""
+    from django.db.models import Count, Q
+
+    from apps.children.models import Enrollment
+
+    rows = Group.objects.filter(
+        kindergarten__in=administered_kindergartens(user)
+    ).select_related("kindergarten", "school_year")
+
+    if q:
+        rows = rows.filter(name__icontains=q)
+    if kindergarten:
+        rows = rows.filter(kindergarten=kindergarten)
+    if school_year:
+        rows = rows.filter(school_year=school_year)
+    if status:
+        rows = rows.filter(status=status)
+
+    return rows.annotate(
+        child_count=Count(
+            "enrollments", distinct=True,
+            filter=Q(enrollments__status=Enrollment.Status.ACTIVE,
+                     enrollments__deleted_at__isnull=True),
+        ),
+    ).order_by("-school_year__starts_on", "name")

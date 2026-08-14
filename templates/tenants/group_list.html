@@ -1,0 +1,132 @@
+{% extends base_template %}
+{% comment %} RFP §3.2's group management. Filters follow §11's list: name,
+   kindergarten, school year, status. {% endcomment %}
+
+{% block title %}Бүлгийн удирдлага{% endblock %}
+{% block heading %}Бүлгийн удирдлага{% endblock %}
+{% block lede %}
+  <p class="lede">Нийт {{ total }} бүлэг</p>
+{% endblock %}
+
+{% block content %}
+  <div class="page-actions" style="margin:-8px 0 16px">
+    <a class="btn" href="{% url 'tenants:group_create' %}">
+      <svg class="ic ic--sm" aria-hidden="true"><use href="#i-children"></use></svg>
+      Шинэ бүлэг нэмэх
+    </a>
+  </div>
+
+  <div class="card">
+    <form method="get" class="filters">
+      <div>
+        <label for="id_q">Хайх</label>
+        <input type="search" name="q" id="id_q" value="{{ filters.q }}"
+               placeholder="Бүлгийн нэр">
+      </div>
+
+      {% if kindergartens|length > 1 %}
+        <div>
+          <label for="id_kindergarten">Цэцэрлэг</label>
+          <select name="kindergarten" id="id_kindergarten">
+            <option value="">Бүгд</option>
+            {% for kg in kindergartens %}
+              <option value="{{ kg.pk }}"
+                {% if filters.kindergarten.pk == kg.pk %}selected{% endif %}>
+                {{ kg.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+
+      <div>
+        <label for="id_year">Хичээлийн жил</label>
+        <select name="year" id="id_year">
+          <option value="">Бүгд</option>
+          {% for year in years %}
+            <option value="{{ year.pk }}"
+              {% if filters.school_year.pk == year.pk %}selected{% endif %}>
+              {{ year.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label for="id_status">Төлөв</label>
+        <select name="status" id="id_status">
+          <option value="">Бүгд</option>
+          {% for value, label in statuses %}
+            <option value="{{ value }}"
+              {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="filters__actions">
+        <button type="submit" class="btn">Шүүх</button>
+        <a class="btn btn--ghost" href="{% url 'tenants:group_list' %}">Цэвэрлэх</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    {% if page.object_list %}
+      <div class="table-wrap">
+        <table>
+          <caption class="sr-only">Бүлгийн жагсаалт</caption>
+          <thead>
+            <tr>
+              <th scope="col">Бүлгийн нэр</th>
+              <th scope="col">Насны ангилал</th>
+              <th scope="col">Цэцэрлэг</th>
+              <th scope="col">Хичээлийн жил</th>
+              <th scope="col">Хүүхэд</th>
+              <th scope="col">Төлөв</th>
+              <th scope="col"><span class="sr-only">Үйлдэл</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for group in page.object_list %}
+              <tr>
+                <td class="name">
+                  <a href="{% url 'tenants:group_edit' group.pk %}"
+                     style="text-decoration:none; color:inherit">{{ group.name }}</a>
+                </td>
+                <td>{{ group.age_category|default:"—" }}</td>
+                <td>{{ group.kindergarten.name }}</td>
+                <td>{{ group.school_year.name }}</td>
+                <td>{{ group.child_count|default:0 }}</td>
+                <td>
+                  <span class="badge {% if group.status == 'active' %}badge--ok{% else %}badge--muted{% endif %}">
+                    {{ group.get_status_display }}
+                  </span>
+                </td>
+                <td style="white-space:nowrap">
+                  <a class="btn btn--ghost btn--sm"
+                     href="{% url 'tenants:group_edit' group.pk %}">Засах</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <span>Нийт {{ page.paginator.count }} бүлэг</span>
+        {% if page.has_previous %}
+          <a href="?{{ request.GET.urlencode }}&page={{ page.previous_page_number }}">← Өмнөх</a>
+        {% endif %}
+        <span>{{ page.number }} / {{ page.paginator.num_pages }}</span>
+        {% if page.has_next %}
+          <a href="?{{ request.GET.urlencode }}&page={{ page.next_page_number }}">Дараах →</a>
+        {% endif %}
+      </div>
+    {% else %}
+      <p class="empty">
+        <svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg>
+        Бүлэг олдсонгүй.
+      </p>
+    {% endif %}
+  </div>
+{% endblock %}
