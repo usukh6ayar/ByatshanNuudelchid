@@ -17,6 +17,7 @@ from apps.dashboard import selectors
 from apps.dashboard.tasks import refresh_admin_dashboards
 from apps.observations.models import Observation, ObservationType
 from apps.observations.services import create_observation
+from apps.tenants.models import Group
 
 pytestmark = pytest.mark.django_db
 
@@ -271,60 +272,65 @@ def test_login_lands_on_the_right_dashboard(client, world, naran_admin_user):
     assert client.get("/").url == reverse("children:parent_home")
 
 
-# ------------------------------------------------------------------ §6.4
+# ------------------------------------------------------------------ §3.2
 
-def test_the_term_track_marks_past_current_and_future(world, terms):
-    """RFP §6.4 — the year's four terms, and where it has got to.
+def test_the_band_track_places_the_group_in_the_four_year_run(world,
+                                                              make_group):
+    """Mongolian kindergartens run Бага (2 нас) → Дунд (3) → Ахлах (4) →
+    Бэлтгэл (5), one band per year. Knowing this year's band fixes the rest
+    by counting, so the track projects the years around it."""
+    group = world["sunflower"]
+    group.age_band = Group.AgeBand.SENIOR
+    group.save(update_fields=["age_band"])
 
-    The dashboard used to name only the open term, which is the smaller
-    half of what a teacher wants to know.
-    """
-    import datetime as dt
-
-    # A day inside the second term, whatever dates ensure_default_terms
-    # chose for this year.
-    inside_second = terms[1].starts_on + dt.timedelta(days=1)
-
-    track = selectors.teacher_dashboard(world["dulmaa"],
-                                        today=inside_second)["term_track"]
+    track = selectors.teacher_dashboard(world["dulmaa"])["band_track"]
 
     assert [step["state"] for step in track] == [
-        "done", "current", "ahead", "ahead",
+        "done", "done", "current", "ahead",
     ]
-    assert [step["term"].pk for step in track] == [t.pk for t in terms]
+    assert [step["label"] for step in track] == [
+        "Бага бүлэг", "Дунд бүлэг", "Ахлах бүлэг", "Бэлтгэл бүлэг",
+    ]
 
 
-def test_the_track_survives_the_summer_gap(world, terms):
-    """Between years there is no current term. The strip still has to draw:
-    a teacher opening the dashboard in August should see the year's shape,
-    not an empty panel."""
-    import datetime as dt
+def test_the_years_are_counted_from_the_groups_own_year(world):
+    """Only the current year is a SchoolYear row; the others are projected,
+    because a kindergarten has not created 2028-2029 yet and should not have
+    to for this to draw."""
+    group = world["sunflower"]
+    group.age_band = Group.AgeBand.JUNIOR
+    group.save(update_fields=["age_band"])
+    start = group.school_year.starts_on.year
 
-    after_the_year = terms[-1].ends_on + dt.timedelta(days=20)
+    track = selectors.teacher_dashboard(world["dulmaa"])["band_track"]
 
-    track = selectors.teacher_dashboard(world["dulmaa"],
-                                        today=after_the_year)["term_track"]
-
-    assert len(track) == 4
-    assert {step["state"] for step in track} == {"done"}
-
-
-def test_a_year_with_no_terms_has_no_track(world):
-    """Nothing configured yet — the template hides the card rather than
-    drawing an empty line."""
-    assert selectors.teacher_dashboard(world["dulmaa"])["term_track"] == []
+    assert [step["years"] for step in track] == [
+        f"{start}–{start + 1}",
+        f"{start + 1}–{start + 2}",
+        f"{start + 2}–{start + 3}",
+        f"{start + 3}–{start + 4}",
+    ]
+    assert track[0]["state"] == "current"
 
 
-def test_the_track_reaches_the_dashboard(client, world, terms):
-    """Through the HTTP client, because a selector returning the right list
-    proves nothing if the template never draws it.
+def test_a_group_with_no_band_draws_nothing(world):
+    """age_category is free text — "3-4 нас", "холимог". Guessing the band
+    from it would be a guess shown as a fact."""
+    assert world["sunflower"].age_band == ""
 
-    Asserts on four steps rather than on a current one: the fixture's school
-    year is fixed and today eventually walks past its end, which is the
-    summer case the test above covers deliberately."""
+    assert selectors.teacher_dashboard(world["dulmaa"])["band_track"] == []
+
+
+def test_the_track_reaches_the_dashboard(client, world):
+    """Through the HTTP client: a selector returning the right list proves
+    nothing if the template never draws it."""
+    group = world["sunflower"]
+    group.age_band = Group.AgeBand.MIDDLE
+    group.save(update_fields=["age_band"])
     login(client, world["dulmaa"])
 
     html = client.get(reverse("dashboard:teacher")).content.decode()
 
-    assert "Хичээлийн жилийн явц" in html
+    assert "Бүлгийн шатлал" in html
+    assert "Бэлтгэл бүлэг" in html
     assert html.count("track__step track__step--") == 4

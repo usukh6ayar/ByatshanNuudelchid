@@ -68,27 +68,27 @@
     </div>
   {% endif %}
 
-  {% comment %} RFP §6.4's four terms as a line — where the year has got to,
-     and what is left. The dashboard only ever said which term was open,
-     which is the smaller half of the question a teacher asks. {% endcomment %}
-  {% if term_track %}
+  {% comment %} The four kindergarten bands — Бага, Дунд, Ахлах, Бэлтгэл —
+     and the year this cohort meets each one. A group moves up every
+     September, so its band this year fixes the rest by counting.
+     Hidden when the group has no band set: guessing it from the free-text
+     age category would be a guess shown as a fact. {% endcomment %}
+  {% if band_track %}
     <div class="card">
       <div class="card__head">
-        <h2>Хичээлийн жилийн явц</h2>
-        <span class="badge badge--muted">{{ term_track.0.term.school_year.name }}</span>
+        <h2>Бүлгийн шатлал</h2>
+        <span class="badge badge--muted">{{ groups.0.name }}</span>
       </div>
       <ol class="track">
-        {% for step in term_track %}
+        {% for step in band_track %}
           <li class="track__step track__step--{{ step.state }}">
-            <span class="track__name">{{ step.term.name }}</span>
+            <span class="track__name">{{ step.label }}</span>
             <span class="track__dot" aria-hidden="true"></span>
-            <span class="track__dates">
-              {{ step.term.starts_on|date:"m.d" }}–{{ step.term.ends_on|date:"m.d" }}
-            </span>
+            <span class="track__dates">{{ step.years }}</span>
             <span class="sr-only">
-              {% if step.state == 'done' %}дууссан
-              {% elif step.state == 'current' %}одоогийн улирал
-              {% else %}хараахан эхлээгүй{% endif %}
+              {% if step.state == 'done' %}өнгөрсөн
+              {% elif step.state == 'current' %}одоогийн бүлэг
+              {% else %}хойшид{% endif %}
             </span>
           </li>
         {% endfor %}

@@ -22,11 +22,7 @@ from django.utils import timezone
 
 from apps.accounts.models import Role, User
 from apps.assessment.models import Assessment, AssessmentLevel
-from apps.assessment.selectors import (
-    current_term,
-    domains_for,
-    terms_for,
-)
+from apps.assessment.selectors import current_term, domains_for
 from apps.children.models import Child, Enrollment
 from apps.comms.models import Announcement
 from apps.core.models import AuditAction, AuditLog
@@ -65,7 +61,7 @@ def teacher_dashboard(user, *, today: dt.date | None = None) -> dict:
         "child_count": len(child_ids),
         "groups": groups,
         "term": term,
-        "term_track": _term_track(groups, today),
+        "band_track": _band_track(groups),
         "birthdays_today": _birthdays_today(children, today),
         "recent_observations": _recent_observations(child_ids),
         "recent_parent_notes": _recent_parent_notes(child_ids),
@@ -88,31 +84,44 @@ def _current_term_for(groups, today):
     return None
 
 
-def _term_track(groups, today):
-    """RFP §6.4's four terms as a progression — done, current, still ahead.
+def _band_track(groups):
+    """The four kindergarten bands and the year this cohort meets each one.
 
-    A teacher's year is four terms long and the dashboard only ever showed
-    which one is open. The strip answers the question they actually ask in
-    the staff room: how far through the year are we, and what is left.
+    Mongolian kindergartens run Бага (2 нас), Дунд (3), Ахлах (4) and
+    Бэлтгэл (5) — one band per year of age, the same four years RFP §4.3
+    gives a page each. A cohort moves up one band every September, so
+    knowing the band a group is in this year fixes every other year by
+    counting.
 
-    Falls back to the group's own year rather than the calendar so that a
-    teacher looking at the dashboard in the summer, between terms, still
-    sees the year's shape instead of an empty panel.
+    The years are projected, not stored: only the current one is a
+    ``SchoolYear`` row. That is honest for a track whose whole job is to
+    show where a group sits in a four-year run — the kindergarten has not
+    created 2028-2029 yet, and should not have to for this to draw.
+
+    Returns ``[]`` when the group has no band set, because guessing it from
+    ``age_category`` free text ("3-4 нас", "холимог") would be a guess shown
+    as a fact.
     """
-    year = next((g.school_year for g in groups), None)
-    if year is None:
+    group = next((g for g in groups if g.age_band), None)
+    if group is None:
         return []
 
-    live = current_term(year, today)
+    bands = list(Group.AgeBand)
+    here = bands.index(Group.AgeBand(group.age_band))
+    # "2025-2026" → 2025. The year row is the anchor; the rest are offsets.
+    start = group.school_year.starts_on.year
+
     track = []
-    for term in terms_for(year):
-        if live is not None and term.pk == live.pk:
-            state = "current"
-        elif term.ends_on < today:
-            state = "done"
-        else:
-            state = "ahead"
-        track.append({"term": term, "state": state})
+    for index, band in enumerate(bands):
+        first = start + (index - here)
+        track.append({
+            "band": band,
+            "label": band.label,
+            "years": f"{first}–{first + 1}",
+            "state": ("current" if index == here
+                      else "done" if index < here
+                      else "ahead"),
+        })
     return track
 
 

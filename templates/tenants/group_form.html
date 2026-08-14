@@ -29,10 +29,15 @@
 
         <div class="grid grid--2">
           <div>
-            <label for="id_age_category">Насны ангилал</label>
-            <input type="text" name="age_category" id="id_age_category"
-                   placeholder="ж: 3–4 насны бүлэг"
-                   value="{{ form.age_category|default:'' }}">
+            <label for="id_age_band">Насны бүлэг</label>
+            <select name="age_band" id="id_age_band">
+              <option value="">— сонгох —</option>
+              {% for value, label in bands %}
+                <option value="{{ value }}"
+                  {% if form.age_band == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            <p class="hint">Бага 2 нас · Дунд 3 · Ахлах 4 · Бэлтгэл 5</p>
           </div>
           <div>
             <label for="id_school_year">Хичээлийн жил *</label>
@@ -47,6 +52,11 @@
             </select>
           </div>
         </div>
+
+        <label for="id_age_category">Насны ангилал (чөлөөт бичвэр)</label>
+        <input type="text" name="age_category" id="id_age_category"
+               placeholder="ж: 3–4 нас, холимог"
+               value="{{ form.age_category|default:'' }}">
 
         <label for="id_timetable">Хичээлийн хуваарь</label>
         <textarea name="timetable" id="id_timetable" rows="3">{{ form.timetable|default:'' }}</textarea>

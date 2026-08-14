@@ -186,8 +186,10 @@ def group_form(request, group_id=None):
         "obj": obj,
         "years": years,
         "statuses": Group.Status.choices,
+        "bands": Group.AgeBand.choices,
         "form": {
             "name": getattr(obj, "name", ""),
+            "age_band": getattr(obj, "age_band", ""),
             "age_category": getattr(obj, "age_category", ""),
             "school_year": getattr(obj, "school_year_id", ""),
             "timetable": getattr(obj, "timetable", ""),
@@ -208,6 +210,11 @@ def group_form(request, group_id=None):
 
         target = obj or Group()
         target.name = request.POST.get("name", "").strip()
+        # Only the four national bands, never whatever was posted: an
+        # unknown value would render as a blank cell everywhere it is shown.
+        posted_band = request.POST.get("age_band", "")
+        target.age_band = (posted_band
+                           if posted_band in Group.AgeBand.values else "")
         target.age_category = request.POST.get("age_category", "").strip()
         target.school_year = year
         # Taken from the school year, never from the form: a crafted post

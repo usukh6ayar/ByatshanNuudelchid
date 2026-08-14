@@ -59,8 +59,10 @@ class Command(BaseCommand):
         kindergarten = self._kindergarten()
         year = self._school_year(kindergarten)
         groups = [
-            self._group(kindergarten, year, "Наранцэцэг", "3-4 нас"),
-            self._group(kindergarten, year, "Бөмбөгөр", "4-5 нас"),
+            self._group(kindergarten, year, "Наранцэцэг", "3-4 нас",
+                        Group.AgeBand.MIDDLE),
+            self._group(kindergarten, year, "Бөмбөгөр", "4-5 нас",
+                        Group.AgeBand.SENIOR),
         ]
 
         director = self._user("director", "Болормаа", "Б.",
@@ -209,10 +211,10 @@ class Command(BaseCommand):
 
         return teacher
 
-    def _group(self, kindergarten, year, name, age_category):
+    def _group(self, kindergarten, year, name, age_category, band=""):
         obj, _ = Group.objects.get_or_create(
             kindergarten=kindergarten, school_year=year, name=name,
-            defaults={"age_category": age_category},
+            defaults={"age_category": age_category, "age_band": band},
         )
         return obj
 
