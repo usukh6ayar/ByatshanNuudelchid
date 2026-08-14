@@ -1,0 +1,72 @@
+{% extends base_template %}
+{% comment %} RFP §2.1 — "Багшийн бүртгэл үүсгэх".
+
+   No password field. The account is created unusable and the teacher sets
+   their own on activation; a director typing a colleague's password is the
+   habit that ends with one password shared by a staff room. {% endcomment %}
+
+{% block title %}Шинэ багш урих{% endblock %}
+{% block heading %}Шинэ багш урих{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width:720px">
+    {% if error %}<p class="msg msg--error" role="alert">{{ error }}</p>{% endif %}
+
+    <p class="brand__sub" style="margin-top:0">
+      Багш урилгын кодоор бүртгэлээ идэвхжүүлж, нууц үгээ өөрөө үүсгэнэ.
+    </p>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="grid grid--2">
+        <div>
+          <label for="id_last_name">Овог</label>
+          <input type="text" name="last_name" id="id_last_name"
+                 value="{{ form.last_name|default:'' }}">
+        </div>
+        <div>
+          <label for="id_first_name">Нэр *</label>
+          <input type="text" name="first_name" id="id_first_name" required
+                 value="{{ form.first_name|default:'' }}">
+        </div>
+      </div>
+
+      <label for="id_kindergarten">Цэцэрлэг *</label>
+      <select name="kindergarten" id="id_kindergarten" required>
+        <option value="">— сонгох —</option>
+        {% for kg in kindergartens %}
+          <option value="{{ kg.pk }}"
+            {% if form.kindergarten|stringformat:"s" == kg.pk|stringformat:"s" %}selected{% endif %}>
+            {{ kg.name }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <label for="id_username">Нэвтрэх нэр</label>
+      <input type="text" name="username" id="id_username"
+             value="{{ form.username|default:'' }}">
+
+      <div class="grid grid--2">
+        <div>
+          <label for="id_email">И-мэйл</label>
+          <input type="email" name="email" id="id_email"
+                 value="{{ form.email|default:'' }}">
+        </div>
+        <div>
+          <label for="id_phone">Утас</label>
+          <input type="text" name="phone" id="id_phone"
+                 value="{{ form.phone|default:'' }}">
+        </div>
+      </div>
+      <p class="hint">
+        Нэвтрэх нэр, и-мэйл, утасны аль нэгийг оруулна уу — багш үүгээр нэвтэрнэ.
+      </p>
+
+      <div class="btn-row">
+        <button type="submit" class="btn">Урилга үүсгэх</button>
+        <a class="btn btn--ghost" href="{% url 'accounts:staff_list' %}">Болих</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

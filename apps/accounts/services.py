@@ -431,3 +431,21 @@ def register_guardian(*, actor, child, last_name, first_name, relation,
         actor=actor, user=user, kindergarten=child.kindergarten, request=request
     )
     return guardianship, token, code
+
+
+@transaction.atomic
+def save_membership_state(*, actor, membership, request=None) -> Membership:
+    """Activate or end a posting — RFP §3.3's "ажиллаж байгаа эсэх".
+
+    Ends the posting rather than deleting it: the observations that teacher
+    wrote stay attributed to them, and their access follows the membership,
+    so switching this off is what actually revokes it. CLAUDE.md §3.3
+    forbids the hard delete in any case.
+    """
+    membership.updated_by = actor
+    membership.save(update_fields=["is_active", "updated_by", "updated_at"])
+    audit(
+        action=AuditAction.PERMISSION_CHANGE, request=request, actor=actor,
+        kindergarten=membership.kindergarten, obj=membership,
+    )
+    return membership

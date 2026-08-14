@@ -52,7 +52,7 @@
         <svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg>
         Бүлгийн удирдлага
       </a>
-      <a href="{% url 'udirdlaga:accounts_membership_changelist' %}"
+      <a href="{% url 'accounts:staff_list' %}"
          {% if nav == 'staff' %}aria-current="page"{% endif %}>
         <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
         Багшийн удирдлага
@@ -62,7 +62,7 @@
         <svg class="ic" aria-hidden="true"><use href="#i-portfolio"></use></svg>
         Хүүхдийн удирдлага
       </a>
-      <a href="{% url 'udirdlaga:accounts_user_changelist' %}"
+      <a href="{% url 'accounts:user_list' %}"
          {% if nav == 'users' %}aria-current="page"{% endif %}>
         <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
         Хэрэглэгч ба эрх

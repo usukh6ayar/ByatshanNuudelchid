@@ -1,0 +1,114 @@
+{% extends base_template %}
+{% comment %} RFP §2.1 — "Системийн нийт хэрэглэгчийг удирдах".
+
+   The directory the screenshot complained about, rebuilt. One row per
+   person, their postings listed inside the row, rather than Django's
+   changelist with its breadcrumbs and filter sidebar. {% endcomment %}
+
+{% block title %}Хэрэглэгч ба эрх{% endblock %}
+{% block heading %}Хэрэглэгч ба эрх{% endblock %}
+{% block lede %}
+  <p class="lede">Нийт {{ total }} хэрэглэгч</p>
+{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <form method="get" class="filters">
+      <div>
+        <label for="id_q">Хайх</label>
+        <input type="search" name="q" id="id_q" value="{{ filters.q }}"
+               placeholder="Нэр, нэвтрэх нэр, и-мэйл, утас">
+      </div>
+
+      <div>
+        <label for="id_role">Эрх</label>
+        <select name="role" id="id_role">
+          <option value="">Бүгд</option>
+          {% for value, label in roles %}
+            <option value="{{ value }}"
+              {% if filters.role == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label for="id_active">Төлөв</label>
+        <select name="active" id="id_active">
+          <option value="">Бүгд</option>
+          <option value="yes" {% if filters.active == 'yes' %}selected{% endif %}>Идэвхтэй</option>
+          <option value="no" {% if filters.active == 'no' %}selected{% endif %}>Идэвхгүй</option>
+        </select>
+      </div>
+
+      <div class="filters__actions">
+        <button type="submit" class="btn">Шүүх</button>
+        <a class="btn btn--ghost" href="{% url 'accounts:user_list' %}">Цэвэрлэх</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    {% if page.object_list %}
+      <div class="table-wrap">
+        <table>
+          <caption class="sr-only">Хэрэглэгчийн жагсаалт</caption>
+          <thead>
+            <tr>
+              <th scope="col">Овог, нэр</th>
+              <th scope="col">Нэвтрэх нэр</th>
+              <th scope="col">И-мэйл</th>
+              <th scope="col">Утас</th>
+              <th scope="col">Эрх</th>
+              <th scope="col">Төлөв</th>
+              <th scope="col">Сүүлд нэвтэрсэн</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in page.object_list %}
+              <tr>
+                <td class="name">
+                  <span class="person">
+                    <span class="avatar avatar--sm" aria-hidden="true">
+                      {{ u.first_name|first|default:"·" }}
+                    </span>
+                    <span class="person__name">{{ u }}</span>
+                  </span>
+                </td>
+                <td>{{ u.username|default:"—" }}</td>
+                <td>{{ u.email|default:"—" }}</td>
+                <td>{{ u.phone|default:"—" }}</td>
+                <td>
+                  {% for m in u.memberships.all %}
+                    <span class="badge badge--muted">{{ m.get_role_display }}</span>
+                  {% empty %}—{% endfor %}
+                </td>
+                <td>
+                  <span class="badge {% if u.is_active %}badge--ok{% else %}badge--muted{% endif %}">
+                    {% if u.is_active %}Идэвхтэй{% else %}Идэвхгүй{% endif %}
+                  </span>
+                </td>
+                <td>{{ u.last_login_at|date:"Y.m.d H:i"|default:"—" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <span>Нийт {{ page.paginator.count }} хэрэглэгч</span>
+        {% if page.has_previous %}
+          <a href="?{{ request.GET.urlencode }}&page={{ page.previous_page_number }}">← Өмнөх</a>
+        {% endif %}
+        <span>{{ page.number }} / {{ page.paginator.num_pages }}</span>
+        {% if page.has_next %}
+          <a href="?{{ request.GET.urlencode }}&page={{ page.next_page_number }}">Дараах →</a>
+        {% endif %}
+      </div>
+    {% else %}
+      <p class="empty">
+        <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
+        Хэрэглэгч олдсонгүй.
+      </p>
+    {% endif %}
+  </div>
+{% endblock %}

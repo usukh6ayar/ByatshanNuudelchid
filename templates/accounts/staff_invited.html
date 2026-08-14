@@ -1,0 +1,37 @@
+{% extends base_template %}
+{% comment %} Shown once. Only the hash of the code is stored (§3.1), so there
+   is no screen that can show it again — hence the warning rather than a
+   quiet "saved". {% endcomment %}
+
+{% block title %}Урилга үүслээ{% endblock %}
+{% block heading %}Урилга үүслээ{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width:640px">
+    <p class="msg msg--ok" role="status">
+      {{ created }} багшийн бүртгэл үүслээ.
+    </p>
+
+    <h2>Идэвхжүүлэх код</h2>
+    <p class="brand__sub" style="margin-top:-8px">
+      Энэ кодыг багшид дамжуулна уу. <strong>Дахин харагдахгүй</strong> —
+      системд зөвхөн шифрлэсэн хэлбэрээр хадгалагдана.
+    </p>
+
+    <p style="font-size:2rem; font-weight:700; letter-spacing:.25em;
+              text-align:center; padding:18px; background:var(--bg);
+              border-radius:12px">{{ code }}</p>
+
+    <p class="hint">
+      Багш <code>{% url 'accounts:activate' %}</code> хаягаар орж, өөрийн
+      нэвтрэх нэр болон энэ кодыг оруулж нууц үгээ үүсгэнэ.
+    </p>
+
+    <div class="btn-row">
+      <a class="btn" href="{% url 'accounts:staff_list' %}">Жагсаалт руу буцах</a>
+      <a class="btn btn--ghost" href="{% url 'accounts:staff_invite' %}">
+        Дахин урих
+      </a>
+    </div>
+  </div>
+{% endblock %}

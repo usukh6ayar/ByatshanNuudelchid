@@ -10,6 +10,7 @@ urlpatterns = [
     # /udirdlaga/ and must be matched BEFORE the admin site mounted below,
     # which would otherwise swallow every path in that prefix.
     path("", include("apps.tenants.urls")),
+    path("", include("apps.accounts.urls")),
     # The rest of the administrator's workspace, still on Django's admin.
     # Being replaced screen by screen; what is left is the configuration
     # tables a director edits rarely.
@@ -19,7 +20,6 @@ urlpatterns = [
     path("django-admin/", admin.site.urls),
     path("healthz", healthz, name="healthz"),
     path("", home, name="home"),
-    path("", include("apps.accounts.urls")),
     path("", include("apps.children.urls")),
     path("", include("apps.portfolio.urls")),
     path("", include("apps.observations.urls")),

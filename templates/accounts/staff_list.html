@@ -1,0 +1,152 @@
+{% extends base_template %}
+{% comment %} RFP §3.3's teacher management, in the product's own chrome.
+
+   One row per membership rather than per person: the same teacher can hold a
+   posting at two kindergartens, and a posting is what a director assigns,
+   ends and restores. {% endcomment %}
+
+{% block title %}Багшийн удирдлага{% endblock %}
+{% block heading %}Багшийн удирдлага{% endblock %}
+{% block lede %}
+  <p class="lede">Нийт {{ total }} ажилтан</p>
+{% endblock %}
+
+{% block content %}
+  <div class="page-actions" style="margin:-8px 0 16px">
+    <a class="btn" href="{% url 'accounts:staff_invite' %}">
+      <svg class="ic ic--sm" aria-hidden="true"><use href="#i-user"></use></svg>
+      Шинэ багш урих
+    </a>
+  </div>
+
+  <div class="card">
+    <form method="get" class="filters">
+      <div>
+        <label for="id_q">Хайх</label>
+        <input type="search" name="q" id="id_q" value="{{ filters.q }}"
+               placeholder="Нэр, и-мэйл, утас">
+      </div>
+
+      {% if kindergartens|length > 1 %}
+        <div>
+          <label for="id_kindergarten">Цэцэрлэг</label>
+          <select name="kindergarten" id="id_kindergarten">
+            <option value="">Бүгд</option>
+            {% for kg in kindergartens %}
+              <option value="{{ kg.pk }}"
+                {% if filters.kindergarten.pk == kg.pk %}selected{% endif %}>{{ kg.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+
+      <div>
+        <label for="id_role">Эрх</label>
+        <select name="role" id="id_role">
+          <option value="">Бүгд</option>
+          {% for value, label in roles %}
+            <option value="{{ value }}"
+              {% if filters.role == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label for="id_active">Төлөв</label>
+        <select name="active" id="id_active">
+          <option value="">Бүгд</option>
+          <option value="yes" {% if filters.active == 'yes' %}selected{% endif %}>Идэвхтэй</option>
+          <option value="no" {% if filters.active == 'no' %}selected{% endif %}>Идэвхгүй</option>
+        </select>
+      </div>
+
+      <div class="filters__actions">
+        <button type="submit" class="btn">Шүүх</button>
+        <a class="btn btn--ghost" href="{% url 'accounts:staff_list' %}">Цэвэрлэх</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    {% if page.object_list %}
+      <div class="table-wrap">
+        <table>
+          <caption class="sr-only">Багшийн жагсаалт</caption>
+          <thead>
+            <tr>
+              <th scope="col">Овог, нэр</th>
+              <th scope="col">Нэвтрэх нэр</th>
+              <th scope="col">Холбоо барих</th>
+              <th scope="col">Эрх</th>
+              <th scope="col">Цэцэрлэг</th>
+              <th scope="col">Бүлэг</th>
+              <th scope="col">Төлөв</th>
+              <th scope="col"><span class="sr-only">Үйлдэл</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in page.object_list %}
+              <tr>
+                <td class="name">
+                  <span class="person">
+                    <span class="avatar avatar--sm" aria-hidden="true">
+                      {{ m.user.first_name|first|default:"·" }}
+                    </span>
+                    <span class="person__name">{{ m.user }}</span>
+                  </span>
+                </td>
+                <td>{{ m.user.username|default:"—" }}</td>
+                <td>
+                  {{ m.user.email|default:"" }}
+                  {% if m.user.email and m.user.phone %}<br>{% endif %}
+                  {{ m.user.phone|default:"" }}
+                  {% if not m.user.email and not m.user.phone %}—{% endif %}
+                </td>
+                <td>{{ m.get_role_display }}</td>
+                <td>{{ m.kindergarten.name|default:"—" }}</td>
+                <td>
+                  {% for a in m.group_assignments.all %}
+                    {{ a.group.name }}{% if not forloop.last %}, {% endif %}
+                  {% empty %}
+                    <span class="badge badge--muted">Хуваарилаагүй</span>
+                  {% endfor %}
+                </td>
+                <td>
+                  <span class="badge {% if m.user.is_active %}badge--ok{% else %}badge--muted{% endif %}">
+                    {% if m.user.is_active %}Идэвхтэй{% else %}Идэвхгүй{% endif %}
+                  </span>
+                </td>
+                <td style="white-space:nowrap">
+                  <form method="post"
+                        action="{% url 'accounts:membership_toggle' m.pk %}"
+                        onsubmit="return confirm('{% if m.is_active %}Энэ багшийн эрхийг хаах уу?{% else %}Эрхийг сэргээх үү?{% endif %}')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn--ghost btn--sm">
+                      {% if m.is_active %}Хаах{% else %}Сэргээх{% endif %}
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <span>Нийт {{ page.paginator.count }} ажилтан</span>
+        {% if page.has_previous %}
+          <a href="?{{ request.GET.urlencode }}&page={{ page.previous_page_number }}">← Өмнөх</a>
+        {% endif %}
+        <span>{{ page.number }} / {{ page.paginator.num_pages }}</span>
+        {% if page.has_next %}
+          <a href="?{{ request.GET.urlencode }}&page={{ page.next_page_number }}">Дараах →</a>
+        {% endif %}
+      </div>
+    {% else %}
+      <p class="empty">
+        <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
+        Ажилтан олдсонгүй.
+      </p>
+    {% endif %}
+  </div>
+{% endblock %}
