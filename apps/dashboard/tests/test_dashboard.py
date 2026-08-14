@@ -269,3 +269,62 @@ def test_login_lands_on_the_right_dashboard(client, world, naran_admin_user):
 
     login(client, world["bataa_mother"])
     assert client.get("/").url == reverse("children:parent_home")
+
+
+# ------------------------------------------------------------------ §6.4
+
+def test_the_term_track_marks_past_current_and_future(world, terms):
+    """RFP §6.4 — the year's four terms, and where it has got to.
+
+    The dashboard used to name only the open term, which is the smaller
+    half of what a teacher wants to know.
+    """
+    import datetime as dt
+
+    # A day inside the second term, whatever dates ensure_default_terms
+    # chose for this year.
+    inside_second = terms[1].starts_on + dt.timedelta(days=1)
+
+    track = selectors.teacher_dashboard(world["dulmaa"],
+                                        today=inside_second)["term_track"]
+
+    assert [step["state"] for step in track] == [
+        "done", "current", "ahead", "ahead",
+    ]
+    assert [step["term"].pk for step in track] == [t.pk for t in terms]
+
+
+def test_the_track_survives_the_summer_gap(world, terms):
+    """Between years there is no current term. The strip still has to draw:
+    a teacher opening the dashboard in August should see the year's shape,
+    not an empty panel."""
+    import datetime as dt
+
+    after_the_year = terms[-1].ends_on + dt.timedelta(days=20)
+
+    track = selectors.teacher_dashboard(world["dulmaa"],
+                                        today=after_the_year)["term_track"]
+
+    assert len(track) == 4
+    assert {step["state"] for step in track} == {"done"}
+
+
+def test_a_year_with_no_terms_has_no_track(world):
+    """Nothing configured yet — the template hides the card rather than
+    drawing an empty line."""
+    assert selectors.teacher_dashboard(world["dulmaa"])["term_track"] == []
+
+
+def test_the_track_reaches_the_dashboard(client, world, terms):
+    """Through the HTTP client, because a selector returning the right list
+    proves nothing if the template never draws it.
+
+    Asserts on four steps rather than on a current one: the fixture's school
+    year is fixed and today eventually walks past its end, which is the
+    summer case the test above covers deliberately."""
+    login(client, world["dulmaa"])
+
+    html = client.get(reverse("dashboard:teacher")).content.decode()
+
+    assert "Хичээлийн жилийн явц" in html
+    assert html.count("track__step track__step--") == 4

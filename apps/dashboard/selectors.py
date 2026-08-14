@@ -22,7 +22,11 @@ from django.utils import timezone
 
 from apps.accounts.models import Role, User
 from apps.assessment.models import Assessment, AssessmentLevel
-from apps.assessment.selectors import current_term, domains_for
+from apps.assessment.selectors import (
+    current_term,
+    domains_for,
+    terms_for,
+)
 from apps.children.models import Child, Enrollment
 from apps.comms.models import Announcement
 from apps.core.models import AuditAction, AuditLog
@@ -61,6 +65,7 @@ def teacher_dashboard(user, *, today: dt.date | None = None) -> dict:
         "child_count": len(child_ids),
         "groups": groups,
         "term": term,
+        "term_track": _term_track(groups, today),
         "birthdays_today": _birthdays_today(children, today),
         "recent_observations": _recent_observations(child_ids),
         "recent_parent_notes": _recent_parent_notes(child_ids),
@@ -81,6 +86,34 @@ def _current_term_for(groups, today):
         if found is not None:
             return found
     return None
+
+
+def _term_track(groups, today):
+    """RFP §6.4's four terms as a progression — done, current, still ahead.
+
+    A teacher's year is four terms long and the dashboard only ever showed
+    which one is open. The strip answers the question they actually ask in
+    the staff room: how far through the year are we, and what is left.
+
+    Falls back to the group's own year rather than the calendar so that a
+    teacher looking at the dashboard in the summer, between terms, still
+    sees the year's shape instead of an empty panel.
+    """
+    year = next((g.school_year for g in groups), None)
+    if year is None:
+        return []
+
+    live = current_term(year, today)
+    track = []
+    for term in terms_for(year):
+        if live is not None and term.pk == live.pk:
+            state = "current"
+        elif term.ends_on < today:
+            state = "done"
+        else:
+            state = "ahead"
+        track.append({"term": term, "state": state})
+    return track
 
 
 def _birthdays_today(children, today):

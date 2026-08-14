@@ -68,6 +68,34 @@
     </div>
   {% endif %}
 
+  {% comment %} RFP §6.4's four terms as a line — where the year has got to,
+     and what is left. The dashboard only ever said which term was open,
+     which is the smaller half of the question a teacher asks. {% endcomment %}
+  {% if term_track %}
+    <div class="card">
+      <div class="card__head">
+        <h2>Хичээлийн жилийн явц</h2>
+        <span class="badge badge--muted">{{ term_track.0.term.school_year.name }}</span>
+      </div>
+      <ol class="track">
+        {% for step in term_track %}
+          <li class="track__step track__step--{{ step.state }}">
+            <span class="track__name">{{ step.term.name }}</span>
+            <span class="track__dot" aria-hidden="true"></span>
+            <span class="track__dates">
+              {{ step.term.starts_on|date:"m.d" }}–{{ step.term.ends_on|date:"m.d" }}
+            </span>
+            <span class="sr-only">
+              {% if step.state == 'done' %}дууссан
+              {% elif step.state == 'current' %}одоогийн улирал
+              {% else %}хараахан эхлээгүй{% endif %}
+            </span>
+          </li>
+        {% endfor %}
+      </ol>
+    </div>
+  {% endif %}
+
   <div class="grid grid--2">
     {% comment %} §12.1 — "тухайн улирлын үнэлгээний явц" {% endcomment %}
     <div class="card">

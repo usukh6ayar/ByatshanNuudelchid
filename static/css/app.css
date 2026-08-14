@@ -584,3 +584,86 @@ dl.facts--cols dd { margin: 2px 0 0; font-weight: 600; }
 }
 .links a { font-weight: 600; text-decoration: none; }
 .links a:hover { text-decoration: underline; }
+
+/* --------------------------------------------------------------- track
+   RFP §6.4's four terms as a horizontal progression, modelled on the
+   client's prototype. Three states: behind us, here now, still ahead.
+
+   An <ol> because that is what it is — an ordered sequence — and a screen
+   reader then announces "1 of 4" without any ARIA. The state is also
+   spelled out in .sr-only text, since colour alone is not a label
+   (RFP §629–635). */
+
+.track {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0;
+}
+.track__step {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  position: relative;
+  padding: 4px 6px;
+  text-align: center;
+}
+/* The connecting line, drawn between dots rather than under them, so it
+   never pokes out past the first or last step. */
+.track__step + .track__step::before {
+  content: "";
+  position: absolute;
+  top: 30px;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--line);
+}
+.track__name { font-size: .84rem; font-weight: 700; color: var(--faint); }
+.track__dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--line);
+  position: relative; z-index: 1;
+  box-shadow: 0 0 0 4px var(--card);
+}
+.track__dates { font-size: .78rem; font-weight: 600; color: var(--faint); }
+
+/* Behind us: readable but plainly past. The prototype greys the finished
+   bands the same way, and it is what makes the current one findable at a
+   glance rather than by reading four labels. */
+.track__step--done .track__name,
+.track__step--done .track__dates { color: var(--faint); }
+.track__step--done .track__dot { background: #c7cbd6; }
+.track__step--done + .track__step::before { background: #dfe2ea; }
+
+.track__step--current .track__name { color: var(--ink); }
+.track__step--current .track__dates { color: var(--ink); }
+.track__step--current .track__dot {
+  background: var(--ok);
+  /* The one you are standing on, larger and ringed — the prototype marks it
+     the same way and it survives being printed in greyscale. */
+  width: 18px; height: 18px;
+  box-shadow: 0 0 0 4px var(--card), 0 0 0 7px var(--ok-soft);
+}
+
+@media (max-width: 640px) {
+  /* Four columns at 375px gives each term about 80px, which wraps the
+     dates onto three lines. Stacked instead, with the line running down. */
+  .track { grid-auto-flow: row; grid-auto-columns: auto; }
+  .track__step {
+    grid-template-columns: 18px 1fr auto;
+    justify-items: start;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    padding: 9px 2px;
+  }
+  .track__dot { order: -1; }
+  .track__step + .track__step::before {
+    top: -9px; left: 8px; right: auto;
+    width: 2px; height: 18px;
+  }
+}
