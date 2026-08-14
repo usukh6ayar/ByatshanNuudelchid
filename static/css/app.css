@@ -23,7 +23,7 @@
   --warn-soft: #fdf3e3;
   --danger: #b3261e;
   --danger-soft: #fdecea;
-  --radius: 16px;
+  --radius: 18px;
   --shadow: 0 1px 2px rgba(20, 22, 40, .04), 0 6px 16px rgba(20, 22, 40, .045);
 
   /* The mockups tint each statistic a different colour so a teacher can find
@@ -40,7 +40,18 @@
 
 body {
   margin: 0;
-  background: var(--bg);
+  /* RFP §13 asks for "хүүхдэд ээлтэй, дулаан өнгө төрх". A flat grey reads
+     as an office tool; four soft radial washes give the page warmth without
+     adding a single image to load or costing anything at 3G (§17).
+     Measured from the client's own prototype rather than invented — the
+     hues and opacities are its numbers. */
+  background:
+    radial-gradient(80% 50% at 10% -5%, rgba(99, 102, 241, .14) 0%, transparent 55%),
+    radial-gradient(60% 40% at 92% 3%, rgba(236, 72, 153, .10) 0%, transparent 50%),
+    radial-gradient(50% 60% at 88% 92%, rgba(20, 184, 166, .09) 0%, transparent 50%),
+    radial-gradient(45% 35% at 4% 88%, rgba(245, 158, 11, .09) 0%, transparent 50%),
+    var(--bg);
+  background-attachment: fixed;
   color: var(--ink);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   line-height: 1.5;
@@ -372,16 +383,36 @@ textarea { min-height: 90px; resize: vertical; }
 /* The grid of shortcuts on the parent home. */
 .quick { display: grid; gap: 10px;
          grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); }
+/* Tinted, one colour each — the client's prototype navigates by colour and
+   RFP §13 asks for a warm, child-friendly surface. A family opening this on
+   a phone finds "Ажиглалт" by its colour before they finish reading the
+   label. Six identical white squares gave them nothing to aim at. */
 .quick a {
-  display: flex; flex-direction: column; align-items: center; gap: 7px;
-  padding: 15px 8px; border-radius: 13px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 17px 8px; border-radius: 18px; text-align: center;
   background: var(--card); border: 1px solid var(--line);
   text-decoration: none; color: var(--ink); font-size: .82rem;
   font-weight: 600; line-height: 1.25;
   min-height: 44px;
+  transition: transform .12s ease, box-shadow .12s ease;
 }
-.quick a:hover { border-color: var(--brand); background: var(--brand-soft); }
-.quick .ic { color: var(--brand); width: 22px; height: 22px; }
+.quick a:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.quick .ic { width: 24px; height: 24px; }
+
+/* nth-child rather than a class per link: the tiles are a fixed short list
+   and colouring them in the template would put presentation there. */
+.quick a:nth-child(6n+1) { background: var(--c-blue-soft);  border-color: transparent; }
+.quick a:nth-child(6n+1) .ic { color: var(--c-blue); }
+.quick a:nth-child(6n+2) { background: var(--c-pink-soft);  border-color: transparent; }
+.quick a:nth-child(6n+2) .ic { color: var(--c-pink); }
+.quick a:nth-child(6n+3) { background: var(--c-green-soft); border-color: transparent; }
+.quick a:nth-child(6n+3) .ic { color: var(--c-green); }
+.quick a:nth-child(6n+4) { background: var(--c-amber-soft); border-color: transparent; }
+.quick a:nth-child(6n+4) .ic { color: var(--c-amber); }
+.quick a:nth-child(6n+5) { background: var(--c-teal-soft);  border-color: transparent; }
+.quick a:nth-child(6n+5) .ic { color: var(--c-teal); }
+.quick a:nth-child(6n+6) { background: var(--c-sky-soft);   border-color: transparent; }
+.quick a:nth-child(6n+6) .ic { color: var(--c-sky); }
 
 dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px;
            margin: 0; font-size: .92rem; }
