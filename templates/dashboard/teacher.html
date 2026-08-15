@@ -68,6 +68,46 @@
     </div>
   {% endif %}
 
+  {% comment %} Үлгэрчилсэн дүрэм §7.8 — where the group is in its day.
+     Silent outside the routine and when none is set: inventing a "current"
+     activity at 07:00 lies to a teacher who can see the room is empty.
+  {% endcomment %}
+  {% if routine and routine.current or routine and routine.next %}
+    <div class="card">
+      <div class="card__head">
+        <h2>Өдрийн дэглэм</h2>
+        <a href="{% url 'tenants:group_routine' routine.group.pk %}">Засах</a>
+      </div>
+      <div class="grid grid--2">
+        <div>
+          <div class="tile__label">Одоо</div>
+          {% if routine.current %}
+            <p style="font-size:1.15rem; font-weight:700; margin:2px 0 0">
+              {{ routine.current.activity }}
+            </p>
+            <p class="brand__sub">
+              {{ routine.current.starts_at|time:"H:i" }}–{{ routine.current.ends_at|time:"H:i" }}
+              {% if routine.current.note %} · {{ routine.current.note }}{% endif %}
+            </p>
+          {% else %}
+            <p class="brand__sub" style="margin-top:6px">Дэглэмээс гадуур цаг</p>
+          {% endif %}
+        </div>
+        <div>
+          <div class="tile__label">Дараа нь</div>
+          {% if routine.next %}
+            <p style="font-size:1.05rem; font-weight:600; margin:2px 0 0">
+              {{ routine.next.activity }}
+            </p>
+            <p class="brand__sub">{{ routine.next.starts_at|time:"H:i" }}-аас</p>
+          {% else %}
+            <p class="brand__sub" style="margin-top:6px">Өдөр дууссан</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
   {% comment %} The two things a teacher starts from, on the screen they land
      on. Recording an activity for the whole group is §5.2's daily case and
      was four clicks deep behind a child; the §6.3 grid was the same.
@@ -82,6 +122,13 @@
         <a class="btn btn--ghost" href="{% url 'assessment:group_grid' group.pk %}">
           <svg class="ic ic--sm" aria-hidden="true"><use href="#i-assessment"></use></svg>
           Түргэн үнэлгээ
+        </a>
+        {% comment %} The routine card above only appears during the day, so
+           without this a teacher opening the dashboard at 20:00 has no way
+           in to edit tomorrow's. {% endcomment %}
+        <a class="btn btn--ghost" href="{% url 'tenants:group_routine' group.pk %}">
+          <svg class="ic ic--sm" aria-hidden="true"><use href="#i-sun"></use></svg>
+          Өдрийн дэглэм
         </a>
       {% endfor %}
     </div>

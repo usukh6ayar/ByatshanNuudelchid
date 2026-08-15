@@ -1,0 +1,125 @@
+{% extends base_template %}
+{% comment %} The group's day — Үлгэрчилсэн дүрэм §7.8.
+
+   The regulation requires each group to keep its own routine and §7.8.1
+   makes the durations the group's decision, because a Бага бүлэг naps
+   longer than a Бэлтгэл бүлэг. So this is per group, editable, and seeded
+   from the regulation's own example rather than fixed to it.
+{% endcomment %}
+
+{% block title %}Өдрийн дэглэм{% endblock %}
+{% block heading %}Өдрийн дэглэм{% endblock %}
+{% block lede %}
+  <p class="lede">{{ group.name }} · {{ group.school_year.name }}</p>
+{% endblock %}
+
+{% block content %}
+  {% if error %}<p class="msg msg--error" role="alert">{{ error }}</p>{% endif %}
+
+  {% if now %}
+    <div class="card" style="border-color:var(--ok)">
+      <div class="card__head">
+        <h2>Одоо</h2>
+        <span class="badge badge--ok">
+          {{ now.starts_at|time:"H:i" }}–{{ now.ends_at|time:"H:i" }}
+        </span>
+      </div>
+      <p style="font-size:1.15rem; font-weight:700; margin:0">{{ now.activity }}</p>
+      {% if now.note %}<p class="brand__sub">{{ now.note }}</p>{% endif %}
+    </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card__head">
+      <h2>Өдрийн хуваарь</h2>
+      {% if slots %}
+        <span class="badge badge--muted">{{ slots|length }} хэсэг</span>
+      {% endif %}
+    </div>
+
+    {% if slots %}
+      <div class="table-wrap">
+        <table>
+          <caption class="sr-only">Өдрийн дэглэм</caption>
+          <thead>
+            <tr>
+              <th scope="col">Цаг</th>
+              <th scope="col">Үйл ажиллагаа</th>
+              <th scope="col">Тэмдэглэл</th>
+              <th scope="col"><span class="sr-only">Үйлдэл</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for slot in slots %}
+              <tr{% if now and slot.pk == now.pk %} style="background:var(--ok-soft)"{% endif %}>
+                <td style="white-space:nowrap; font-weight:600">
+                  {{ slot.starts_at|time:"H:i" }}–{{ slot.ends_at|time:"H:i" }}
+                </td>
+                <td class="name">{{ slot.activity }}</td>
+                <td>{{ slot.note|default:"—" }}</td>
+                <td>
+                  <form method="post"
+                        onsubmit="return confirm('«{{ slot.activity }}» хэсгийг устгах уу?')">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="slot" value="{{ slot.pk }}">
+                    <button type="submit" class="btn btn--ghost btn--sm">Устгах</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="empty">
+        <svg class="ic" aria-hidden="true"><use href="#i-sun"></use></svg>
+        Өдрийн дэглэм тохируулаагүй байна.
+      </p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="defaults">
+        <button type="submit" class="btn">Үлгэрчилсэн дэглэмийг оруулах</button>
+      </form>
+      <p class="hint">
+        Хүүхдийн цэцэрлэгийн үлгэрчилсэн дүрмийн жишээ дэглэм орно —
+        дараа нь бүлгийнхээ онцлогт тохируулан засна.
+      </p>
+    {% endif %}
+  </div>
+
+  <div class="card" style="max-width:720px">
+    <h2>Хэсэг нэмэх</h2>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="grid grid--2">
+        <div>
+          <label for="id_starts_at">Эхлэх цаг *</label>
+          <input type="time" name="starts_at" id="id_starts_at" required
+                 value="{{ form.starts_at|default:'' }}">
+        </div>
+        <div>
+          <label for="id_ends_at">Дуусах цаг *</label>
+          <input type="time" name="ends_at" id="id_ends_at" required
+                 value="{{ form.ends_at|default:'' }}">
+        </div>
+      </div>
+
+      <label for="id_activity">Үйл ажиллагаа *</label>
+      <input type="text" name="activity" id="id_activity" required
+             placeholder="ж: Өглөөний дасгал"
+             value="{{ form.activity|default:'' }}">
+
+      <label for="id_note">Тэмдэглэл</label>
+      <input type="text" name="note" id="id_note"
+             placeholder="ж: Даваа гарагт усан санд"
+             value="{{ form.note|default:'' }}">
+
+      <div class="btn-row">
+        <button type="submit" class="btn">Нэмэх</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}

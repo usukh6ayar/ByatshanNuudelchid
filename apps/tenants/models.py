@@ -126,6 +126,51 @@ class Group(TenantScopedModel):
         return f"{self.name} ({self.school_year.name})"
 
 
+class RoutineSlot(TenantScopedModel):
+    """One block of a group's day — the Үлгэрчилсэн дүрэм's өдрийн дэглэм.
+
+    §7.8 of the model regulation requires each group to keep its own daily
+    routine and §7.8.1 says the durations and the transitions between
+    blocks follow the children's age and physical needs — which is why this
+    hangs off ``Group`` and not off ``Kindergarten``. A Бага бүлэг naps
+    longer than a Бэлтгэл бүлэг.
+
+    ``Group.timetable`` stays as the free-text note beside it: §3.2 asks for
+    "хичээлийн хуваарь" and a kindergarten often has a sentence the clock
+    cannot hold ("Даваа гарагт усан сан").
+
+    Ordered by ``starts_at`` rather than by a stored position — the day runs
+    forwards, and a separate order column is one more thing to keep in step
+    with the times.
+    """
+
+    group = models.ForeignKey(Group, on_delete=models.CASCADE,
+                              related_name="routine")
+    starts_at = models.TimeField("эхлэх цаг")
+    ends_at = models.TimeField("дуусах цаг")
+    activity = models.CharField("үйл ажиллагаа", max_length=100)
+    note = models.CharField("тэмдэглэл", max_length=200, blank=True)
+
+    class Meta:
+        verbose_name = "өдрийн дэглэмийн хэсэг"
+        verbose_name_plural = "өдрийн дэглэм"
+        ordering = ["starts_at"]
+        indexes = [models.Index(fields=["group", "starts_at"])]
+
+    def __str__(self) -> str:
+        return f"{self.starts_at:%H:%M}–{self.ends_at:%H:%M} {self.activity}"
+
+    def covers(self, moment) -> bool:
+        """Is ``moment`` inside this block?
+
+        End-exclusive, so 13:30 belongs to the nap that starts then rather
+        than to the lunch that ends then. Blocks the regulation leaves a gap
+        between simply match nothing, which is honest — a teacher walking
+        children down a corridor is not in either.
+        """
+        return self.starts_at <= moment < self.ends_at
+
+
 class GroupTeacher(TenantScopedModel):
     """Teacher assignment — RFP §2.1 "assign a teacher to a group".
 

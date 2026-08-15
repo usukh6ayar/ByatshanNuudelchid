@@ -31,7 +31,7 @@ from apps.media.models import MediaFile
 from apps.observations.models import Observation
 from apps.reports.models import ReportJob
 from apps.tenants.models import Group, Kindergarten
-from apps.tenants.selectors import assignable_groups
+from apps.tenants.selectors import assignable_groups, routine_for
 
 __all__ = ["teacher_dashboard", "admin_dashboard", "compute_admin_dashboard"]
 
@@ -62,6 +62,10 @@ def teacher_dashboard(user, *, today: dt.date | None = None) -> dict:
         "groups": groups,
         "term": term,
         "band_track": _band_track(groups),
+        # Үлгэрчилсэн дүрэм §7.8 — what the group is doing right now, and
+        # what follows. ``None`` before 08:30 and after the day ends, which
+        # is the honest answer rather than an invented one.
+        "routine": _routine_state(groups),
         "birthdays_today": _birthdays_today(children, today),
         "recent_observations": _recent_observations(child_ids),
         "recent_parent_notes": _recent_parent_notes(child_ids),
@@ -123,6 +127,27 @@ def _band_track(groups):
                       else "ahead"),
         })
     return track
+
+
+def _routine_state(groups):
+    """The block a group is in, and the one after it.
+
+    "What is next" is the half a teacher glances at — the block they are in
+    is the room they are standing in. Both come from one pass over a
+    routine that is at most a dozen rows.
+    """
+    group = next(iter(groups), None)
+    if group is None:
+        return None
+
+    slots = list(routine_for(group))
+    if not slots:
+        return None
+
+    moment = timezone.localtime().time()
+    current = next((s for s in slots if s.covers(moment)), None)
+    upcoming = next((s for s in slots if s.starts_at > moment), None)
+    return {"group": group, "current": current, "next": upcoming}
 
 
 def _birthdays_today(children, today):

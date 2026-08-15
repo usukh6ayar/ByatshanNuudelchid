@@ -334,3 +334,80 @@ def test_the_track_reaches_the_dashboard(client, world):
     assert "Бүлгийн шатлал" in html
     assert "Бэлтгэл бүлэг" in html
     assert html.count("track__step track__step--") == 4
+
+
+# ------------------------------------------- Үлгэрчилсэн дүрэм §7.8
+
+@pytest.fixture
+def routine(world, naran_admin_user):
+    from apps.tenants import services as tenant_services
+
+    return tenant_services.apply_default_routine(actor=naran_admin_user,
+                                                 group=world["sunflower"])
+
+
+def test_the_dashboard_reports_the_current_block(world, routine, monkeypatch):
+    """What the group is doing now, and what follows — the half a teacher
+    glances at is "next"; the block they are in is the room they stand in."""
+
+    from django.utils import timezone
+
+    frozen = timezone.localtime().replace(
+        hour=12, minute=45, second=0, microsecond=0)
+    monkeypatch.setattr(timezone, "localtime", lambda *a, **k: frozen)
+
+    state = selectors.teacher_dashboard(world["dulmaa"])["routine"]
+
+    assert state["current"].activity == "Өдрийн хоол"
+    assert state["next"].activity == "Унтлага"
+
+
+def test_outside_the_day_it_reports_neither(world, routine, monkeypatch):
+    """22:00 is not an activity. Inventing one lies to a teacher who can see
+    the room is empty."""
+
+    from django.utils import timezone
+
+    frozen = timezone.localtime().replace(
+        hour=22, minute=0, second=0, microsecond=0)
+    monkeypatch.setattr(timezone, "localtime", lambda *a, **k: frozen)
+
+    state = selectors.teacher_dashboard(world["dulmaa"])["routine"]
+
+    assert state["current"] is None
+    assert state["next"] is None
+
+
+def test_before_the_day_starts_it_reports_what_is_coming(world, routine,
+                                                          monkeypatch):
+    """07:00 — nothing running yet, but the teacher wants the day ahead."""
+
+    from django.utils import timezone
+
+    frozen = timezone.localtime().replace(
+        hour=7, minute=0, second=0, microsecond=0)
+    monkeypatch.setattr(timezone, "localtime", lambda *a, **k: frozen)
+
+    state = selectors.teacher_dashboard(world["dulmaa"])["routine"]
+
+    assert state["current"] is None
+    assert state["next"].activity == "Хүүхэд хүлээн авах"
+
+
+def test_a_group_with_no_routine_reports_nothing(world):
+    assert selectors.teacher_dashboard(world["dulmaa"])["routine"] is None
+
+
+def test_the_card_reaches_the_dashboard(client, world, routine, monkeypatch):
+
+    from django.utils import timezone
+
+    frozen = timezone.localtime().replace(
+        hour=14, minute=0, second=0, microsecond=0)
+    monkeypatch.setattr(timezone, "localtime", lambda *a, **k: frozen)
+    login(client, world["dulmaa"])
+
+    html = client.get(reverse("dashboard:teacher")).content.decode()
+
+    assert "Өдрийн дэглэм" in html
+    assert "Унтлага" in html
