@@ -164,27 +164,3 @@ def group_rows(user, *, q="", kindergarten=None, school_year=None, status=""):
                      enrollments__deleted_at__isnull=True),
         ),
     ).order_by("-school_year__starts_on", "name")
-
-
-def routine_for(group):
-    """A group's day, in order — Үлгэрчилсэн дүрэм §7.8."""
-    from .models import RoutineSlot
-
-    return RoutineSlot.objects.filter(group=group).order_by("starts_at")
-
-
-def routine_now(group, moment=None):
-    """The block a group is in, or ``None``.
-
-    ``None`` is a real answer, not a missing one: before 08:30, after 18:00,
-    and in the gaps the regulation leaves between blocks. A screen that
-    invents a "current" activity for 07:00 is lying to a teacher who can
-    see the room is empty.
-    """
-    from django.utils import timezone
-
-    moment = moment or timezone.localtime().time()
-    for slot in routine_for(group):
-        if slot.covers(moment):
-            return slot
-    return None

@@ -10,7 +10,7 @@ from django.db import transaction
 from apps.accounts.models import Role
 from apps.core.services import save_record
 
-from .models import Group, GroupTeacher, RoutineSlot, SchoolYear
+from .models import Group, GroupTeacher, SchoolYear
 
 
 @transaction.atomic
@@ -116,81 +116,3 @@ def archive_group(*, actor, group: Group, request=None) -> Group:
     """
     group.status = Group.Status.ARCHIVED
     return save_record(actor=actor, obj=group, created=False, request=request)
-
-
-# The routine in the model regulation's own example, as a starting point a
-# kindergarten then edits. §7.8.1 makes the durations the group's own
-# decision, so these are defaults and never a constraint.
-DEFAULT_ROUTINE = [
-    ("08:30", "08:50", "Хүүхэд хүлээн авах"),
-    ("08:50", "09:10", "Өглөөний дасгал"),
-    ("09:30", "10:00", "Өглөөний цай"),
-    ("10:10", "11:00", "Хичээл, үйл ажиллагаа"),
-    ("11:00", "12:20", "Гадаа тоглолт, зугаалга"),
-    ("12:30", "13:10", "Өдрийн хоол"),
-    ("13:30", "15:15", "Унтлага"),
-    ("15:30", "16:00", "Үдийн цай"),
-    ("16:00", "17:30", "Чөлөөт тоглоом, дугуйлан"),
-    ("17:30", "18:00", "Хүүхэд гэрт нь тараах"),
-]
-
-
-@transaction.atomic
-def save_routine_slot(*, actor, obj, created: bool, request=None):
-    """One block of the day — Үлгэрчилсэн дүрэм §7.8.
-
-    The kindergarten follows the group, so nothing else may set it: a block
-    filed against the wrong tenant would be invisible to the §3.2 filter
-    that every screen relies on.
-    """
-    obj.kindergarten_id = obj.group.kindergarten_id
-
-    if obj.ends_at <= obj.starts_at:
-        raise ValidationError(
-            {"ends_at": "Дуусах цаг эхлэх цагаас хойш байх ёстой."}
-        )
-    if not obj.activity.strip():
-        raise ValidationError({"activity": "Үйл ажиллагааны нэрийг оруулна уу."})
-
-    # Overlaps are refused rather than merged: a day where 13:00 belongs to
-    # two blocks has no answer to "what is happening now", which is the one
-    # question this exists to answer.
-    clash = RoutineSlot.objects.filter(
-        group=obj.group,
-        starts_at__lt=obj.ends_at,
-        ends_at__gt=obj.starts_at,
-    ).exclude(pk=obj.pk).first()
-    if clash is not None:
-        raise ValidationError(
-            f"Энэ цаг «{clash.activity}» ({clash.starts_at:%H:%M}–"
-            f"{clash.ends_at:%H:%M})-тэй давхцаж байна."
-        )
-
-    return save_record(actor=actor, obj=obj, created=created, request=request)
-
-
-@transaction.atomic
-def apply_default_routine(*, actor, group, request=None) -> list:
-    """Give a group the regulation's example day, once.
-
-    Refuses rather than merges when the group already has a routine: a
-    second pass would collide with what the teacher has already adjusted,
-    and silently skipping would look like the button did nothing.
-    """
-    import datetime as dt
-
-    if RoutineSlot.objects.filter(group=group).exists():
-        raise ValidationError("Энэ бүлэгт өдрийн дэглэм аль хэдийн бий.")
-
-    created = []
-    for starts, ends, activity in DEFAULT_ROUTINE:
-        slot = RoutineSlot(
-            kindergarten_id=group.kindergarten_id,
-            group=group,
-            starts_at=dt.time.fromisoformat(starts),
-            ends_at=dt.time.fromisoformat(ends),
-            activity=activity,
-        )
-        created.append(save_record(actor=actor, obj=slot, created=True,
-                                   request=request))
-    return created

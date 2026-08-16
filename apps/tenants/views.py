@@ -18,15 +18,12 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.http import Http404
 from django.shortcuts import redirect, render
-from django.utils.dateparse import parse_time
 
 from apps.accounts.models import Role
-from apps.core import services as core_services
-from apps.core.layouts import ADMIN, layout_for
+from apps.core.layouts import ADMIN
 
 from . import selectors, services
-from .models import Group, Kindergarten, RoutineSlot, SchoolYear
-from .selectors import assignable_groups
+from .models import Group, Kindergarten, SchoolYear
 
 PAGE_SIZE = 20
 
@@ -251,93 +248,3 @@ def _message(exc) -> str:
     if isinstance(exc, ValidationError):
         return " ".join(exc.messages)
     return str(exc)
-
-
-@login_required
-def group_routine(request, group_id):
-    """A group's daily routine — Үлгэрчилсэн дүрэм §7.8.
-
-    Reached by an administrator from the group list and by the group's own
-    teacher from the dashboard: §7.8.1 makes the durations the group's
-    decision, and the person who knows when these children actually settle
-    is the one standing in the room.
-    """
-    group = _routine_group_or_404(request.user, group_id)
-
-    context = {
-        "base_template": layout_for(request.user),
-        "nav": "groups",
-        "group": group,
-        "slots": selectors.routine_for(group),
-        "now": selectors.routine_now(group),
-        "form": {},
-    }
-
-    if request.method == "POST":
-        action = request.POST.get("action")
-
-        if action == "defaults":
-            try:
-                made = services.apply_default_routine(
-                    actor=request.user, group=group, request=request
-                )
-            except (PermissionDenied, ValidationError) as exc:
-                messages.error(request, _message(exc))
-            else:
-                messages.success(request, f"{len(made)} хэсэг үүслээ.")
-            return redirect("tenants:group_routine", group_id=group.pk)
-
-        if action == "delete":
-            slot = RoutineSlot.objects.filter(
-                pk=request.POST.get("slot") or 0, group=group
-            ).first()
-            if slot is not None:
-                core_services.soft_delete(actor=request.user, obj=slot,
-                                          request=request)
-                messages.success(request, "Хэсэг устгагдлаа.")
-            return redirect("tenants:group_routine", group_id=group.pk)
-
-        context["form"] = request.POST
-        slot = RoutineSlot(kindergarten_id=group.kindergarten_id, group=group)
-        starts = parse_time(request.POST.get("starts_at", ""))
-        ends = parse_time(request.POST.get("ends_at", ""))
-        if starts is None or ends is None:
-            context["error"] = "Цагийг зөв оруулна уу."
-            return render(request, "tenants/group_routine.html", context)
-
-        slot.starts_at = starts
-        slot.ends_at = ends
-        slot.activity = request.POST.get("activity", "").strip()
-        slot.note = request.POST.get("note", "").strip()
-
-        try:
-            services.save_routine_slot(actor=request.user, obj=slot,
-                                       created=True, request=request)
-        except (PermissionDenied, ValidationError) as exc:
-            context["error"] = _message(exc)
-            return render(request, "tenants/group_routine.html", context)
-
-        messages.success(request, "Хэсэг нэмэгдлээ.")
-        return redirect("tenants:group_routine", group_id=group.pk)
-
-    return render(request, "tenants/group_routine.html", context)
-
-
-def _routine_group_or_404(user, group_id):
-    """The group, if this user may edit its day.
-
-    Two doors, one rule: a director for the kindergartens they administer,
-    a teacher for the groups they are assigned to. Anything else is 404
-    rather than 403 — CLAUDE.md §1.1.
-    """
-    group = Group.objects.filter(
-        pk=group_id,
-        kindergarten__in=selectors.administered_kindergartens(user),
-    ).select_related("kindergarten", "school_year").first()
-    if group is not None:
-        return group
-
-    group = assignable_groups(user).filter(pk=group_id).first()
-    if group is None:
-        raise Http404
-    return group

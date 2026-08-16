@@ -19,8 +19,4 @@ urlpatterns = [
     path("udirdlaga/bulguud/shine/", views.group_form, name="group_create"),
     path("udirdlaga/bulguud/<int:group_id>/", views.group_form,
          name="group_edit"),
-    # Үлгэрчилсэн дүрэм §7.8 — the group's own day. Both a director and the
-    # group's teacher reach it; the view decides which door was used.
-    path("bagsh/bulge/<int:group_id>/deglem/", views.group_routine,
-         name="group_routine"),
 ]
