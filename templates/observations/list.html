@@ -119,6 +119,47 @@
     {% endif %}
   </div>
 
+  {% comment %} Always-visible search row — client's mockup. Хайх has no
+     backend text search yet (selectors.child_observations has nothing to
+     match against), so it is disabled rather than silently doing nothing
+     on submit. Сургалтын чиглэл and Хугацаа are the same real `domain`,
+     `from` and `to` filters as the disclosure below, just surfaced here so
+     they do not need a click to reach. Submitting either form keeps
+     `type` as a hidden field, so the active tab survives. {% endcomment %}
+  <form method="get" class="filterbar" style="margin-top:var(--s4)">
+    <input type="hidden" name="type" value="{{ filters.type }}">
+    <div>
+      <label for="id_q">Хайх</label>
+      <input type="search" id="id_q" placeholder="Тэмдэглэлээс хайх..." disabled
+             title="Тун удахгүй">
+    </div>
+    <div>
+      <label for="id_domain_top">Сургалтын чиглэл</label>
+      <select name="domain" id="id_domain_top">
+        <option value="">Бүх чиглэл</option>
+        {% for item in domains %}
+          <option value="{{ item.pk }}"
+            {% if filters.domain == item.pk|stringformat:"s" %}selected{% endif %}>
+            {{ item.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="id_from_top">Хугацаа — эхлэх</label>
+      <input type="date" name="from" id="id_from_top" value="{{ filters.from }}">
+    </div>
+    <div>
+      <label for="id_to_top">Хугацаа — дуусах</label>
+      <input type="date" name="to" id="id_to_top" value="{{ filters.to }}">
+    </div>
+    <div class="filterbar__go">
+      <button type="submit" class="btn btn--ghost">
+        {{ page.paginator.count }} {% if filters.type == buteel_pk %}бүтээл{% else %}ажиглалт{% endif %}
+      </button>
+    </div>
+  </form>
+
   {% comment %} RFP §11's filters, exactly the six the view already reads:
      type, source, domain, level and the date interval. Nothing new. Two
      columns on a phone, six across on a wide screen. {% endcomment %}
