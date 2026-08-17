@@ -101,6 +101,46 @@
     {% endif %}
   </div>
 
+  {% comment %} Тэмдэглэлийн төрөл — client's mockup. A richer entry point
+     beside "Ажиглалт нэмэх" above; all three tiles open the same real
+     `observations:create` form for this child. No separate "Ярилцлага"
+     record type exists yet (CLAUDE.md §7.1), so it is not a fabricated
+     route — it opens the same form as the other two. {% endcomment %}
+  {% if can_record %}
+    <section class="section">
+      {% include "components/section_head.html" with title="Тэмдэглэлийн төрөл" %}
+      <div class="note-types">
+        <a class="note-type note-type--green" href="{% url 'observations:create' child.pk %}">
+          <span class="note-type__icon" aria-hidden="true">
+            <svg class="ic ic--sm" aria-hidden="true"><use href="#i-observation"></use></svg>
+          </span>
+          <span>
+            <span class="note-type__title">Ажиглалт</span>
+            <span class="note-type__sub">Хүүхдийн хөгжлийн тэмдэглэл</span>
+          </span>
+        </a>
+        <a class="note-type note-type--blue" href="{% url 'observations:create' child.pk %}">
+          <span class="note-type__icon" aria-hidden="true">
+            <svg class="ic ic--sm" aria-hidden="true"><use href="#i-chat"></use></svg>
+          </span>
+          <span>
+            <span class="note-type__title">Ярилцлага</span>
+            <span class="note-type__sub">Асуулт, хариултын тэмдэглэл</span>
+          </span>
+        </a>
+        <a class="note-type note-type--amber" href="{% url 'observations:create' child.pk %}">
+          <span class="note-type__icon" aria-hidden="true">
+            <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
+          </span>
+          <span>
+            <span class="note-type__title">Бүтээл</span>
+            <span class="note-type__sub">Бүтээл, зураг, ахицын тэмдэглэл</span>
+          </span>
+        </a>
+      </div>
+    </section>
+  {% endif %}
+
   <div class="work" style="margin-top:var(--s5)">
     {% comment %} ============================================ the record {% endcomment %}
     <div>

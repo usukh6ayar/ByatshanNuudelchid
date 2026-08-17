@@ -104,6 +104,66 @@
     {% include "components/empty.html" with icon="children" message="Энэ бүлэгт идэвхтэй хүүхэд бүртгэлгүй байна." %}
   {% else %}
 
+    {% comment %} Хүүхэд сонгох + Тэмдэглэлийн төрөл — client's mockup. The
+       roster is `rows` this view already built (§6.3's grid, one row per
+       enrollment); "focus_child" is a plain GET param the template reads
+       itself, so switching it re-renders the same grid with a different
+       default child below — no view change. All three note-type tiles open
+       the real `observations:create` form; CLAUDE.md §7.1 — there is no
+       separate "Ярилцлага" record type yet, so it is not a fabricated
+       route. {% endcomment %}
+    {% with focus_id=request.GET.focus_child|default:rows.0.child.pk|stringformat:"s" %}
+      <section class="section" style="margin-top:var(--s5)">
+        {% include "components/section_head.html" with title="Хүүхэд сонгох" %}
+        <form method="get">
+          <input type="hidden" name="domain" value="{{ domain.pk }}">
+          <input type="hidden" name="term" value="{{ term.pk }}">
+          <label for="id_focus_child" class="sr-only">Хүүхэд</label>
+          <select name="focus_child" id="id_focus_child" onchange="this.form.submit()">
+            {% for row in rows %}
+              <option value="{{ row.child.pk }}"
+                {% if row.child.pk|stringformat:"s" == focus_id %}selected{% endif %}>
+                {{ row.child.full_name }}
+              </option>
+            {% endfor %}
+          </select>
+        </form>
+      </section>
+
+      <section class="section">
+        {% include "components/section_head.html" with title="Тэмдэглэлийн төрөл" %}
+        <div class="note-types">
+          <a class="note-type note-type--green" href="{% url 'observations:create' focus_id %}">
+            <span class="note-type__icon" aria-hidden="true">
+              <svg class="ic ic--sm" aria-hidden="true"><use href="#i-observation"></use></svg>
+            </span>
+            <span>
+              <span class="note-type__title">Ажиглалт</span>
+              <span class="note-type__sub">Хүүхдийн хөгжлийн тэмдэглэл</span>
+            </span>
+          </a>
+          <a class="note-type note-type--blue" href="{% url 'observations:create' focus_id %}">
+            <span class="note-type__icon" aria-hidden="true">
+              <svg class="ic ic--sm" aria-hidden="true"><use href="#i-chat"></use></svg>
+            </span>
+            <span>
+              <span class="note-type__title">Ярилцлага</span>
+              <span class="note-type__sub">Асуулт, хариултын тэмдэглэл</span>
+            </span>
+          </a>
+          <a class="note-type note-type--amber" href="{% url 'observations:create' focus_id %}">
+            <span class="note-type__icon" aria-hidden="true">
+              <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
+            </span>
+            <span>
+              <span class="note-type__title">Бүтээл</span>
+              <span class="note-type__sub">Бүтээл, зураг, ахицын тэмдэглэл</span>
+            </span>
+          </a>
+        </div>
+      </section>
+    {% endwith %}
+
     {% comment %} §12 — how much work is left, from the selector's own
        `total` and `missing`. Stated as two real counts rather than as
        "assessed / total": the template has no arithmetic, and computing the

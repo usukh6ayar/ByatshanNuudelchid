@@ -289,6 +289,76 @@ a { color: var(--brand); }
 .tile--pink  .tile__icon { background: var(--c-pink-soft);  color: var(--c-pink); }
 .tile--teal  .tile__icon { background: var(--c-teal-soft);  color: var(--c-teal); }
 
+/* Три quick-launch tiles into the real observation form, tinted per the
+   client's mockup — used on the group grid (with a child picker above it)
+   and the child page (for that one child). All three are the same real
+   `observations:create` link; there is no separate "Ярилцлага" record type
+   in the database, so it opens the same form as the other two rather than
+   a route that does not exist. */
+.note-types { display: grid; gap: var(--s3);
+              grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.note-type {
+  display: flex; gap: var(--s3); align-items: flex-start; padding: var(--s4);
+  border-radius: var(--radius); border: 1px solid transparent;
+  text-decoration: none; color: var(--ink);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.note-type:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.note-type__icon {
+  width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+  display: grid; place-items: center; color: #fff;
+}
+.note-type__title { display: block; font-weight: 700; }
+.note-type__sub { display: block; color: var(--muted); font-size: .8rem; margin-top: 2px; }
+
+.note-type--green { background: var(--ok-soft); }
+.note-type--green .note-type__icon { background: var(--ok); }
+.note-type--blue { background: var(--c-blue-soft); }
+.note-type--blue .note-type__icon { background: var(--c-blue); }
+.note-type--amber { background: var(--c-amber-soft); }
+.note-type--amber .note-type__icon { background: var(--c-amber); }
+
+/* The three type "tabs" above the observation list — real links applying
+   the existing `?type=` filter, replacing the plain <select> with the same
+   query the view already handles. A count only shows on whichever tab
+   matches the active filter, the real current result count; the others do
+   not guess at a number nobody asked them to compute. */
+.type-tabs { display: grid; gap: var(--s3);
+             grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+             margin-top: var(--s4); }
+.type-tab {
+  display: flex; align-items: center; gap: var(--s3); padding: var(--s3) var(--s4);
+  border-radius: var(--radius); border: 2px solid transparent;
+  text-decoration: none; color: var(--ink); font-weight: 700;
+}
+.type-tab__icon {
+  width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
+  display: grid; place-items: center; color: #fff;
+}
+.type-tab__count {
+  margin-left: auto; min-width: 22px; height: 22px; padding: 0 6px;
+  border-radius: 999px; background: rgba(255,255,255,.6); color: var(--ink);
+  font-size: .78rem; display: grid; place-items: center;
+}
+.type-tab--green { background: var(--ok-soft); }
+.type-tab--green .type-tab__icon { background: var(--ok); }
+.type-tab--blue { background: var(--c-blue-soft); }
+.type-tab--blue .type-tab__icon { background: var(--c-blue); }
+.type-tab--amber { background: var(--c-amber-soft); }
+.type-tab--amber .type-tab__icon { background: var(--c-amber); }
+.type-tab[aria-current] { border-color: currentColor; }
+
+/* Quick-insert phrases on the observation form — click appends the phrase
+   into the textarea beside it. Pure client-side convenience over a real
+   field; nothing here is stored separately. */
+.chip-row { display: flex; gap: var(--s2); flex-wrap: wrap; margin: var(--s2) 0 0; }
+.chip {
+  border: 1px solid var(--line); background: var(--card); color: var(--muted);
+  border-radius: 999px; padding: 6px 12px; font-size: .8rem; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+}
+.chip:hover { background: var(--bg); color: var(--ink); }
+
 .badge {
   display: inline-block; padding: 3px 9px; border-radius: 999px;
   font-size: .78rem; font-weight: 600;

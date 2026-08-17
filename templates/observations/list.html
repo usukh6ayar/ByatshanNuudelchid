@@ -57,6 +57,49 @@
     {% endif %}
   </div>
 
+  {% comment %} Three "tabs" — client's mockup. Each is a real link applying
+     the existing `?type=` filter, the same query the <select> inside the
+     filter panel below already sends. The count only shows on whichever
+     tab matches the active filter — the real current result count, not a
+     guess at the other two. "Бүтээл" is matched by name, not a hard-coded
+     id: ObservationType rows are seed data and their ids are not
+     guaranteed stable across environments. "Ярилцлага" has no matching
+     type yet (CLAUDE.md §7.1 — data, not code, once it exists), so it is
+     inert rather than filtering on a type that does not exist. {% endcomment %}
+  <div class="type-tabs">
+    <a class="type-tab type-tab--green" href="?"
+       {% if not filters.type %}aria-current="true"{% endif %}>
+      <span class="type-tab__icon" aria-hidden="true">
+        <svg class="ic ic--sm" aria-hidden="true"><use href="#i-observation"></use></svg>
+      </span>
+      Ажиглалт
+      {% if not filters.type %}<span class="type-tab__count">{{ page.paginator.count }}</span>{% endif %}
+    </a>
+
+    <span class="type-tab type-tab--blue" aria-disabled="true" style="cursor:default">
+      <span class="type-tab__icon" aria-hidden="true">
+        <svg class="ic ic--sm" aria-hidden="true"><use href="#i-chat"></use></svg>
+      </span>
+      Ярилцлага
+      <span class="type-tab__count" title="Тун удахгүй">—</span>
+    </span>
+
+    {% for item in types %}
+      {% if "Бүтээл" in item.name %}
+        <a class="type-tab type-tab--amber" href="?type={{ item.pk }}"
+           {% if filters.type == item.pk|stringformat:"s" %}aria-current="true"{% endif %}>
+          <span class="type-tab__icon" aria-hidden="true">
+            <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
+          </span>
+          Бүтээл
+          {% if filters.type == item.pk|stringformat:"s" %}
+            <span class="type-tab__count">{{ page.paginator.count }}</span>
+          {% endif %}
+        </a>
+      {% endif %}
+    {% endfor %}
+  </div>
+
   {% comment %} RFP §11's filters, exactly the six the view already reads:
      type, source, domain, level and the date interval. Nothing new. Two
      columns on a phone, six across on a wide screen. {% endcomment %}
