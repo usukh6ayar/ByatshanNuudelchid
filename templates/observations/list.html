@@ -40,22 +40,13 @@
     </span>
   </div>
 
-  {% comment %} The primary action sits above the filters: a teacher arrives
-     here to record far more often than to search. {% endcomment %}
-  <div class="btn-row" style="margin-top:var(--s4)">
-    {% if can_record %}
-      <a class="btn" href="{% url 'observations:create' child.pk %}">
-        <svg class="ic ic--sm" aria-hidden="true"><use href="#i-plus"></use></svg>
-        Ажиглалт нэмэх
-      </a>
-    {% elif is_guardian %}
-      {# §5.4 — the family's own contribution #}
-      <a class="btn" href="{% url 'observations:parent_create' child.pk %}">
-        <svg class="ic ic--sm" aria-hidden="true"><use href="#i-plus"></use></svg>
-        Миний ажиглалт нэмэх
-      </a>
-    {% endif %}
-  </div>
+  {% comment %} Everything below reacts to which tab is active, so the
+     matched "Бүтээл" type's id is resolved once here rather than re-found
+     in four different places — every check below is `filters.type ==
+     buteel_pk` (Django's `{% with %}` cannot itself hold a comparison, only
+     a value). {% endcomment %}
+  {% for item in types %}{% if "Бүтээл" in item.name %}
+    {% with buteel_pk=item.pk|stringformat:"s" %}
 
   {% comment %} Three "tabs" — client's mockup. Each is a real link applying
      the existing `?type=` filter, the same query the <select> inside the
@@ -66,7 +57,7 @@
      guaranteed stable across environments. "Ярилцлага" has no matching
      type yet (CLAUDE.md §7.1 — data, not code, once it exists), so it is
      inert rather than filtering on a type that does not exist. {% endcomment %}
-  <div class="type-tabs">
+  <div class="type-tabs" style="margin-top:var(--s4)">
     <a class="type-tab type-tab--green" href="?"
        {% if not filters.type %}aria-current="true"{% endif %}>
       <span class="type-tab__icon" aria-hidden="true">
@@ -84,20 +75,48 @@
       <span class="type-tab__count" title="Тун удахгүй">—</span>
     </span>
 
-    {% for item in types %}
-      {% if "Бүтээл" in item.name %}
-        <a class="type-tab type-tab--amber" href="?type={{ item.pk }}"
-           {% if filters.type == item.pk|stringformat:"s" %}aria-current="true"{% endif %}>
-          <span class="type-tab__icon" aria-hidden="true">
-            <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
+    <a class="type-tab type-tab--amber" href="?type={{ buteel_pk }}"
+       {% if filters.type == buteel_pk %}aria-current="true"{% endif %}>
+      <span class="type-tab__icon" aria-hidden="true">
+        <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
+      </span>
+      Бүтээл
+      {% if filters.type == buteel_pk %}<span class="type-tab__count">{{ page.paginator.count }}</span>{% endif %}
+    </a>
+  </div>
+
+  {% comment %} The "add" row now sits under the tabs and matches whichever
+     one is active — client's mockup shows "Шинэ бүтээл нэмэх" once the
+     Бүтээл tab is selected. Still one real link, `observations:create`;
+     `?type=` is passed through so the form opens with that type
+     pre-selected via the same param the create view already reads
+     (`_pick(types, request.GET.get("type"))`). {% endcomment %}
+  <div class="btn-row" style="margin-top:var(--s4)">
+    {% if can_record %}
+      {% if filters.type == buteel_pk %}
+        <a class="btn note-type note-type--amber" style="padding:var(--s3) var(--s4)"
+           href="{% url 'observations:create' child.pk %}?type={{ buteel_pk }}">
+          <span class="note-type__icon" aria-hidden="true">
+            <svg class="ic ic--sm" aria-hidden="true"><use href="#i-plus"></use></svg>
           </span>
-          Бүтээл
-          {% if filters.type == item.pk|stringformat:"s" %}
-            <span class="type-tab__count">{{ page.paginator.count }}</span>
-          {% endif %}
+          <span>
+            <span class="note-type__title">Шинэ бүтээл нэмэх</span>
+            <span class="note-type__sub">Бүтээл, зураг болон ахицын тэмдэглэл</span>
+          </span>
+        </a>
+      {% else %}
+        <a class="btn" href="{% url 'observations:create' child.pk %}">
+          <svg class="ic ic--sm" aria-hidden="true"><use href="#i-plus"></use></svg>
+          Ажиглалт нэмэх
         </a>
       {% endif %}
-    {% endfor %}
+    {% elif is_guardian %}
+      {# §5.4 — the family's own contribution #}
+      <a class="btn" href="{% url 'observations:parent_create' child.pk %}">
+        <svg class="ic ic--sm" aria-hidden="true"><use href="#i-plus"></use></svg>
+        Миний ажиглалт нэмэх
+      </a>
+    {% endif %}
   </div>
 
   {% comment %} RFP §11's filters, exactly the six the view already reads:
@@ -186,7 +205,7 @@
 
   {% if page.paginator.count %}
     <div class="listmeta">
-      <span>Нийт {{ page.paginator.count }} ажиглалт</span>
+      <span>Нийт {{ page.paginator.count }} {% if filters.type == buteel_pk %}бүтээл{% else %}ажиглалт{% endif %}</span>
       {% if page.paginator.num_pages > 1 %}
         <span>{{ page.number }} / {{ page.paginator.num_pages }} хуудас</span>
       {% endif %}
@@ -263,10 +282,17 @@
         {% endif %}
       </div>
     {% empty %}
-      {% comment %} Two empty states, one for each reason the list can be
-         bare: nothing recorded yet, or a filter that matched nothing. Both
-         offer the way out of themselves. {% endcomment %}
-      {% if filters.type or filters.source or filters.domain or filters.level or filters.from or filters.to %}
+      {% comment %} Three empty states, in order of specificity: the Бүтээл
+         tab open and empty gets its own wording and an add action (client's
+         mockup — "Дээрх товч дарж шинэ бүтээл нэмнэ үү"), any other filter
+         that matched nothing gets the generic clear-filter message, and no
+         filter at all is the true first-time-here state. {% endcomment %}
+      {% if filters.type == buteel_pk and can_record %}
+        {% url 'observations:create' child.pk as create_buteel_url %}
+        {% include "components/empty.html" with icon="observation" message="Бүтээл байхгүй байна. Дээрх товч дарж шинэ бүтээл нэмнэ үү." action=create_buteel_url action_label="Шинэ бүтээл нэмэх" %}
+      {% elif filters.type == buteel_pk %}
+        {% include "components/empty.html" with icon="observation" message="Бүтээл байхгүй байна." %}
+      {% elif filters.type or filters.source or filters.domain or filters.level or filters.from or filters.to %}
         {% url 'observations:list' child.pk as clear_url %}
         {% include "components/empty.html" with icon="observation" message="Энэ шүүлтэд тохирох ажиглалт олдсонгүй." action=clear_url action_label="Шүүлтийг цэвэрлэх" %}
       {% elif can_record %}
@@ -300,4 +326,7 @@
       </nav>
     {% endwith %}
   {% endif %}
+
+    {% endwith %}
+  {% endif %}{% endfor %}
 {% endblock %}
