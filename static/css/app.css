@@ -1818,6 +1818,37 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
 .kidrow__sep { display: none; }
 @media (max-width: 899px) { .kidrow__sep { display: inline; color: var(--faint); } }
 
+/* Per-row "⋮" action menu — client's mockup: Тайлан / Засах / PDF /
+   Устгах. Replaces the old single Засах link with one 44px trigger, so it
+   does not add row height on a phone the way a second visible button
+   would. <details>, so it needs no JavaScript. Устгах has no route yet —
+   there is no archive/delete endpoint exposed to a teacher — so it renders
+   muted and inert rather than linking to a 404. */
+.menu { position: relative; justify-self: start; }
+.menu > summary {
+  list-style: none; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; min-width: 44px;
+  border-radius: var(--radius-sm); border: 1px solid var(--line);
+  background: var(--card); color: var(--muted);
+}
+.menu > summary::-webkit-details-marker { display: none; }
+.menu > summary:hover { color: var(--brand); border-color: var(--brand); }
+.menu__list {
+  position: absolute; right: 0; top: 48px; z-index: 20; min-width: 168px;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow); padding: var(--s1);
+}
+.menu__list a, .menu__list .menu__soon {
+  display: flex; align-items: center; gap: var(--s2);
+  padding: var(--s2) var(--s3); border-radius: var(--radius-ctl);
+  text-decoration: none; color: var(--ink); font-size: var(--t-label);
+}
+.menu__list a:hover { background: var(--bg); }
+.menu__list .menu__soon { color: var(--faint); cursor: default; }
+
+@media (min-width: 900px) { .menu { justify-self: stretch; } }
+
 /* ================================================== teacher child detail
    Added 2026-08-16. Deliberately *not* the parent profile: that screen opens
    on a large photograph and reads as a family keepsake. This one is a work

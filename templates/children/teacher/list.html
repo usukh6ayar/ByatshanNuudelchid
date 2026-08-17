@@ -206,9 +206,31 @@
           {% endif %}
         </div>
 
-        <a class="kidrow__edit" href="{% url 'children:edit' child.pk %}">
-          Засах<span class="sr-only"> — {{ child.full_name }}</span>
-        </a>
+        <details class="menu">
+          <summary aria-label="Үйлдэл — {{ child.full_name }}">
+            <svg class="ic ic--sm" aria-hidden="true"><use href="#i-more"></use></svg>
+          </summary>
+          <div class="menu__list">
+            <a href="{% url 'portfolio:overview' child.pk %}">
+              <svg class="ic ic--sm" aria-hidden="true"><use href="#i-report"></use></svg>
+              Тайлан
+            </a>
+            <a href="{% url 'children:edit' child.pk %}">
+              <svg class="ic ic--sm" aria-hidden="true"><use href="#i-children"></use></svg>
+              Засах
+            </a>
+            <a href="{% url 'reports:request' child.pk %}">
+              <svg class="ic ic--sm" aria-hidden="true"><use href="#i-report"></use></svg>
+              PDF
+            </a>
+            {% comment %} No route yet — archiving a child is not exposed to
+               a teacher. Muted, not a link, so it cannot 404 the page. {% endcomment %}
+            <span class="menu__soon">
+              <svg class="ic ic--sm" aria-hidden="true"><use href="#i-soon"></use></svg>
+              Устгах — тун удахгүй
+            </span>
+          </div>
+        </details>
       </div>
     {% empty %}
       {% comment %} Two states that must not read alike: nothing matched a
