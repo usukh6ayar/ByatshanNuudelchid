@@ -4,6 +4,7 @@ All logic lives here; views only parse the request and render (CLAUDE.md §2.1).
 """
 
 import hashlib
+import logging
 import secrets
 
 from django.conf import settings
@@ -24,6 +25,8 @@ from .models import (
     TeacherProfile,
     User,
 )
+
+logger = logging.getLogger(__name__)
 
 TOKEN_TTL_HOURS = 2
 
@@ -224,7 +227,56 @@ def request_password_reset(*, request, identifier: str) -> str | None:
         expires_at=timezone.now() + timezone.timedelta(hours=TOKEN_TTL_HOURS),
         requested_ip=client_ip(request),
     )
+
+    send_password_reset_email(request=request, user=user, raw_token=raw)
     return raw
+
+
+def send_password_reset_email(*, request, user, raw_token: str) -> None:
+    """Deliver the §3.1 reset link.
+
+    Here rather than in the view for the usual reason (CLAUDE.md §2.1): the
+    §20-IV API will ask for a reset too, and a view that sent the mail itself
+    would leave that path silently doing nothing.
+
+    **The link is never logged.** It printed to stdout until 2026-08-17,
+    which in production meant a working credential sitting in the container
+    log where anyone with log access could use it. A failure to send is
+    logged — without the token — because a reset nobody receives has to be
+    diagnosable.
+
+    `fail_silently=False`: a misconfigured SMTP host should raise on the
+    first attempt, not discard reset links quietly for weeks.
+    """
+    from django.conf import settings
+    from django.core.mail import send_mail
+    from django.template.loader import render_to_string
+    from django.urls import reverse
+
+    reset_url = request.build_absolute_uri(
+        reverse("accounts:password_reset_confirm", args=[raw_token])
+    )
+    site_name = getattr(settings, "SITE_NAME", "Бяцхан нүүдэлчид")
+    body = render_to_string("accounts/email/password_reset.txt", {
+        "user": user,
+        "reset_url": reset_url,
+        "site_name": site_name,
+        "ttl_hours": TOKEN_TTL_HOURS,
+    })
+
+    try:
+        send_mail(
+            subject=f"{site_name} — нууц үг сэргээх",
+            message=body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+    except Exception:
+        # Never the token, never the URL — only that delivery failed and to
+        # which account, so an administrator can act on it.
+        logger.exception("password reset email failed for user id=%s", user.pk)
+        raise
 
 
 def resolve_reset_token(raw: str) -> PasswordResetToken | None:
