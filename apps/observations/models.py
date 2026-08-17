@@ -103,9 +103,19 @@ class Observation(TenantScopedModel):
     teacher_comment = models.TextField("багшийн тайлбар", blank=True)
     next_steps = models.TextField("дараагийн дэмжлэг, төлөвлөгөө", blank=True)
 
-    # §5.1 — "эцэг эхэд харагдах эсэх". Default open: an observation the
-    # family cannot see is the exception, not the rule.
-    visible_to_parents = models.BooleanField("эцэг эхэд харагдах", default=True)
+    # §5.1 — "эцэг эхэд харагдах эсэх".
+    #
+    # Closed by default (product decision, 2026-08-16). This read `default=True`
+    # until then, on the reasoning that a hidden observation is the exception.
+    # The client's decision is the opposite one: a teacher's note is a working
+    # record until they choose to publish it, and a draft thought about a
+    # child should not reach the family because someone forgot to untick a
+    # box. §5.1 names the field but does not fix its default, so this is a
+    # product call rather than a change to the requirement.
+    #
+    # A family's *own* submission is the exception and is not governed by
+    # this default — see ``services.create_observation``.
+    visible_to_parents = models.BooleanField("эцэг эхэд харагдах", default=False)
     # §5.4 — "хүүхдийн нэгдсэн тайланд оруулах эсэхийг шийдэх".
     include_in_report = models.BooleanField("тайланд оруулах", default=True)
 

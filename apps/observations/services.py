@@ -129,10 +129,26 @@ def create_observation(*, actor, child, type, observed_on,
         type=type,
         source=source,
         observed_on=observed_on,
-        # A parent's own note is visible to them by definition; a teacher
-        # chooses, and §5.1's default is open.
+        # §5.1 — who may see this. Product decision, 2026-08-16: a teacher's
+        # observation is **closed by default** and becomes visible only when
+        # they say so. It read "default open" until then.
+        #
+        # A family's own submission is the exception, and deliberately so: it
+        # is their words about their own child, and a child usually has more
+        # than one guardian. Defaulting it closed would hide a mother's note
+        # from the father — taking something away from the family that the
+        # privacy decision was never about. The submitting parent would still
+        # see it (``selectors._readable`` always returns a user their own
+        # submissions), which is exactly what would make the loss hard to
+        # notice.
+        #
+        # The rule lives here rather than in the view because the §20-IV API
+        # will call this same function (CLAUDE.md §2.1); a default applied in
+        # a template or a view is one the mobile client would not inherit.
         visible_to_parents=(
-            True if visible_to_parents is None else bool(visible_to_parents)
+            (source == Observation.Source.PARENT)
+            if visible_to_parents is None
+            else bool(visible_to_parents)
         ),
         include_in_report=bool(include_in_report),
         review_status=(
