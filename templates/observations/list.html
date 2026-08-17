@@ -40,23 +40,24 @@
     </span>
   </div>
 
-  {% comment %} Everything below reacts to which tab is active, so the
-     matched "Бүтээл" type's id is resolved once here rather than re-found
-     in four different places — every check below is `filters.type ==
-     buteel_pk` (Django's `{% with %}` cannot itself hold a comparison, only
-     a value). {% endcomment %}
+  {% comment %} Everything below reacts to which tab is active, so both
+     matched types' ids are resolved once here rather than re-found in four
+     different places — every check below is `filters.type == buteel_pk` or
+     `== yarilzlaga_pk` (Django's `{% with %}` cannot itself hold a
+     comparison, only a value). Both are matched by name, not a hard-coded
+     id: ObservationType rows are seed data and their ids are not
+     guaranteed stable across environments. Two separate matcher loops,
+     nested, since each has to stay open around everything below it. {% endcomment %}
   {% for item in types %}{% if "Бүтээл" in item.name %}
     {% with buteel_pk=item.pk|stringformat:"s" %}
+  {% for item2 in types %}{% if "Ярилцлага" in item2.name %}
+    {% with yarilzlaga_pk=item2.pk|stringformat:"s" %}
 
   {% comment %} Three "tabs" — client's mockup. Each is a real link applying
      the existing `?type=` filter, the same query the <select> inside the
      filter panel below already sends. The count only shows on whichever
      tab matches the active filter — the real current result count, not a
-     guess at the other two. "Бүтээл" is matched by name, not a hard-coded
-     id: ObservationType rows are seed data and their ids are not
-     guaranteed stable across environments. "Ярилцлага" has no matching
-     type yet (CLAUDE.md §7.1 — data, not code, once it exists), so it is
-     inert rather than filtering on a type that does not exist. {% endcomment %}
+     guess at the other two. {% endcomment %}
   <div class="type-tabs" style="margin-top:var(--s4)">
     <a class="type-tab type-tab--green" href="?"
        {% if not filters.type %}aria-current="true"{% endif %}>
@@ -67,13 +68,14 @@
       {% if not filters.type %}<span class="type-tab__count">{{ page.paginator.count }}</span>{% endif %}
     </a>
 
-    <span class="type-tab type-tab--blue" aria-disabled="true" style="cursor:default">
+    <a class="type-tab type-tab--blue" href="?type={{ yarilzlaga_pk }}"
+       {% if filters.type == yarilzlaga_pk %}aria-current="true"{% endif %}>
       <span class="type-tab__icon" aria-hidden="true">
         <svg class="ic ic--sm" aria-hidden="true"><use href="#i-chat"></use></svg>
       </span>
       Ярилцлага
-      <span class="type-tab__count" title="Тун удахгүй">—</span>
-    </span>
+      {% if filters.type == yarilzlaga_pk %}<span class="type-tab__count">{{ page.paginator.count }}</span>{% endif %}
+    </a>
 
     <a class="type-tab type-tab--amber" href="?type={{ buteel_pk }}"
        {% if filters.type == buteel_pk %}aria-current="true"{% endif %}>
@@ -370,4 +372,6 @@
 
     {% endwith %}
   {% endif %}{% endfor %}
+  {% endwith %}
+{% endif %}{% endfor %}
 {% endblock %}
