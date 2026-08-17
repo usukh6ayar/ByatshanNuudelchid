@@ -55,12 +55,47 @@
 
       <label for="id_strengths">Давуу тал</label>
       <textarea name="strengths" id="id_strengths" rows="3">{{ report.strengths|default:"" }}</textarea>
+      {% comment %} Quick-insert phrases from the client's "Нэгдсэн дүгнэлт"
+         mockup — clicking one appends the phrase into the textarea above.
+         Pure client-side convenience over the same real `strengths` field;
+         nothing here is stored separately. The mockup's period picker and
+         "select which observations this summarizes" step are not built:
+         there is no monthly concept and no observation-to-report link in
+         the data model (Term/TermReport are the real unit here), so this
+         upgrades the real screen instead of drawing a form with nowhere to
+         save. {% endcomment %}
+      <div class="chip-row">
+        <button type="button" class="chip" data-append-to="id_strengths" data-text="Ахиц гарсан">Ахиц гарсан</button>
+        <button type="button" class="chip" data-append-to="id_strengths" data-text="Бие даалт нэмэгдсэн">Бие даалт нэмэгдсэн</button>
+        <button type="button" class="chip" data-append-to="id_strengths" data-text="Дэмжлэг багассан">Дэмжлэг багассан</button>
+        <button type="button" class="chip" data-append-to="id_strengths" data-text="Санаагаа илэрхийлсэн">Санаагаа илэрхийлсэн</button>
+        <button type="button" class="chip" data-append-to="id_strengths" data-text="Идэвх нэмэгдсэн">Идэвх нэмэгдсэн</button>
+        <button type="button" class="chip" data-append-to="id_strengths" data-text="Хамтрах чадвар">Хамтрах чадвар</button>
+        <button type="button" class="chip" data-append-to="id_strengths" data-text="Тогтвортой эзэмшсэн">Тогтвортой эзэмшсэн</button>
+      </div>
 
-      <label for="id_needs_support">Дэмжих шаардлагатай чадвар</label>
+      <label for="id_needs_support" style="margin-top:18px">Дэмжих шаардлагатай чадвар</label>
       <textarea name="needs_support" id="id_needs_support" rows="3">{{ report.needs_support|default:"" }}</textarea>
+      <div class="chip-row">
+        <button type="button" class="chip" data-append-to="id_needs_support" data-text="Тогтмол бус">Тогтмол бус</button>
+        <button type="button" class="chip" data-append-to="id_needs_support" data-text="Чиглүүлэг хэрэгтэй">Чиглүүлэг хэрэгтэй</button>
+        <button type="button" class="chip" data-append-to="id_needs_support" data-text="Давтаж бататгах">Давтаж бататгах</button>
+      </div>
 
-      <label for="id_next_goals">Дараагийн улирлын зорилго</label>
+      <label for="id_next_goals" style="margin-top:18px">Дараагийн улирлын зорилго</label>
       <textarea name="next_goals" id="id_next_goals" rows="3">{{ report.next_goals|default:"" }}</textarea>
+      <div class="chip-row">
+        <button type="button" class="chip" data-append-to="id_next_goals" data-text="Бие даан хийлгэнэ">Бие даан хийлгэнэ</button>
+        <button type="button" class="chip" data-append-to="id_next_goals" data-text="Дэмжлэг багасгана">Дэмжлэг багасгана</button>
+        <button type="button" class="chip" data-append-to="id_next_goals" data-text="Давтаж бататгана">Давтаж бататгана</button>
+        <button type="button" class="chip" data-append-to="id_next_goals" data-text="Хамтран ажиллуулна">Хамтран ажиллуулна</button>
+        <button type="button" class="chip" data-append-to="id_next_goals" data-text="Тоглоомоор дэмжинэ">Тоглоомоор дэмжинэ</button>
+        <button type="button" class="chip" data-append-to="id_next_goals" data-text="Хэрэгсэл дүрсээр ашиглана">Хэрэгсэл дүрсээр ашиглана</button>
+        <button type="button" class="chip" data-append-to="id_next_goals" data-text="Чиглүүлж дэмжинэ">Чиглүүлж дэмжинэ</button>
+        <button type="button" class="chip" data-append-to="id_next_goals" data-text="Өдөр тутам давтана">Өдөр тутам давтана</button>
+        <button type="button" class="chip" data-append-to="id_next_goals" data-text="Ахицыг ажиглана">Ахицыг ажиглана</button>
+        <button type="button" class="chip" data-append-to="id_next_goals" data-text="Гэр бүлтэй хамтарна">Гэр бүлтэй хамтарна</button>
+      </div>
 
       <label for="id_advice_for_parents">Эцэг эхэд өгөх зөвлөмж</label>
       <textarea name="advice_for_parents" id="id_advice_for_parents" rows="3">{{ report.advice_for_parents|default:"" }}</textarea>
@@ -84,4 +119,19 @@
       </div>
     </form>
   </div>
+
+  {% comment %} Appends a chip's phrase to its textarea — comma-joined if
+     the field already has text. No framework, no state beyond the field
+     itself; equivalent to typing the phrase by hand. {% endcomment %}
+  <script>
+    document.querySelectorAll(".chip[data-append-to]").forEach(function (chip) {
+      chip.addEventListener("click", function () {
+        var field = document.getElementById(chip.dataset.appendTo);
+        if (!field) return;
+        var text = chip.dataset.text;
+        field.value = field.value.trim() ? field.value.trim() + ", " + text : text;
+        field.focus();
+      });
+    });
+  </script>
 {% endblock %}
