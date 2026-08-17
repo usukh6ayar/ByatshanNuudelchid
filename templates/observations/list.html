@@ -121,6 +121,26 @@
     {% endif %}
   </div>
 
+  {% comment %} Two more real entry points — client's mockup. "Нэгдсэн
+     дүгнэлт бичих" goes to the child's term-by-term matrix
+     (assessment:child), the closest existing screen to "write a
+     consolidated write-up" — there is no separate summary screen.
+     "Эцэг эхийн бичсэн тэмдэглэл" reuses the `source` filter this view
+     already supports; the count shows only once that filter is the active
+     one, same rule as the tabs above. {% endcomment %}
+  <div class="grid grid--2" style="margin-top:var(--s4)">
+    <a class="btn btn--ghost" href="{% url 'assessment:child' child.pk %}">
+      Нэгдсэн дүгнэлт бичих
+    </a>
+    <a class="btn btn--ghost" href="?source=parent"
+       style="display:flex; justify-content:space-between">
+      Эцэг эхийн бичсэн тэмдэглэл
+      {% if filters.source == 'parent' %}
+        <span class="badge badge--muted">{{ page.paginator.count }}</span>
+      {% endif %}
+    </a>
+  </div>
+
   {% comment %} Always-visible search row — client's mockup. Хайх has no
      backend text search yet (selectors.child_observations has nothing to
      match against), so it is disabled rather than silently doing nothing
