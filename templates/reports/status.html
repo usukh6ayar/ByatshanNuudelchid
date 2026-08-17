@@ -1,40 +1,82 @@
 {% extends base_template %}
-{% comment %} RFP §549, §626 — the system stays usable while this renders, and the
-   screen says what is happening rather than sitting blank.
+{% comment %} RFP §549, §626 — the system stays usable while this renders, and
+   the screen says what is happening rather than sitting blank. Redesigned
+   2026-08-17.
 
-   The page polls a small JSON endpoint instead of holding the connection
-   open. It also works with JavaScript switched off: the "Дахин шалгах"
-   button below does the same thing by hand. {% endcomment %}
+   Four states, all of them the `ReportJob`'s own (`queued`, `running`,
+   `done`, `failed`, `expired`) — no second state machine, and nothing here
+   computes a status of its own.
 
-{% block title %}Тайлан бэлдэж байна{% endblock %}
-{% block heading %}PDF тайлан — {{ child.full_name }}{% endblock %}
+   The polling contract is unchanged: the page fetches
+   `reports:progress`, updates `#job-status`, and reloads once the job
+   reports itself finished. Reloading rather than building the result in
+   JavaScript, because the server already renders every state of this screen
+   and two renderers would drift.
+
+   It still works with JavaScript switched off — the "Дахин шалгах" link
+   below reloads the same page by hand. {% endcomment %}
+
+{% block title %}PDF тайлан{% endblock %}
+{% block heading %}PDF тайлан{% endblock %}
 
 {% block content %}
-  <div class="card" style="max-width:620px" id="job"
+  <div class="subject">
+    {% include "components/avatar.html" with person=child %}
+    <span class="subject__body">
+      <span class="subject__name">{{ child.full_name }}</span>
+      <span class="subject__meta">
+        <span class="badge badge--muted">{{ job.get_type_display }}</span>
+        <span class="badge badge--muted">{{ job.requested_at|date:"Y.m.d H:i" }}</span>
+      </span>
+    </span>
+  </div>
+
+  <div id="job" style="margin-top:var(--s4)"
        data-progress-url="{% url 'reports:progress' child.pk job.pk %}"
        data-download-url="{% url 'reports:download' child.pk job.pk %}"
        data-poll="{{ poll_seconds }}">
 
-    <p id="job-status">
-      <strong>{{ job.get_status_display }}</strong>
-    </p>
-
     {% if job.status == 'failed' %}
-      <p class="msg msg--error" role="alert">
-        Тайлан бэлдэх үед алдаа гарлаа.
-        {% if job.error_message %}<br>{{ job.error_message }}{% endif %}
-      </p>
+      <div class="jobstate">
+        <span class="jobstate__icon jobstate__icon--fail" aria-hidden="true">
+          <svg class="ic"><use href="#i-report"></use></svg>
+        </span>
+        <div class="jobstate__body">
+          <h2 class="jobstate__title" id="job-status">Тайлан бэлдэж чадсангүй</h2>
+          <p class="jobstate__note" role="alert">
+            {% if job.error_message %}
+              {{ job.error_message }}
+            {% else %}
+              Дахин оролдоно уу. Асуудал давтагдвал администратортаа хандана уу.
+            {% endif %}
+          </p>
+        </div>
+      </div>
       <div class="btn-row">
         <a class="btn" href="{% url 'reports:request' child.pk %}">Дахин оролдох</a>
+        <a class="btn btn--ghost" href="{% url 'portfolio:overview' child.pk %}">
+          Хавтас руу буцах
+        </a>
       </div>
 
     {% elif job.is_downloadable %}
-      <p>
-        {{ job.page_count }} хуудас ·
-        {{ job.file_size|filesizeformat }}
-      </p>
+      <div class="jobstate">
+        <span class="jobstate__icon jobstate__icon--done" aria-hidden="true">
+          <svg class="ic"><use href="#i-check"></use></svg>
+        </span>
+        <div class="jobstate__body">
+          <h2 class="jobstate__title" id="job-status">Тайлан бэлэн боллоо</h2>
+          <p class="jobstate__note">
+            {{ job.page_count }} хуудас · {{ job.file_size|filesizeformat }}
+            {% if job.expires_at %}
+              · {{ job.expires_at|date:"Y.m.d" }} хүртэл хадгалагдана
+            {% endif %}
+          </p>
+        </div>
+      </div>
       <div class="btn-row">
         <a class="btn" href="{% url 'reports:download' child.pk job.pk %}">
+          <svg class="ic ic--sm" aria-hidden="true"><use href="#i-report"></use></svg>
           PDF татах
         </a>
         <a class="btn btn--ghost" href="{% url 'portfolio:overview' child.pk %}">
@@ -43,17 +85,53 @@
       </div>
 
     {% elif job.status == 'expired' %}
-      <p>Энэ тайлангийн хугацаа дууссан байна.</p>
+      <div class="jobstate">
+        <span class="jobstate__icon jobstate__icon--busy" aria-hidden="true">
+          <svg class="ic"><use href="#i-report"></use></svg>
+        </span>
+        <div class="jobstate__body">
+          <h2 class="jobstate__title" id="job-status">Хугацаа дууссан</h2>
+          <p class="jobstate__note">
+            Хүүхдийн мэдээлэл агуулсан файл хязгаартай хугацаанд хадгалагдана.
+            Дахин бэлдэхэд нэг товшилт хангалттай.
+          </p>
+        </div>
+      </div>
       <div class="btn-row">
         <a class="btn" href="{% url 'reports:request' child.pk %}">Дахин бэлдэх</a>
       </div>
 
     {% else %}
-      <p class="brand__sub">
-        Бэлдэж байна. Энэ хуудсыг хаагаад дараа буцаж орж болно.
-      </p>
+      {% comment %} Queued or running. `progress_percent` is the job's own
+         figure; while it is still zero the bar slides instead of showing a
+         false 0%. {% endcomment %}
+      <div class="jobstate">
+        <span class="jobstate__icon jobstate__icon--busy" aria-hidden="true">
+          <svg class="ic"><use href="#i-report"></use></svg>
+        </span>
+        <div class="jobstate__body">
+          <h2 class="jobstate__title" id="job-status">{{ job.get_status_display }}</h2>
+          <p class="jobstate__note">
+            Тайланг бэлдэж байна. Энэ хуудсыг хааж, дараа буцаж орсон ч
+            болно — системийг үргэлжлүүлэн ашиглаж болно.
+          </p>
+
+          <div class="jobbar{% if not job.progress_percent %} jobbar--waiting{% endif %}"
+               role="progressbar" aria-live="polite"
+               aria-valuenow="{{ job.progress_percent }}"
+               aria-valuemin="0" aria-valuemax="100"
+               aria-label="Тайлан бэлтгэх явц">
+            <div class="jobbar__fill" id="job-bar"
+                 style="width:{{ job.progress_percent }}%"></div>
+          </div>
+        </div>
+      </div>
+
       <div class="btn-row">
         <a class="btn btn--ghost" href="">Дахин шалгах</a>
+        <a class="btn btn--ghost" href="{% url 'portfolio:overview' child.pk %}">
+          Хавтас руу буцах
+        </a>
       </div>
     {% endif %}
   </div>
@@ -68,8 +146,18 @@
           fetch(box.dataset.progressUrl, {credentials: "same-origin"})
             .then(function (response) { return response.json(); })
             .then(function (data) {
-              document.getElementById("job-status").innerHTML =
-                "<strong>" + data.status_display + "</strong>";
+              document.getElementById("job-status").textContent =
+                data.status_display;
+
+              // The bar leaves its indeterminate state as soon as the job
+              // reports a real figure.
+              var bar = document.getElementById("job-bar");
+              if (bar && data.progress) {
+                bar.style.width = data.progress + "%";
+                bar.parentNode.classList.remove("jobbar--waiting");
+                bar.parentNode.setAttribute("aria-valuenow", data.progress);
+              }
+
               // Reloading rather than building the result in JavaScript:
               // the server already renders every state of this screen, and
               // two renderers would drift.

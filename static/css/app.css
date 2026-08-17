@@ -8,15 +8,19 @@
    RFP §13, §619, §17. */
 
 :root {
-  --ink: #1f2430;
-  --muted: #6b7280;
-  --faint: #9aa1ad;
-  --brand: #5b4bd6;
-  --brand-ink: #4a3cc0;
-  --brand-soft: #eeecfd;
-  --bg: #f6f7fb;
+  /* Warm neutrals. The ground was #f6f7fb — a cool grey that reads as an
+     office tool. RFP §13 asks for "дулаан өнгө төрх", and the difference
+     between a cool and a warm off-white is most of what separates the two
+     without touching a single accent. */
+  --ink: #26242b;
+  --muted: #77737d;
+  --faint: #a6a3ae;
+  --brand: #6c63ff;
+  --brand-ink: #574fd6;
+  --brand-soft: #eeecff;
+  --bg: #f8f7f4;
   --card: #ffffff;
-  --line: #e6e8ef;
+  --line: #e9e6e0;
   --ok: #15803d;
   --ok-soft: #e7f6ec;
   --warn: #b45309;
@@ -24,36 +28,71 @@
   --danger: #b3261e;
   --danger-soft: #fdecea;
   --radius: 18px;
-  --shadow: 0 1px 2px rgba(20, 22, 40, .04), 0 6px 16px rgba(20, 22, 40, .045);
+  --radius-sm: 14px;
+  /* One control radius for every input, select, textarea and button, so a
+     field and the button beside it are never a pixel apart. Was 11px in four
+     separate rules. */
+  --radius-ctl: 12px;
+  /* 48px controls (approved 2026-08-17). The 16px font floor is unchanged
+     and still what stops mobile Safari zooming; this is the box around it. */
+  --control-h: 48px;
+  --shadow: 0 1px 2px rgba(37, 35, 42, .04), 0 6px 16px rgba(37, 35, 42, .045);
+
+  /* -------------------------------------------------------- spacing scale
+     Six steps. Every padding, gap and margin comes from these, because the
+     audit found eight literal values between 8px and 18px doing the work of
+     three — close enough to look accidental rather than rhythmic. */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
+
+  /* ----------------------------------------------------------- type scale
+     Five steps plus a numeral size, replacing nine ad-hoc font sizes.
+
+     Heading line-height is 1.35 rather than the 1.2 a Latin-only design
+     would use: Mongolian compounds are long — "Хөгжлийн үнэлгээний явц",
+     "Бүртгэлийн дугаар" — and wrap onto two lines at almost every width,
+     so headings have to survive wrapping without the lines touching. */
+  --t-page: 1.5rem;
+  --t-title: 1.05rem;
+  --t-body: .94rem;
+  --t-meta: .8rem;
+  --t-label: .78rem;
+  --t-stat: 1.75rem;
+  --lh-head: 1.35;
 
   /* The mockups tint each statistic a different colour so a teacher can find
-     the one they want by shape rather than by reading all six. */
-  --c-blue: #3b82f6;   --c-blue-soft: #e8f0fe;
-  --c-green: #16a34a;  --c-green-soft: #e6f6ec;
-  --c-amber: #ea8c1a;  --c-amber-soft: #fdf1e0;
-  --c-sky: #0ea5e9;    --c-sky-soft: #e4f4fd;
-  --c-pink: #e0518c;   --c-pink-soft: #fceaf2;
-  --c-teal: #0d9488;   --c-teal-soft: #e0f5f2;
+     the one they want by shape rather than by reading all six. Retuned to
+     the approved pastel direction: mint, sky, warm yellow, peach. */
+  --c-blue: #4f7fe0;   --c-blue-soft: #e6eeFB;
+  --c-green: #2f9367;  --c-green-soft: #bfe8d4;
+  --c-amber: #b7861f;  --c-amber-soft: #f8e6a0;
+  --c-sky: #2b87bf;    --c-sky-soft: #cde7f7;
+  --c-pink: #cf6a52;   --c-pink-soft: #f8d5c2;
+  --c-teal: #1d8f88;   --c-teal-soft: #cfeeeb;
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  /* RFP §13 asks for "хүүхдэд ээлтэй, дулаан өнгө төрх". A flat grey reads
-     as an office tool; four soft radial washes give the page warmth without
-     adding a single image to load or costing anything at 3G (§17).
-     Measured from the client's own prototype rather than invented — the
-     hues and opacities are its numbers. */
+  /* RFP §13 asks for "хүүхдэд ээлтэй, дулаан өнгө төрх". This was four
+     radial washes at .09–.14 opacity, which read as warmth on an empty
+     screen and as noise behind a dense one — the audit's problem 9.
+
+     The warmth now comes from the ground itself (#faf9f6 rather than a cool
+     grey), so two washes at half the old opacity are enough to keep the
+     page from looking flat. Still no image, still nothing to load (§17). */
   background:
-    radial-gradient(80% 50% at 10% -5%, rgba(99, 102, 241, .14) 0%, transparent 55%),
-    radial-gradient(60% 40% at 92% 3%, rgba(236, 72, 153, .10) 0%, transparent 50%),
-    radial-gradient(50% 60% at 88% 92%, rgba(20, 184, 166, .09) 0%, transparent 50%),
-    radial-gradient(45% 35% at 4% 88%, rgba(245, 158, 11, .09) 0%, transparent 50%),
+    radial-gradient(70% 45% at 8% -5%, rgba(108, 99, 255, .07) 0%, transparent 55%),
+    radial-gradient(55% 40% at 95% 2%, rgba(207, 106, 82, .05) 0%, transparent 52%),
     var(--bg);
   background-attachment: fixed;
   color: var(--ink);
+  /* System stack: renders Mongolian Cyrillic correctly on every target
+     platform, costs no request and needs no build step. A webfont would
+     mean either a CDN — ruled out by the stack decision — or self-hosting
+     about 200KB for glyphs the device already has. */
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: var(--t-body);
   line-height: 1.5;
   /* Nothing in this application is meant to be read by scrolling the page
      sideways. Wide content — the §6.3 grid, long registration numbers —
@@ -105,7 +144,7 @@ a { color: var(--brand); }
 .nav { display: flex; flex-direction: column; gap: 2px; }
 .nav a {
   display: flex; align-items: center; gap: 11px;
-  padding: 10px 12px; border-radius: 11px;
+  padding: 10px 12px; border-radius: var(--radius-ctl);
   color: var(--muted); text-decoration: none; font-size: .92rem;
   font-weight: 500;
 }
@@ -136,8 +175,11 @@ a { color: var(--brand); }
   display: flex; align-items: center; justify-content: space-between;
   gap: 16px; margin-bottom: 22px; flex-wrap: wrap;
 }
-.topbar h1 { font-size: 1.5rem; margin: 0; letter-spacing: -.01em; }
-.topbar .lede { color: var(--muted); font-size: .9rem; margin: 3px 0 0; }
+.topbar h1 {
+  font-size: var(--t-page); margin: 0;
+  letter-spacing: -.01em; line-height: var(--lh-head);
+}
+.topbar .lede { color: var(--muted); font-size: var(--t-meta); margin: 3px 0 0; }
 .topbar .who {
   display: flex; align-items: center; gap: 10px;
   background: var(--card); border: 1px solid var(--line);
@@ -161,7 +203,7 @@ a { color: var(--brand); }
     white-space: nowrap;
     display: flex; align-items: center; min-height: 44px;
   }
-  .btn { padding: 13px 18px; min-height: 44px; }
+  .btn { padding: 13px 18px; }
   .main { padding: 18px 14px 40px; }
   /* Which group and year is context, not navigation — it costs a whole row
      on a phone and the page header already says where you are. */
@@ -175,7 +217,10 @@ a { color: var(--brand); }
   border-radius: var(--radius); padding: 18px;
   box-shadow: var(--shadow);
 }
-.card h2 { font-size: 1.05rem; margin: 0 0 14px; }
+.card h2 {
+  font-size: var(--t-title); margin: 0 0 var(--s3);
+  line-height: var(--lh-head);
+}
 
 /* Everything stacked in the content column sits the same distance apart,
    whatever kind of block it is.
@@ -222,7 +267,12 @@ a { color: var(--brand); }
    looks like, and no template has to know. */
 .tile > * { flex: 1 0 100%; min-width: 0; }
 .tile > .tile__icon { flex: 0 0 auto; }
-.tile > .tile__icon + * { flex: 1 1 auto; }
+/* `1 1 0` rather than `1 1 auto`: with `auto` the basis is the content's own
+   width, so at four columns the label "Хариуцсан хүүхэд" was wider than the
+   space left beside a 44px icon and the whole block wrapped underneath it —
+   the icon then sat alone on its own line in every tile. A zero basis lets
+   it shrink and wrap its text instead of wrapping itself. */
+.tile > .tile__icon + * { flex: 1 1 0; }
 .tile__icon {
   width: 44px; height: 44px; border-radius: 13px; flex-shrink: 0;
   display: grid; place-items: center;
@@ -266,7 +316,7 @@ a { color: var(--brand); }
 .feed { display: flex; flex-direction: column; gap: 2px; }
 .feed__item {
   display: flex; gap: 11px; align-items: flex-start;
-  padding: 10px 8px; border-radius: 11px;
+  padding: 10px 8px; border-radius: var(--radius-ctl);
   text-decoration: none; color: inherit;
 }
 a.feed__item:hover { background: var(--bg); }
@@ -321,18 +371,29 @@ input[type=search], input[type=number], input[type=password], select, textarea {
      that no longer fits the screen. This is the single most consequential
      number in the file for RFP §17 — CLAUDE.md §5 says it has to work on a
      phone before it works anywhere else. */
-  width: 100%; padding: 10px 12px; font-size: 16px; font-family: inherit;
-  border: 1px solid var(--line); border-radius: 11px;
+  width: 100%; padding: 12px 14px; font-size: 16px; font-family: inherit;
+  min-height: var(--control-h);
+  border: 1px solid var(--line); border-radius: var(--radius-ctl);
   background: var(--card); color: var(--ink);
 }
+/* One focus treatment for every interactive thing on the page. It was on
+   fields only, so a keyboard user tabbing through a row of buttons had
+   nothing to follow. `:focus-visible` keeps it off mouse clicks. */
 input:focus, select:focus, textarea:focus {
   outline: 2px solid var(--brand); outline-offset: 1px; border-color: var(--brand);
+}
+a:focus-visible, button:focus-visible, summary:focus-visible,
+.btn:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px;
 }
 textarea { min-height: 90px; resize: vertical; }
 
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 11px 18px; border: 0; border-radius: 11px;
+  padding: 11px 18px; border: 0; border-radius: var(--radius-ctl);
+  /* 44px at every width, not only under 900px — a mouse target this size is
+     no worse and the rule was duplicated in the mobile block. */
+  min-height: 44px;
   background: var(--brand); color: #fff; font-size: .93rem; font-weight: 600;
   cursor: pointer; text-decoration: none; font-family: inherit;
 }
@@ -346,7 +407,7 @@ textarea { min-height: 90px; resize: vertical; }
 .filters label { margin: 0 0 5px; }
 .filters > div { flex: 1 1 150px; min-width: 0; }
 
-.msg { padding: 12px 14px; border-radius: 11px; margin-bottom: 16px;
+.msg { padding: 12px 14px; border-radius: var(--radius-ctl); margin-bottom: 16px;
        font-size: .9rem; }
 .msg--error { background: var(--danger-soft); color: var(--danger); }
 .msg--ok { background: var(--ok-soft); color: var(--ok); }
@@ -469,14 +530,25 @@ dl.facts--cols dd { margin: 2px 0 0; font-weight: 600; }
    Dark stays available, because the mockup's own sidebar carries a
    "Гэрэлтэй горим" switch — the design expects the choice to be the user's.
    It applies only when they ask for it. */
+/* Retuned alongside the light palette in the same change, deliberately: a
+   half-migrated theme gives dark text on a dark panel, which is worse than
+   no dark theme at all. The neutrals carry the same warmth as the light
+   ones — a brown-leaning near-black rather than a blue-leaning one. */
 :root[data-theme="dark"] {
-  --ink: #e9ebf0; --muted: #9aa1ad; --faint: #6b7280;
-  --bg: #14161c; --card: #1c1f27; --line: #2c303b;
-  --brand: #7c6cf0; --brand-ink: #6a58e8; --brand-soft: #262244;
+  --ink: #e9e6e0; --muted: #a09ca6; --faint: #74717a;
+  --bg: #16151a; --card: #1f1e24; --line: #302e36;
+  --brand: #8b83ff; --brand-ink: #7a71f5; --brand-soft: #2a2748;
   --ok-soft: #16301f; --warn-soft: #33260f; --danger-soft: #3a2321;
   --shadow: 0 1px 2px rgba(0, 0, 0, .35);
-  --c-blue-soft: #16233b; --c-green-soft: #12301d; --c-amber-soft: #33260f;
-  --c-sky-soft: #10293a; --c-pink-soft: #331a26; --c-teal-soft: #0e2b28;
+  /* The accent tints are pastels chosen to sit on white; used as-is here
+     they glow. Each is replaced by a deep version of the same hue, with the
+     saturated icon colour lightened so it still reads against it. */
+  --c-blue: #7ba3ee;   --c-blue-soft: #1c2740;
+  --c-green: #5cc394;  --c-green-soft: #14312a;
+  --c-amber: #d8ab4d;  --c-amber-soft: #332a12;
+  --c-sky: #63b0dd;    --c-sky-soft: #142c3c;
+  --c-pink: #e39179;   --c-pink-soft: #35211c;
+  --c-teal: #4cbdb5;   --c-teal-soft: #102e2c;
 }
 /* Kept light in the dark theme on purpose: the logo is a full-colour mark
    drawn on white, so a dark tile behind it reads as a hole in the sidebar. */
@@ -667,3 +739,1675 @@ dl.facts--cols dd { margin: 2px 0 0; font-weight: 600; }
     width: 2px; height: 18px;
   }
 }
+
+/* ============================================================ components
+   Added 2026-08-16 with the presentation-layer redesign (docs/UI_AUDIT.md).
+
+   Everything below backs a Django include in templates/components/. The
+   audit's finding was that the vocabulary existed only as CSS classes, so
+   each template hand-wrote the markup and the shapes drifted. Markup and
+   style now arrive together. */
+
+/* ---------------------------------------------------------- flat section
+   The audit's problem 6: every block on every screen was a bordered white
+   card, so a stack of them gave the eye no entry point. A section is the
+   flat alternative — a title and its content on the page ground, with
+   whitespace doing the grouping instead of a border. Cards are kept for
+   things that genuinely are objects; sections carry the rest. */
+
+.section { margin-top: var(--s6); }
+.section__head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: var(--s3); margin-bottom: var(--s3); flex-wrap: wrap;
+}
+.section__head h2 {
+  margin: 0; font-size: var(--t-title); line-height: var(--lh-head);
+}
+.section__head a {
+  font-size: var(--t-meta); font-weight: 600; text-decoration: none;
+}
+.section__head a:hover { text-decoration: underline; }
+/* A quiet caption under a section title, for the one line of context that
+   would otherwise become another muted paragraph nobody styled. */
+.section__note { color: var(--muted); font-size: var(--t-meta); margin: 0; }
+
+/* --------------------------------------------------------- profile hero
+   The child's own header — the audit's problem 5 and 7, and the brief's
+   §12 "this is my child's story".
+
+   Deliberately not a .card: it is the subject of the page, not one panel
+   among several. A soft tinted field, the photograph large and
+   rounded-rectangular as teacher-child-profile-360.jpeg draws it, the name
+   at page-title size. The parent's view of their own child was previously
+   a 96px round avatar in a generic card while the teacher got the 132px
+   hero — backwards for a product whose emotional centre is the family. */
+
+.profile {
+  display: flex; gap: var(--s5); align-items: flex-start; flex-wrap: wrap;
+  padding: var(--s5);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(90% 120% at 0% 0%, var(--brand-soft) 0%, transparent 70%),
+    var(--card);
+  border: 1px solid var(--line);
+}
+.profile__photo {
+  width: 128px; height: 128px; border-radius: 20px; object-fit: cover;
+  flex-shrink: 0; font-size: 2.6rem;
+  background: var(--card);
+  /* A white ring so the photograph reads as a print laid on the tint
+     rather than a hole cut into it. */
+  box-shadow: 0 0 0 4px var(--card), var(--shadow);
+}
+.profile__body { flex: 1 1 300px; min-width: 0; }
+.profile__name {
+  margin: 0; font-size: var(--t-page); line-height: var(--lh-head);
+  letter-spacing: -.01em;
+}
+.profile__meta {
+  display: flex; gap: var(--s2); flex-wrap: wrap;
+  margin: var(--s3) 0 0;
+}
+/* Two columns, or four where there is room — never three.
+   `auto-fit` with a minimum gave three columns at 1024px, which left the
+   fourth fact alone on a second row with a third of the hero empty beside
+   it: the same 3+1 orphan the shortcut grid had at 375px. Four facts only
+   ever divide evenly by two or four, so those are the only counts offered. */
+.profile__facts {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s3) var(--s5); margin: var(--s4) 0 0;
+}
+@media (min-width: 1200px) {
+  .profile__facts { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.profile__facts > div { min-width: 0; }
+.profile__facts dt { color: var(--muted); font-size: var(--t-label); }
+.profile__facts dd {
+  margin: 2px 0 0; font-weight: 600; font-size: var(--t-body);
+  overflow-wrap: anywhere;
+}
+.profile__actions {
+  display: flex; gap: var(--s2); flex-wrap: wrap; margin-top: var(--s4);
+}
+
+@media (max-width: 560px) {
+  /* Centred on a phone: at 375px a 128px photo beside text leaves about
+     190px for a Mongolian full name, which wraps to three lines. Stacked
+     and centred, the name gets the full width and the screen opens with
+     the child rather than with a cramped row. */
+  .profile { flex-direction: column; align-items: center; text-align: center;
+             padding: var(--s5) var(--s4); }
+  .profile__body { flex: 1 1 auto; width: 100%; }
+  .profile__meta, .profile__actions { justify-content: center; }
+  .profile__facts { text-align: left; }
+}
+
+/* -------------------------------------------------------------- timeline
+   Recent observations on the child profile, as the 360° mockup draws them:
+   a date rail on the left, the entry beside it, an optional thumbnail. */
+
+.timeline { display: flex; flex-direction: column; gap: var(--s1); }
+.timeline__item {
+  display: flex; gap: var(--s3); align-items: flex-start;
+  padding: var(--s3); border-radius: var(--radius-sm);
+  text-decoration: none; color: inherit;
+}
+a.timeline__item:hover { background: var(--card); }
+.timeline__date {
+  flex: 0 0 auto; width: 52px; text-align: center;
+  padding: var(--s2) 0; border-radius: 10px;
+  background: var(--brand-soft); color: var(--brand);
+  font-size: var(--t-label); font-weight: 700; line-height: 1.2;
+}
+.timeline__date span { display: block; font-size: 1.15rem; }
+/* These are spans, not divs: the whole row is one <a>, and a block-level
+   element inside a phrasing-content link is invalid HTML that browsers
+   silently repair by splitting the anchor. `display: block` gives the same
+   layout from markup that parses. */
+.timeline__body { flex: 1; min-width: 0; display: block; }
+.timeline__title { display: block; font-weight: 600; font-size: var(--t-body); }
+.timeline__meta {
+  display: block; color: var(--muted); font-size: var(--t-meta); margin-top: 2px;
+}
+.timeline__thumb {
+  width: 56px; height: 56px; border-radius: 10px; object-fit: cover;
+  flex-shrink: 0;
+}
+
+/* ------------------------------------------------------------ photo strip
+   "Сүүлийн мөчүүд". A scrolling row on a phone, a grid from 560px up.
+   Every image here is reached through an observation the reader is allowed
+   to see — the visibility gate is in the selector, never in this file. */
+
+.moments {
+  display: grid; gap: var(--s2);
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+}
+.moments a {
+  display: block; aspect-ratio: 1; border-radius: var(--radius-sm);
+  overflow: hidden; background: var(--bg);
+}
+.moments img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.moments a:hover img { opacity: .92; }
+
+/* --------------------------------------------------------------- ages 2–5
+   RFP §4.3 gives each year of age its own page. Four chips, the filled ones
+   linked, the empty ones plainly waiting rather than missing. */
+
+.ages { display: grid; gap: var(--s2);
+        grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); }
+.ages a, .ages span {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: var(--s3) var(--s2); border-radius: var(--radius-sm);
+  text-decoration: none; text-align: center;
+  font-size: var(--t-meta); min-height: 44px; justify-content: center;
+}
+.ages a {
+  background: var(--brand-soft); color: var(--brand); font-weight: 700;
+}
+.ages span {
+  background: var(--bg); color: var(--faint);
+  border: 1px dashed var(--line);
+}
+.ages strong { font-size: var(--t-body); display: block; }
+
+/* --------------------------------------------------------- mobile header
+   Parent only. The desktop sidebar is replaced on a phone by this bar plus
+   the bottom navigation below — a deliberate mobile layout rather than a
+   folded desktop one, which the audit listed as problem 1. */
+
+.mhead { display: none; }
+
+/* ----------------------------------------------------- bottom navigation
+   overview-mobile-app-screens.jpeg draws the parent app with a fixed bar of
+   four or five destinations. Rendered on every parent screen, shown only
+   under 900px.
+
+   Not given to the teacher shell: a teacher's nav is six entries deep and
+   desktop-first, and a bar of six 62px items at 375px is a mis-tap
+   generator. That shell keeps the scrolling strip. */
+
+.bottomnav { display: none; }
+
+@media (max-width: 900px) {
+  .shell--parent .sidebar { display: none; }
+
+  .shell--parent .mhead {
+    display: flex; align-items: center; gap: var(--s3);
+    padding: var(--s3) var(--s4);
+    background: var(--card); border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 20;
+  }
+  .mhead__name { font-weight: 700; font-size: var(--t-body); line-height: 1.2; }
+  .mhead__sub { color: var(--muted); font-size: var(--t-label); }
+  .mhead__end { margin-left: auto; display: flex; align-items: center;
+                gap: var(--s2); }
+
+  .shell--parent .bottomnav {
+    display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    background: var(--card); border-top: 1px solid var(--line);
+    /* Clears the iOS home indicator. Without it the last row of the bar
+       sits under the system gesture area and the taps go to Safari. */
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .bottomnav a {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 3px;
+    min-height: 56px; padding: var(--s2) 2px;
+    text-decoration: none; color: var(--muted);
+    font-size: .68rem; font-weight: 600; line-height: 1.2; text-align: center;
+    position: relative;
+  }
+  .bottomnav a[aria-current] { color: var(--brand); }
+  .bottomnav .ic { width: 22px; height: 22px; }
+  .bottomnav .count {
+    position: absolute; top: 6px; left: 50%; margin-left: 4px;
+    background: var(--danger); color: #fff;
+    font-size: .6rem; font-weight: 700; line-height: 1;
+    padding: 3px 5px; border-radius: 999px;
+  }
+  /* The bar floats over the page, so the last card would otherwise sit
+     underneath it and be unreachable. */
+  .shell--parent .main { padding-bottom: 84px; }
+}
+
+/* --------------------------------------------------------- greeting card
+   The parent home and profile open on a warm block rather than a plain
+   heading — overview-mobile-app-screens.jpeg leads every variant this way.
+   One coloured element per screen, which is the 20% of the 80/20. */
+
+.greet {
+  border-radius: var(--radius);
+  padding: var(--s5);
+  background: linear-gradient(135deg, var(--brand) 0%, #8b83ff 100%);
+  color: #fff;
+}
+.greet h2 {
+  margin: 0; font-size: 1.15rem; line-height: var(--lh-head); color: #fff;
+}
+.greet p { margin: var(--s2) 0 0; font-size: var(--t-meta); opacity: .9; }
+
+/* ------------------------------------------------------------ quick row
+   The teacher's three primary daily actions, the brief's §13. Flat, wide
+   targets rather than another row of cards. */
+
+.actions { display: grid; gap: var(--s2);
+           grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.actions a {
+  display: flex; align-items: center; gap: var(--s3);
+  padding: var(--s3) var(--s4); border-radius: var(--radius-sm);
+  background: var(--card); border: 1px solid var(--line);
+  text-decoration: none; color: var(--ink);
+  font-size: var(--t-body); font-weight: 600; min-height: 44px;
+}
+.actions a:hover { border-color: var(--brand); color: var(--brand); }
+.actions .ic { color: var(--brand); }
+
+/* ------------------------------------------------------------ empty state
+   Two kinds, and the audit found one treatment serving both. `.empty` stays
+   for "nothing yet"; this adds the action so a first-run screen offers the
+   way out of itself instead of just reporting the absence. */
+
+.empty__action { margin-top: var(--s3); }
+.empty p { margin: 0; }
+
+/* ------------------------------------------------------- component tidy-ups
+   Small rules the new includes depend on, kept here rather than inlined so
+   the markup stays free of presentation. */
+
+/* A statistic that is also a link. Without this the tile inherits the
+   default link colour and underline and stops looking like a tile. */
+a.tile { text-decoration: none; color: inherit; }
+a.tile:hover { border-color: var(--brand); }
+
+/* The feed row's icon slot, smaller than a statistic's. */
+.tile__icon--sm { width: 34px; height: 34px; border-radius: 10px; }
+
+.tile__value { font-size: var(--t-stat); }
+.tile__label { font-size: var(--t-meta); }
+
+@media (max-width: 900px) {
+  /* The parent's phone header already names the person, so the identity
+     pill in the page header is the same fact twice — and it costs a whole
+     row above the content the family came to read. */
+  .shell--parent .topbar .who { display: none; }
+  .shell--parent .topbar { margin-bottom: var(--s4); }
+}
+
+/* A heading inside a card, below its title — "Үнэлгээ дутуу хүүхдүүд" under
+   the progress bar. Replaces an inline style that set the size and both
+   margins at the point of use. */
+.subhead {
+  font-size: var(--t-meta); font-weight: 700;
+  margin: var(--s5) 0 var(--s2); line-height: var(--lh-head);
+}
+
+/* --------------------------------------------------- phone refinements
+   Measured at 375px in Chromium against the seeded demo child, not
+   reasoned about: each of these was visible in the screenshot. */
+
+@media (max-width: 560px) {
+  /* The hero was about 1000px tall — the whole first screen went on the
+     header, so the family scrolled past their child to reach anything
+     about them. A smaller photograph and tighter rhythm bring the first
+     section above the fold. */
+  .profile { gap: var(--s4); padding: var(--s4); }
+  .profile__photo { width: 104px; height: 104px; border-radius: 18px;
+                    font-size: 2.1rem; }
+  .profile__facts { gap: var(--s3) var(--s4); margin-top: var(--s3); }
+
+  /* Two buttons side by side rather than two full-width rows: both labels
+     fit at 375px and it saves a whole row. */
+  .profile__actions .btn { flex: 1 1 0; min-width: 0; }
+
+  /* Four shortcuts at minmax(104px) gave three columns and left the fourth
+     alone on its own row. Two columns is 2×2 and balanced; the parent home's
+     six become 3×2 for the same reason. */
+  .quick { grid-template-columns: repeat(2, 1fr); }
+
+  /* Sections need less air between them on a phone than on a desktop. */
+  .section { margin-top: var(--s5); }
+}
+
+/* --------------------------------------------------- dashboard rhythm
+   Both measured in Chromium against the seeded demo group, not reasoned
+   about. */
+
+/* Two panels of unequal length were stretched to the same height by the
+   grid's default `stretch`, so the shorter one carried a block of empty
+   white as tall as the difference — three parent notes beside seven
+   observations left about 400px of nothing. */
+.grid--2 { align-items: start; }
+
+/* A section title and a card title inside it were both --t-title, so the
+   grouping read flat: "Сүүлийн үйл явдал" looked like a sibling of
+   "Сүүлийн ажиглалт" rather than its parent. One step up is enough. */
+.section__head h2 { font-size: 1.15rem; font-weight: 700; }
+
+@media (max-width: 560px) {
+  /* minmax(168px, 1fr) plus a 16px gap needs 352px and a 375px screen has
+     347px of content width, so four statistics became four full-width rows
+     — about 400px of scrolling for four numbers. Two columns fits and is
+     what the mockup's phone sheets draw. */
+  .grid--tiles { grid-template-columns: repeat(2, 1fr); gap: var(--s2); }
+  .tile { padding: var(--s3); }
+  .tile__value { font-size: 1.4rem; }
+  .section__head h2 { font-size: 1.05rem; }
+}
+
+@media (max-width: 900px) {
+  /* The teacher's phone chrome was about 800px before any content: a
+     two-line brand, the nav strip, and the theme switch each on its own
+     row. Brand and switch now share a row and the switch drops its label,
+     which halves it. */
+  .sidebar { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  /* Explicit order, because source order alone does not give the layout:
+     the nav is a full-width flex item and sits between the brand and the
+     switch in the markup, so without this the switch wraps past it onto a
+     third row of its own — which is the row this was meant to remove. */
+  .sidebar .brand { order: 1; flex: 1 1 auto; min-width: 0; }
+  .theme { order: 2; margin-left: auto; padding: var(--s2); min-width: 0; }
+  .sidebar .nav { order: 3; flex: 1 0 100%; }
+  .sidebar .brand__name { font-size: .84rem; }
+  /* Visually gone, still the checkbox's accessible name — a switch whose
+     label is `display: none` announces itself as nothing at all. */
+  .theme span:not(.theme__track) {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip-path: inset(50%); white-space: nowrap;
+  }
+}
+
+/* ---------------------------------------------------------- child card
+   The home screen's way in to the child profile.
+
+   Deliberately not `.profile`: the home links to the profile, and a family
+   two taps apart from the same 128px hero twice would think they had not
+   moved. This one is a row — avatar, name, badges, an explicit hint — and
+   the whole thing is the target, which also makes it a comfortably large
+   one on a phone. */
+
+.childcard {
+  display: flex; align-items: center; gap: var(--s4);
+  padding: var(--s4);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(80% 130% at 0% 0%, var(--brand-soft) 0%, transparent 68%),
+    var(--card);
+  border: 1px solid var(--line);
+  text-decoration: none; color: inherit;
+}
+.childcard:hover { border-color: var(--brand); }
+.childcard .avatar--lg {
+  width: 72px; height: 72px; font-size: 1.5rem; border-radius: 20px;
+  box-shadow: 0 0 0 3px var(--card);
+}
+.childcard__body { min-width: 0; display: block; }
+.childcard__name {
+  display: block; font-weight: 700; font-size: 1.15rem;
+  line-height: var(--lh-head);
+}
+.childcard__meta {
+  display: flex; gap: var(--s2); flex-wrap: wrap; margin-top: var(--s2);
+}
+/* Says what tapping does. The card is a link with no underline and no
+   button, so without this the affordance is carried by nothing but the
+   hover border — which a phone does not have. */
+.childcard__hint {
+  display: block; margin-top: var(--s2);
+  color: var(--brand); font-size: var(--t-meta); font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  /* The "Бүгдийг харах" link in a section header is a 19px target — the
+     last one on the parent screens under the 44px floor (RFP §629-635).
+     Padding rather than a font-size bump, so the type scale holds and only
+     the hit area grows. `baseline` alignment is swapped for `center`
+     because a taller link would otherwise drag its heading off the line. */
+  /* `.card__head a` is the same "Бүгдийг харах" link in the older card
+     pattern — the section version was fixed on 2026-08-16 and this one was
+     missed, because no redesigned screen used it until the dashboard's two
+     panels. */
+  .section__head, .card__head { align-items: center; }
+  .section__head a, .card__head a {
+    display: inline-flex; align-items: center;
+    min-height: 44px; padding: 0 var(--s2); margin-right: calc(var(--s2) * -1);
+  }
+}
+
+@media (min-width: 901px) {
+  /* The guardian's screens are a single column of full-width blocks, which
+     at 1440px left the greeting, the child card and each announcement
+     stretched across about 1100px with their content crammed into the
+     left third. A reading-width cap makes the desktop view look intended
+     rather than merely un-narrowed.
+
+     Parent only. The teacher's shell is a data tool — the children list and
+     the §6.3 assessment grid want every pixel — so it stays full width. */
+  .shell--parent .main {
+    max-width: 1000px;
+    margin-inline: auto;
+    width: 100%;
+  }
+}
+
+/* ================================================================ forms
+   Added 2026-08-16 with the observation-form redesign. §5.1's entry form is
+   the highest-frequency teacher workflow, and it was one flat stack of
+   eighteen controls with inline styles holding the layout together.
+
+   The rule here is the same one the dashboard follows: sections group, and
+   whitespace does the grouping. A card per section would give five bordered
+   rectangles down a phone screen and make a long form feel longer. */
+
+/* A reading width, not the whole screen. At 1440px the form ran to about
+   1080px, which put a date field and a nine-word label at opposite ends of
+   the same row and made every textarea a very wide, very short letterbox.
+   680px keeps a line of Mongolian at a comfortable measure and the label
+   next to the thing it labels. */
+.formpage { max-width: 680px; }
+
+/* ------------------------------------------------------- child context
+   Which child this record is about, pinned above the first field. On a form
+   reached from four different screens, "who am I writing about" is the one
+   question the page must never leave open. */
+
+.subject {
+  display: flex; align-items: center; gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.subject__body { min-width: 0; }
+.subject__name {
+  display: block; font-weight: 700; font-size: var(--t-body);
+  line-height: var(--lh-head);
+}
+.subject__meta {
+  display: flex; gap: var(--s2); flex-wrap: wrap; margin-top: 3px;
+}
+
+/* ------------------------------------------------------------ sections */
+
+/* Section rhythm. Was --s6 (32px) between sections plus a 32px gap above
+   each field, which on a form of six sections is most of a phone screen
+   spent on air. --s5 reads as a break without becoming a gap. */
+.formsec { margin-top: var(--s5); }
+.formsec__head {
+  display: flex; align-items: baseline; gap: var(--s2);
+  padding-bottom: var(--s1);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: var(--s1);
+}
+.formsec__num {
+  flex: 0 0 auto;
+  width: 22px; height: 22px; border-radius: 7px;
+  display: grid; place-items: center;
+  background: var(--brand-soft); color: var(--brand);
+  font-size: .72rem; font-weight: 700;
+  /* baseline alignment on a flex item with a fixed box drifts; nudge it
+     back onto the heading's line. */
+  align-self: center;
+}
+.formsec__head h2 {
+  margin: 0; font-size: var(--t-title); line-height: var(--lh-head);
+}
+.formsec__note {
+  margin: 0 0 var(--s3); color: var(--muted); font-size: var(--t-meta);
+}
+
+/* -------------------------------------------------------------- fields */
+
+.field { margin-top: var(--s3); }
+.field > label {
+  display: block; margin: 0 0 var(--s2);
+  font-weight: 600; font-size: var(--t-meta); color: var(--ink);
+}
+/* "Optional" rather than "required": most of this form is optional, so
+   marking the exceptions is quieter than marking the majority. */
+.field__opt { color: var(--faint); font-weight: 500; }
+.field__help {
+  margin: var(--s2) 0 0; color: var(--muted); font-size: var(--t-label);
+}
+
+/* Two fields on a row above 640px, stacked below — the date and the type
+   are short and belong together. */
+.fieldgrid { display: grid; gap: 0 var(--s4); grid-template-columns: 1fr; }
+@media (min-width: 640px) {
+  .fieldgrid { grid-template-columns: 1fr 1fr; }
+}
+
+/* Textareas start at roughly three lines and grow. 84px was two blank lines
+   of dead space per field, and there are six of them — about 300px of empty
+   box between the first field and the save button.
+
+   `field-sizing: content` lets a supporting browser grow the box as the
+   teacher types, so a long note is comfortable without every short one
+   being tall. Ignored elsewhere, where the min-height still applies. */
+.field textarea {
+  min-height: 76px;
+  field-sizing: content;
+}
+
+/* --------------------------------------------------- domains + levels
+   §5.1: one observation may touch several domains, each with an optional
+   level. The pairing is the point — the domain says *what*, the level says
+   *how far* — so they sit on one row and the level is plainly secondary. */
+
+.domainlist {
+  display: grid; gap: var(--s2); margin-top: var(--s3);
+  grid-template-columns: 1fr;
+}
+@media (min-width: 780px) {
+  .domainlist { grid-template-columns: 1fr 1fr; }
+}
+.domainrow {
+  display: flex; align-items: center; gap: var(--s3);
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--card);
+  min-height: 44px;
+}
+/* Ticked rows tint, so what this observation covers is legible at a glance
+   instead of by reading every checkbox. */
+.domainrow:has(input:checked) {
+  border-color: var(--brand); background: var(--brand-soft);
+}
+.domainrow input[type=checkbox] { width: 20px; height: 20px; flex-shrink: 0; }
+.domainrow label {
+  margin: 0; flex: 1; min-width: 0; font-size: var(--t-meta); font-weight: 600;
+  cursor: pointer;
+}
+.domainrow select {
+  width: auto; max-width: 148px; flex-shrink: 0;
+  padding: var(--s1) var(--s2); font-size: var(--t-label);
+  min-height: 34px;
+}
+
+/* ---------------------------------------------------------- visibility
+   Whether the family sees this. Distinct enough to be noticed, calm enough
+   not to read as a warning — it is an ordinary editorial choice, not a
+   destructive action. */
+
+.choice {
+  display: flex; gap: var(--s3); align-items: flex-start;
+  padding: var(--s3) var(--s4); margin-top: var(--s3);
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--card);
+  cursor: pointer;
+}
+.choice:has(input:checked) { border-color: var(--brand); background: var(--brand-soft); }
+.choice input[type=checkbox] {
+  width: 20px; height: 20px; flex-shrink: 0; margin-top: 2px;
+}
+.choice__body { min-width: 0; }
+.choice__title {
+  display: block; font-weight: 600; font-size: var(--t-body);
+  line-height: var(--lh-head);
+}
+.choice__note {
+  display: block; margin-top: 3px;
+  color: var(--muted); font-size: var(--t-label);
+}
+
+/* --------------------------------------------------------------- media
+   The attach screen needs a saved observation, so on a new form there is
+   nothing to upload to yet and this says so rather than showing an input
+   that cannot work. */
+
+.mediabox {
+  margin-top: var(--s3); padding: var(--s4);
+  border: 1px dashed var(--line); border-radius: var(--radius-sm);
+  background: var(--card);
+}
+.mediabox p { margin: 0; color: var(--muted); font-size: var(--t-meta); }
+.mediabox .btn { margin-top: var(--s3); }
+.mediashots {
+  display: grid; gap: var(--s2); margin: 0 0 var(--s3);
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+}
+.mediashots img {
+  width: 100%; aspect-ratio: 1; object-fit: cover;
+  border-radius: 10px; display: block;
+}
+
+/* --------------------------------------------------------- form actions
+   Not sticky. A bar pinned to the bottom of a phone viewport covers the
+   field being typed into once the keyboard is up, which is the moment it
+   would matter most. The form is short enough to reach its own end. */
+
+.formactions {
+  display: flex; gap: var(--s3); flex-wrap: wrap;
+  margin-top: var(--s6); padding-top: var(--s4);
+  border-top: 1px solid var(--line);
+}
+.formactions .btn { min-height: 44px; }
+@media (max-width: 480px) {
+  /* Full width and primary first: on a phone the save action should be the
+     widest thing on the screen at the point of deciding. */
+  .formactions { flex-direction: column; }
+  .formactions .btn { width: 100%; }
+}
+
+/* The per-domain level select was `--t-label` (12.5px) when this form was
+   first built — below the 16px floor, so mobile Safari zooms the viewport on
+   focus and does not zoom back out. That is the Day 10 defect exactly, in a
+   control that had not existed then; the guard in test_responsive.py only
+   inspects the `input[type=text]` block, so it did not catch it. Found with
+   scripts/screenshots/probe.mjs at 375px. */
+.domainrow select { font-size: 16px; min-height: 40px; max-width: 160px; }
+
+@media (max-width: 560px) {
+  /* At 375px a 16px select beside a wrapping Mongolian domain name leaves
+     the label about 110px and breaks it over three lines. Below this width
+     the row becomes two: the tick and the name, then the level full width —
+     which also gives the select a comfortable 44px target. */
+  .domainrow { flex-wrap: wrap; }
+  .domainrow select {
+    flex: 1 0 100%; max-width: none; margin-top: var(--s2); min-height: 44px;
+  }
+}
+
+/* The level only means something once its domain is ticked, so an unticked
+   row does not carry one. Nine domains each showing an idle "Түвшин —"
+   select made the picker about 2000px tall on a phone and turned the
+   commonest case — tick two domains, rate neither — into a long scroll past
+   seven controls nobody was going to touch.
+
+   Written as `:not(:has(…))` rather than hiding by default and revealing on
+   check, deliberately: a browser without `:has()` support drops the whole
+   rule as invalid, and the select stays visible — the behaviour before this
+   change. The inverse spelling would hide it with no way back. */
+.domainrow:not(:has(input:checked)) select { display: none; }
+
+/* Native checkboxes paint in the OS accent — system blue on macOS and iOS —
+   which is the one colour in the product that belongs to nothing. One
+   property retints them to the brand and leaves the native control, its
+   keyboard behaviour and its screen-reader semantics untouched. */
+input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
+
+/* ====================================================== observation list
+   Added 2026-08-16, the screen the entry form returns to. It was a stack of
+   `.card`s, one per observation, each with its own border and shadow — which
+   at twenty rows reads as twenty separate things rather than one list.
+
+   One markup, two presentations: a grid row that lines up into columns on a
+   desktop and folds into a card on a phone. Not a `<table>`, because the
+   same markup has to do both and reflowing table cells into a card costs
+   the semantics that made a table worth using. Each row is a link and the
+   list is a list, which is what a screen reader needs to hear. */
+
+.filterbar {
+  display: grid; gap: var(--s3);
+  grid-template-columns: 1fr 1fr;
+  padding: var(--s4);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.filterbar label {
+  margin: 0 0 var(--s1); font-size: var(--t-label); color: var(--muted);
+}
+.filterbar__go { grid-column: 1 / -1; display: flex; gap: var(--s2); }
+.filterbar__go .btn { flex: 1; min-height: 44px; }
+@media (min-width: 700px) { .filterbar { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1100px) {
+  .filterbar { grid-template-columns: repeat(6, 1fr); align-items: end; }
+  .filterbar__go { grid-column: auto; }
+  .filterbar__go .btn { flex: 0 0 auto; }
+}
+
+/* ------------------------------------------------------------- the list */
+
+.obslist { display: flex; flex-direction: column; gap: var(--s2); }
+
+/* Column captions, desktop only. `aria-hidden` because each row already
+   names its own values — a screen reader reading "Огноо" before every date
+   would be worse, not better. */
+.obshead { display: none; }
+@media (min-width: 860px) {
+  .obshead {
+    display: grid; gap: var(--s3);
+    grid-template-columns: 92px 1fr auto 92px;
+    padding: 0 var(--s4) var(--s2);
+    font-size: var(--t-label); font-weight: 600; color: var(--muted);
+  }
+}
+
+.obsrow {
+  display: grid; gap: var(--s2) var(--s3);
+  /* One column on a phone. It was `1fr auto`, and the `auto` track sizes to
+     its content — the "Эцэг эхэд харагдана" badge is about 190px, which at
+     375px left the title roughly 60px and broke it one letter per line.
+     Below 860px the flags and the edit link stack underneath instead. */
+  grid-template-columns: 1fr;
+  padding: var(--s3) var(--s4);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.obsrow:hover { border-color: var(--brand); }
+
+/* The row's main target: everything except the edit link. A separate <a>
+   rather than one wrapping the lot, because an anchor inside an anchor is
+   invalid and browsers silently split it. */
+.obsrow__main {
+  display: grid; gap: var(--s2) var(--s3);
+  grid-template-columns: 56px 1fr;
+  align-items: start;
+  text-decoration: none; color: inherit; min-width: 0;
+}
+.obsrow__date {
+  grid-row: span 2;
+  text-align: center; padding: var(--s2) 0; border-radius: 10px;
+  background: var(--brand-soft); color: var(--brand);
+  font-size: var(--t-label); font-weight: 700; line-height: 1.2;
+}
+.obsrow__date b { display: block; font-size: 1.1rem; }
+.obsrow__body { min-width: 0; }
+.obsrow__title {
+  display: block; font-weight: 600; font-size: var(--t-body);
+  line-height: var(--lh-head);
+  /* `break-word`, not `anywhere`: Mongolian compounds should wrap at spaces
+     and only split when a single word genuinely cannot fit. `anywhere`
+     splits eagerly and reads as broken text. */
+  overflow-wrap: break-word;
+}
+.obsrow__meta {
+  display: block; margin-top: 2px;
+  color: var(--muted); font-size: var(--t-meta);
+}
+.obsrow__chips {
+  grid-column: 2; display: flex; gap: var(--s1); flex-wrap: wrap;
+}
+.obsrow__flags {
+  display: flex; gap: var(--s2); align-items: center; flex-wrap: wrap;
+}
+.obsrow__edit {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 44px; min-width: 44px; padding: 0 var(--s3);
+  border-radius: var(--radius-sm); border: 1px solid var(--line);
+  background: var(--card); color: var(--muted);
+  text-decoration: none; font-size: var(--t-label); font-weight: 600;
+}
+.obsrow__edit:hover { color: var(--brand); border-color: var(--brand); }
+
+/* The photo marker. An icon alone says nothing to a screen reader, so the
+   word rides along in .sr-only and the icon carries it visually. */
+.obsrow__photo {
+  display: inline-flex; align-items: center; gap: 4px;
+  color: var(--muted); font-size: var(--t-label);
+}
+
+@media (min-width: 860px) {
+  /* Columns line up with .obshead above. */
+  .obsrow {
+    grid-template-columns: 1fr auto 92px;
+    align-items: center; padding: var(--s3) var(--s4);
+  }
+  .obsrow__main { grid-template-columns: 92px 1fr; align-items: center; }
+  .obsrow__date { grid-row: auto; }
+  .obsrow__chips { grid-column: 2; }
+}
+
+/* A quiet strip rather than a card: it is a caption for the list below, not
+   an object in its own right. */
+.listmeta {
+  display: flex; justify-content: space-between; gap: var(--s3);
+  flex-wrap: wrap; align-items: baseline;
+  margin-top: var(--s5); margin-bottom: var(--s2);
+  color: var(--muted); font-size: var(--t-meta);
+}
+
+/* ---------------------------------------------------------- pagination */
+
+.pager {
+  display: flex; gap: var(--s2); align-items: center; justify-content: center;
+  flex-wrap: wrap; margin-top: var(--s5);
+}
+.pager a, .pager span {
+  min-height: 44px; display: inline-flex; align-items: center;
+  padding: 0 var(--s4); border-radius: var(--radius-sm);
+  font-size: var(--t-meta); text-decoration: none;
+}
+.pager a { border: 1px solid var(--line); color: var(--ink); font-weight: 600; }
+.pager a:hover { border-color: var(--brand); color: var(--brand); }
+.pager__now { color: var(--muted); }
+
+/* A grid item defaults to `min-width: auto` — its content's intrinsic
+   minimum — and `input[type=date]` carries a wide one in Chromium (its
+   spinner and placeholder text). In a two-column filter grid at 375px the
+   track is about 145px and the input's minimum is larger, so it pushed a
+   few pixels past the viewport and the *page* scrolled sideways.
+
+   Exactly the mechanism recorded for `.table-wrap` above, in a different
+   container. Six pixels, invisible on a laptop, and enough to make a phone
+   scroll horizontally on the teacher's most-used list. */
+.filterbar > div { min-width: 0; }
+.filterbar select, .filterbar input { width: 100%; min-width: 0; }
+
+/* The filter disclosure. Native `<details>`, so it needs no script and keeps
+   its own keyboard and screen-reader behaviour; the marker is replaced
+   because the default triangle sits oddly against a 44px row. */
+.filterwrap { margin-top: var(--s4); }
+.filterwrap > summary {
+  display: flex; align-items: center; gap: var(--s2);
+  min-height: 44px; padding: 0 var(--s4);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: var(--t-meta); font-weight: 600; color: var(--ink);
+  cursor: pointer; list-style: none;
+}
+.filterwrap > summary::-webkit-details-marker { display: none; }
+.filterwrap > summary:hover { border-color: var(--brand); color: var(--brand); }
+.filterwrap > summary .ic { color: var(--muted); }
+.filterwrap > summary::after {
+  content: "▾"; margin-left: auto; color: var(--muted);
+  transition: transform .15s;
+}
+.filterwrap[open] > summary::after { transform: rotate(180deg); }
+.filterwrap[open] > summary {
+  border-bottom-left-radius: 0; border-bottom-right-radius: 0;
+  border-bottom-color: transparent;
+}
+.filterwrap[open] .filterbar {
+  border-top-left-radius: 0; border-top-right-radius: 0;
+}
+
+/* A grid item fills its track by default, which made "Засах" a full-width
+   button on a phone — as loud as the row it belongs to. It is the secondary
+   action; it sizes to its own label and sits at the start of the line. */
+.obsrow__edit { justify-self: start; }
+@media (min-width: 860px) { .obsrow__edit { justify-self: stretch; } }
+
+/* ======================================================== children list
+   Added 2026-08-16. Same construction as the observation list next door: one
+   grid row per child that lines up into columns on a desktop and folds into
+   a card on a phone, from one piece of markup.
+
+   It replaced a nine-column table — code, sex, date of birth, age, group,
+   guardians, status and two buttons — which needed a horizontal scroll on a
+   phone and gave every column the same weight. A teacher opening this screen
+   is looking for one child by name, so the name and the face carry it and
+   the rest is secondary. */
+
+/* Search stays visible at every width: it is how this screen is used. The
+   other six filters live behind the disclosure below it. */
+.searchbar { display: flex; gap: var(--s2); margin-top: var(--s4); }
+.searchbar input[type=search] { flex: 1; min-width: 0; }
+.searchbar .btn { flex: 0 0 auto; min-height: 44px; }
+
+.kidlist { display: flex; flex-direction: column; gap: var(--s2); }
+
+.kidhead { display: none; }
+@media (min-width: 900px) {
+  .kidhead {
+    display: grid; gap: var(--s3);
+    grid-template-columns: 1fr 72px 150px auto 84px;
+    align-items: center;
+    padding: 0 var(--s4) var(--s2);
+    font-size: var(--t-label); font-weight: 600; color: var(--muted);
+  }
+}
+
+.kidrow {
+  display: grid; gap: var(--s2) var(--s3);
+  grid-template-columns: 1fr;
+  padding: var(--s3) var(--s4);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  align-items: center;
+}
+.kidrow:hover { border-color: var(--brand); }
+
+/* The row's main target. A separate <a> from the edit link beside it —
+   an anchor inside an anchor is invalid and browsers split it silently. */
+.kidrow__main {
+  display: flex; align-items: center; gap: var(--s3);
+  min-width: 0; text-decoration: none; color: inherit;
+}
+.kidrow__id { min-width: 0; }
+.kidrow__name {
+  display: block; font-weight: 600; font-size: var(--t-body);
+  line-height: var(--lh-head); overflow-wrap: break-word;
+}
+.kidrow__code {
+  display: block; margin-top: 1px;
+  color: var(--muted); font-size: var(--t-label);
+}
+
+/* On a phone these are labelled inline; the desktop grid drops the label
+   because the column header above already says it. */
+.kidrow__cell { font-size: var(--t-meta); color: var(--ink); min-width: 0; }
+.kidrow__cell b {
+  color: var(--muted); font-weight: 600; font-size: var(--t-label);
+}
+@media (min-width: 900px) { .kidrow__cell b { display: none; } }
+
+.kidrow__flags { display: flex; gap: var(--s2); flex-wrap: wrap; }
+
+.kidrow__edit {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; min-width: 44px; padding: 0 var(--s3);
+  border-radius: var(--radius-sm); border: 1px solid var(--line);
+  background: var(--card); color: var(--muted);
+  text-decoration: none; font-size: var(--t-label); font-weight: 600;
+  justify-self: start;
+}
+.kidrow__edit:hover { color: var(--brand); border-color: var(--brand); }
+
+@media (min-width: 900px) {
+  .kidrow { grid-template-columns: 1fr 72px 150px auto 84px; }
+  .kidrow__edit { justify-self: stretch; }
+}
+
+/* The row's main link wrapped a 40px avatar and inherited its height — four
+   pixels under the §629-635 floor, on the primary target of the screen a
+   teacher taps most. */
+.kidrow__main { min-height: 44px; }
+
+/* Phone density. Age and group ran as two labelled rows, about 70px per
+   child, so a 375px screen held two children — on the screen whose whole
+   job is finding one among twenty. They share a line instead, and the edit
+   button goes: the row already opens the child, and "Засах" is on that page
+   one tap further in. A per-row secondary button is the "nested tiny action"
+   the brief rules out, and it doubled the card's height. */
+@media (max-width: 899px) {
+  .kidrow {
+    grid-template-columns: 1fr auto;
+    gap: var(--s1) var(--s2);
+    padding: var(--s3);
+  }
+  /* Flex, not grid. Grid puts each child in its own track, which pushed
+     the age and the group to opposite edges of the card with the separator
+     stranded between them. Flex lets them flow as one phrase —
+     "5 нас · Наранцэцэг" — and wrap only when they genuinely do not fit. */
+  .kidrow { display: flex; flex-wrap: wrap; align-items: center; }
+  .kidrow__main { flex: 1 0 100%; }
+  .kidrow__cell { color: var(--muted); }
+  .kidrow__flags { flex: 1 0 100%; }
+  /* The edit button goes: the row already opens the child, "Засах" is on
+     that page one tap further in, and a per-row secondary button is the
+     "nested tiny action" the brief rules out — it also doubled the card. */
+  .kidrow__edit { display: none; }
+}
+/* The separator belongs to the phone layout only: on a desktop the two are
+   distinct columns under their own headings. */
+.kidrow__sep { display: none; }
+@media (max-width: 899px) { .kidrow__sep { display: inline; color: var(--faint); } }
+
+/* ================================================== teacher child detail
+   Added 2026-08-16. Deliberately *not* the parent profile: that screen opens
+   on a large photograph and reads as a family keepsake. This one is a work
+   surface — a compact identity strip, the actions immediately under it, and
+   the working record below.
+
+   Two columns from 1100px: the record on the left, the reference facts on
+   the right. Below that one column, because at 1024px a 300px sidebar
+   leaves the observation titles about 400px and they start wrapping. */
+
+.work { display: grid; gap: var(--s5); align-items: start; }
+@media (min-width: 1100px) {
+  .work { grid-template-columns: minmax(0, 1fr) 320px; gap: var(--s5) var(--s6); }
+}
+
+/* --------------------------------------------------------- identity bar
+   Everything a teacher needs to know they are on the right child, in one
+   row: face, name, and the badges that change how they should act — age,
+   group, a status that is not active, a missing guardian. */
+
+.idbar {
+  display: flex; align-items: center; gap: var(--s4); flex-wrap: wrap;
+  padding: var(--s4);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.idbar__photo {
+  width: 76px; height: 76px; border-radius: 18px; object-fit: cover;
+  flex-shrink: 0; font-size: 1.7rem;
+}
+.idbar__body { flex: 1 1 220px; min-width: 0; }
+.idbar__name {
+  margin: 0; font-size: 1.3rem; line-height: var(--lh-head);
+  letter-spacing: -.01em; overflow-wrap: break-word;
+}
+.idbar__meta { display: flex; gap: var(--s2); flex-wrap: wrap; margin-top: var(--s2); }
+
+/* The health note. Prominent because a teacher has to see it before they
+   act, amber rather than red because an allergy is a standing fact about a
+   child, not an error. */
+.notice {
+  display: flex; gap: var(--s3); align-items: flex-start;
+  padding: var(--s3) var(--s4); margin-top: var(--s3);
+  border-radius: var(--radius-sm);
+  background: var(--warn-soft); color: var(--warn);
+  font-size: var(--t-meta);
+}
+.notice strong { flex-shrink: 0; }
+
+/* ------------------------------------------------------------- actions */
+
+.workbar { display: flex; gap: var(--s2); flex-wrap: wrap; margin-top: var(--s4); }
+.workbar .btn { min-height: 44px; }
+
+/* --------------------------------------------------------- side panels
+   Quieter than a card: a hairline and a heading, so the reference column
+   does not compete with the record beside it. */
+
+.panel {
+  padding: var(--s4);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.panel + .panel { margin-top: var(--s4); }
+.panel__title {
+  margin: 0 0 var(--s3); font-size: var(--t-meta); font-weight: 700;
+  color: var(--muted); text-transform: uppercase; letter-spacing: .04em;
+}
+.panel dl { display: grid; gap: var(--s2); margin: 0; font-size: var(--t-meta); }
+.panel dl > div { display: flex; justify-content: space-between; gap: var(--s3); }
+.panel dt { color: var(--muted); flex-shrink: 0; }
+.panel dd { margin: 0; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+
+/* --------------------------------------------------- assessment snapshot
+   §6.4's levels as they stand, one row per domain. Not a chart: the brief
+   rules out radar and analytics, and a teacher reading this wants "where is
+   this child now" rather than a trend line. */
+
+.levels { display: flex; flex-direction: column; gap: var(--s2); }
+.levelrow {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--s3); padding: var(--s2) 0;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--t-meta);
+}
+.levelrow:last-child { border-bottom: 0; }
+.levelrow__name { min-width: 0; overflow-wrap: break-word; }
+.levelrow__term { color: var(--faint); font-size: var(--t-label); }
+
+/* ---------------------------------------------------------- age chips
+   The four §4.3 pages plus About Me, as a route in — this screen is the
+   hub, not the archive, so nothing from those pages is reproduced here. */
+
+.agerow { display: grid; gap: var(--s2);
+          grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); }
+.agerow a, .agerow span {
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  padding: var(--s2); border-radius: var(--radius-sm);
+  text-decoration: none; text-align: center;
+  font-size: var(--t-label); min-height: 44px; justify-content: center;
+}
+.agerow a { background: var(--brand-soft); color: var(--brand); font-weight: 700; }
+.agerow span { background: var(--bg); color: var(--faint); border: 1px dashed var(--line); }
+.agerow b { display: block; font-size: var(--t-meta); }
+
+/* The domain's colour belongs to the domain, so it rides as a dot on the
+   name; the badge beside it is the level and carries the level's own
+   colour. Tinting the level badge by domain made "1. Дэмжлэг шаардлагатай"
+   blue and "3." red — a severity scale that runs backwards and does not
+   exist. Decorative only: the domain is named in words right beside it. */
+.levelrow__dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  margin-right: 4px; vertical-align: baseline; flex-shrink: 0;
+}
+
+/* ================================================== assessment group grid
+   RFP §6.3, redesigned 2026-08-16.
+
+   **This screen is one domain across the whole group, not a children ×
+   domains matrix** — `selectors.group_grid(user, group, term, domain)` takes
+   a single domain and the view resolves it from `?domain=`. So the shape is
+   three columns, not nine, and it never needed the horizontal scroll it had.
+
+   The level control was a `<select>`: open it, scroll it, pick, repeat
+   eighteen times. It is now four radio chips carrying the same field name
+   and the same values, so one tap records a level and every option is
+   visible without opening anything. The data contract is unchanged —
+   `level_<enrollment_id>` posting a level id, empty meaning untouched. */
+
+.gridrow {
+  display: grid; gap: var(--s2) var(--s3);
+  grid-template-columns: 1fr;
+  padding: var(--s3) var(--s4);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+/* Not yet assessed. A quiet amber edge rather than a filled row: §6.3 wants
+   incomplete work findable, and eighteen tinted rows on a fresh term would
+   be a screen of warnings for a teacher who has simply not started. */
+.gridrow--todo { border-left: 3px solid var(--c-amber); }
+
+.gridrow__who { display: flex; align-items: center; gap: var(--s3); min-width: 0; }
+.gridrow__name {
+  font-weight: 600; font-size: var(--t-body); line-height: var(--lh-head);
+  overflow-wrap: break-word; text-decoration: none; color: inherit;
+}
+.gridrow__name:hover { color: var(--brand); }
+.gridrow__prev {
+  color: var(--muted); font-size: var(--t-label); white-space: nowrap;
+}
+
+/* ------------------------------------------------------------ the chips
+   A real radio group: keyboard arrows move between options and a screen
+   reader announces "3 of 4" without any ARIA. The input is visually hidden
+   rather than removed, so focus still lands on it and `:focus-visible`
+   draws a ring on the label beside it. */
+
+.levelset {
+  display: flex; gap: var(--s2); flex-wrap: wrap;
+  border: 0; padding: 0; margin: 0;
+  /* Both are required. A `<fieldset>` is forced to `min-width: min-content`
+     by every browser, so inside a grid track it refuses to shrink and
+     overlaps the columns before it — which is exactly what it did at 1440px
+     until 2026-08-16. `min-inline-size` is the one that actually wins. */
+  min-width: 0; min-inline-size: 0;
+}
+.levelchip { position: relative; }
+.levelchip input {
+  position: absolute; opacity: 0; width: 100%; height: 100%;
+  margin: 0; cursor: pointer;
+}
+.levelchip span {
+  display: flex; align-items: center; gap: 6px;
+  min-height: 44px; padding: 0 var(--s3);
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--card); color: var(--muted);
+  font-size: var(--t-label); font-weight: 600; line-height: 1.2;
+  cursor: pointer;
+}
+.levelchip b {
+  /* The numeral in the level's own colour — a dot of meaning that survives
+     being printed in greyscale because the number is right there. */
+  display: grid; place-items: center;
+  width: 20px; height: 20px; border-radius: 6px; flex-shrink: 0;
+  font-size: .72rem; color: #fff;
+}
+.levelchip input:hover + span { border-color: var(--brand); color: var(--ink); }
+.levelchip input:checked + span {
+  border-color: currentColor; color: var(--ink); font-weight: 700;
+}
+.levelchip input:focus-visible + span {
+  outline: 2px solid var(--brand); outline-offset: 2px;
+}
+/* The "not assessed" option, which posts an empty value exactly as the old
+   select's "— сонгоогүй —" did. */
+.levelchip--none b { background: var(--line); color: var(--muted); }
+
+@media (min-width: 980px) {
+  .gridrow {
+    grid-template-columns: minmax(0, 1fr) 220px 300px;
+    align-items: center;
+  }
+  .gridrow__prev { text-align: right; }
+  .levelset { justify-content: flex-end; flex-wrap: nowrap; }
+}
+
+/* The legend above the list: what 1 to 4 mean, once, instead of on every
+   chip of every row. */
+.levelkey {
+  display: flex; gap: var(--s3); flex-wrap: wrap; align-items: center;
+  font-size: var(--t-label); color: var(--muted);
+}
+.levelkey span { display: inline-flex; align-items: center; gap: 5px; }
+.levelkey i {
+  width: 12px; height: 12px; border-radius: 4px; display: inline-block;
+}
+
+.gridsave {
+  position: sticky; bottom: 0; z-index: 5;
+  display: flex; gap: var(--s3); align-items: center; flex-wrap: wrap;
+  margin-top: var(--s4); padding: var(--s3) var(--s4);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 -2px 12px rgba(37, 35, 42, .06);
+}
+.gridsave .btn { min-height: 44px; }
+.gridsave__note { color: var(--muted); font-size: var(--t-meta); }
+@media (max-width: 560px) {
+  .gridsave { padding: var(--s3); }
+  .gridsave .btn { flex: 1; }
+}
+
+/* The child's name is the row's link to their full assessment record; at
+   20px it was a text-sized target on a screen used with a thumb. */
+.gridrow__name { display: inline-flex; align-items: center; min-height: 44px; }
+
+/* The sticky save bar floats over the list, so the last row sat underneath
+   it and could not be reached — the failure the brief's §10 names. The form
+   ends with clearance equal to the bar. */
+.gridform { padding-bottom: 84px; }
+
+/* Number-only chips, at every width.
+   Labels like "Хүлээгдэж буй түвшнээс ахисан" are 29 characters; four of
+   them plus a clear option is about 900px of chips, which wrapped to two
+   rows per child and pushed the whole group to 8000px on a phone. Worse, it
+   made the one thing this screen is for impossible: reading a column of
+   levels down the group.
+
+   The numeral is the control. It is text, not colour (§14) — the full label
+   rides in `.levelchip__text` for a screen reader and the legend above the
+   list spells out all four for everyone else. */
+.levelchip span {
+  padding: 0 var(--s2); gap: 0; min-width: 46px; justify-content: center;
+}
+.levelchip__text {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
+.levelchip b { width: 24px; height: 24px; font-size: .82rem; }
+.levelset { gap: var(--s2); }
+
+@media (max-width: 700px) {
+  .levelset { gap: var(--s1); }
+  .gridrow { padding: var(--s3); gap: var(--s2); }
+  .gridrow__prev { font-size: var(--t-label); }
+}
+
+/* ==================================================== portfolio overview
+   RFP §4.1–§4.3, redesigned 2026-08-16. The child's own record — About Me,
+   the birthdays, and a page per year from two to five.
+
+   Shared by both roles and deliberately so: §2.3 lets a family write here
+   too, and `editable_age_profile_fields` splits only `parent_note` from
+   `teacher_note`. So this is one screen with one set of actions, and the
+   only thing that changes per role is the wording of the introduction.
+
+   Not the parent profile and not the teacher child detail. Those are a
+   summary and a workspace; this is the record itself, so it reads as a book:
+   a cover, then the sections in the order a life is written down. */
+
+.folio {
+  display: flex; gap: var(--s5); align-items: center; flex-wrap: wrap;
+  padding: var(--s5);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(120% 140% at 0% 0%, var(--brand-soft) 0%, transparent 62%),
+    radial-gradient(90% 120% at 100% 100%, var(--c-amber-soft) 0%, transparent 55%),
+    var(--card);
+  border: 1px solid var(--line);
+}
+.folio__photo {
+  width: 120px; height: 120px; border-radius: 22px; object-fit: cover;
+  flex-shrink: 0; font-size: 2.5rem; background: var(--card);
+  box-shadow: 0 0 0 5px var(--card), var(--shadow);
+}
+.folio__body { flex: 1 1 260px; min-width: 0; }
+.folio__name {
+  margin: 0; font-size: 1.45rem; line-height: var(--lh-head);
+  letter-spacing: -.01em; overflow-wrap: break-word;
+}
+
+/* Birth facts as a quiet line, not four statistic tiles. The zodiac sign and
+   the year animal are §4.2 keepsake details — they belong in a portfolio and
+   they do not belong on a dashboard. */
+.folio__facts {
+  display: flex; gap: var(--s2) var(--s4); flex-wrap: wrap;
+  margin: var(--s3) 0 0; font-size: var(--t-meta); color: var(--muted);
+}
+.folio__facts b { color: var(--ink); font-weight: 600; }
+.folio__actions { display: flex; gap: var(--s2); flex-wrap: wrap; margin-top: var(--s4); }
+
+@media (max-width: 560px) {
+  .folio { flex-direction: column; align-items: center; text-align: center;
+           padding: var(--s5) var(--s4); }
+  .folio__body { flex: 1 1 auto; width: 100%; }
+  .folio__facts { justify-content: center; }
+  .folio__actions { justify-content: center; }
+}
+
+/* A plain white surface. Deliberately not `.panel`: that class exists for
+   the child detail's sidebar and carries a `dl` rule that pushes labels and
+   values to opposite edges — correct for a column of short facts, wrong for
+   prose, and it collided height with weight when reused here. */
+.surface {
+  padding: var(--s4);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+/* ------------------------------------------------------------- About Me
+   The first story element (§4.1), so it gets the widest measure and real
+   prose rather than a definition list squeezed into two columns. */
+
+.about { display: grid; gap: var(--s4); }
+.about__entry { min-width: 0; }
+.about__entry dt {
+  color: var(--muted); font-size: var(--t-label); font-weight: 600;
+  margin-bottom: 2px;
+}
+.about__entry dd {
+  margin: 0; font-size: var(--t-body); line-height: 1.6;
+  overflow-wrap: break-word;
+}
+@media (min-width: 780px) {
+  /* Two columns for the short facts, full width for the prose. */
+  .about { grid-template-columns: 1fr 1fr; }
+  .about__entry--wide { grid-column: 1 / -1; }
+}
+
+/* ------------------------------------------------------- the four ages
+   §4.3 gives each year from two to five its own page. Four cards, each
+   saying whether it holds anything and opening its page either way — an
+   empty year is one waiting to be written, not one that does not exist. */
+
+.years { display: grid; gap: var(--s3);
+         grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.yearcard {
+  display: flex; flex-direction: column; gap: var(--s2);
+  padding: var(--s4); border-radius: var(--radius);
+  background: var(--card); border: 1px solid var(--line);
+  text-decoration: none; color: inherit;
+  min-height: 44px;
+}
+.yearcard:hover { border-color: var(--brand); }
+.yearcard--empty { background: var(--bg); border-style: dashed; }
+.yearcard__head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--s2);
+}
+.yearcard__age {
+  font-size: 1.05rem; font-weight: 700; line-height: var(--lh-head);
+}
+.yearcard__facts {
+  display: grid; gap: 3px; margin: 0; font-size: var(--t-label);
+  color: var(--muted);
+}
+.yearcard__facts b { color: var(--ink); font-weight: 600; }
+.yearcard__go {
+  margin-top: auto; padding-top: var(--s2);
+  color: var(--brand); font-size: var(--t-label); font-weight: 600;
+}
+
+/* --------------------------------------------------------- birthdays
+   §4.2, and the only place a birthday note can be written — the endpoint is
+   POST-only and redirects back here. So this stays an inline editor; it just
+   stops looking like a stack of bare inputs.
+
+   One form per birthday, exactly as before: they save independently, and a
+   single form around all of them would make one save overwrite the rest. */
+
+.bday { display: flex; flex-direction: column; gap: var(--s2); }
+.bdayrow {
+  display: grid; gap: var(--s2) var(--s3);
+  grid-template-columns: 1fr;
+  padding: var(--s3) var(--s4);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.bdayrow__when {
+  display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap;
+}
+.bdayrow__age {
+  display: inline-grid; place-items: center;
+  min-width: 58px; padding: 3px var(--s2); border-radius: 999px;
+  background: var(--c-amber-soft); color: var(--c-amber);
+  font-size: var(--t-label); font-weight: 700;
+}
+.bdayrow__date { color: var(--muted); font-size: var(--t-label); }
+.bdayrow__edit { display: flex; gap: var(--s2); align-items: center; }
+.bdayrow__edit input { flex: 1; min-width: 0; }
+.bdayrow__edit .btn { flex: 0 0 auto; min-height: 44px; }
+
+@media (min-width: 780px) {
+  .bdayrow { grid-template-columns: 190px 1fr; align-items: center; }
+}
+
+/* ================================================== announcements (§8.1)
+   Added 2026-08-16. One screen, two readings: a family asking "is there
+   anything new", a teacher asking "what did I send, to whom, and who has
+   read it".
+
+   Not an inbox. There is no sender to reply to, no thread and no unread
+   count competing for attention — a kindergarten posts a notice and a family
+   reads it. So this is a list of notices, not a mail client. */
+
+.notes { display: flex; flex-direction: column; gap: var(--s2); }
+
+.note {
+  display: grid; gap: var(--s1) var(--s3);
+  grid-template-columns: auto 1fr;
+  padding: var(--s3) var(--s4);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  text-decoration: none; color: inherit;
+}
+.note:hover { border-color: var(--brand); }
+
+/* Unread. Three signals, none of them colour alone (§13): a filled dot, a
+   heavier title, and the word "Шинэ" in the meta line. A family scanning on
+   a phone gets it from the weight; a screen reader gets it from the text. */
+.note--new { border-left: 3px solid var(--brand); }
+.note__dot {
+  width: 9px; height: 9px; border-radius: 50%; margin-top: 7px;
+  background: var(--brand); flex-shrink: 0;
+}
+.note__dot--read { background: transparent; }
+
+.note__body { min-width: 0; }
+.note__title {
+  display: block; font-size: var(--t-body); font-weight: 600;
+  line-height: var(--lh-head); overflow-wrap: break-word;
+}
+.note--new .note__title { font-weight: 700; }
+.note__meta {
+  display: flex; gap: var(--s1) var(--s2); flex-wrap: wrap; align-items: center;
+  margin-top: 3px; color: var(--muted); font-size: var(--t-label);
+}
+.note__preview {
+  display: block; margin-top: var(--s1);
+  color: var(--muted); font-size: var(--t-meta); line-height: 1.5;
+}
+/* A read notice recedes rather than greys out — it is still readable, just
+   no longer asking for attention. */
+.note:not(.note--new) .note__title { color: var(--ink); }
+.note:not(.note--new) { background: transparent; }
+
+/* ------------------------------------------------------------- reading
+   The body of one notice. A single measured column, because this is the one
+   place in the product where somebody reads a paragraph rather than scans a
+   row. */
+
+.notice-read { max-width: 68ch; }
+.notice-read__head { margin-bottom: var(--s4); }
+.notice-read__title {
+  margin: 0; font-size: 1.35rem; line-height: var(--lh-head);
+  letter-spacing: -.01em; overflow-wrap: break-word;
+}
+.notice-read__meta {
+  display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center;
+  margin-top: var(--s2); color: var(--muted); font-size: var(--t-meta);
+}
+.notice-read__body {
+  font-size: var(--t-body); line-height: 1.7; overflow-wrap: break-word;
+}
+.notice-read__body p { margin: 0 0 var(--s3); }
+
+/* Attachments, through the signed-media path like every other file. */
+.notice-files {
+  display: grid; gap: var(--s2); margin-top: var(--s4);
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+.notice-files img {
+  width: 100%; aspect-ratio: 4 / 3; object-fit: cover;
+  border-radius: var(--radius-sm); display: block;
+  background: var(--bg);
+}
+
+/* Who has read it — §8.1's "хэн уншсаныг харах". A list, not a table: it is
+   two fields per row and a table made it scroll sideways on a phone. */
+.readers { display: flex; flex-direction: column; gap: var(--s1); }
+.readerrow {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--s3); padding: var(--s2) 0;
+  border-bottom: 1px solid var(--line); font-size: var(--t-meta);
+}
+.readerrow:last-child { border-bottom: 0; }
+.readerrow__when { color: var(--muted); font-size: var(--t-label);
+                   white-space: nowrap; }
+
+/* ====================================================== reports (§10, §549)
+   Added 2026-08-17. Two screens: ask for a PDF, then wait for it.
+
+   The request screen was a select, a second select and seven checkboxes with
+   no explanation of what any section contained. Almost nobody wants a
+   partial portfolio, so the sections are now shown as *what you will get*,
+   with the checkboxes kept for the person who does want to narrow it. */
+
+.reportcard {
+  padding: var(--s4);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+/* The included sections, as a checklist rather than a form. Each row is a
+   real checkbox — the backend still takes `sections` — but it reads as a
+   contents page. */
+.sectionlist { display: flex; flex-direction: column; gap: var(--s1); }
+.sectionrow {
+  display: flex; align-items: center; gap: var(--s3);
+  min-height: 44px; padding: var(--s2) var(--s3);
+  border-radius: var(--radius-sm); cursor: pointer;
+}
+.sectionrow:hover { background: var(--bg); }
+.sectionrow input { width: 20px; height: 20px; flex-shrink: 0; }
+.sectionrow span { font-size: var(--t-body); }
+
+/* ------------------------------------------------------------- progress
+   §549, §626 — the screen has to say the system is working, not sit blank.
+   A determinate bar where the job reports a percentage, and a quiet pulse
+   while it is still queued. */
+
+.jobstate {
+  display: flex; gap: var(--s4); align-items: flex-start;
+  padding: var(--s5) var(--s4);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.jobstate__icon {
+  width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0;
+  display: grid; place-items: center;
+}
+.jobstate__icon--busy { background: var(--brand-soft); color: var(--brand); }
+.jobstate__icon--done { background: var(--ok-soft); color: var(--ok); }
+.jobstate__icon--fail { background: var(--danger-soft); color: var(--danger); }
+.jobstate__body { flex: 1; min-width: 0; }
+.jobstate__title {
+  margin: 0; font-size: var(--t-title); line-height: var(--lh-head);
+}
+.jobstate__note {
+  margin: var(--s2) 0 0; color: var(--muted); font-size: var(--t-meta);
+}
+
+.jobbar {
+  height: 8px; border-radius: 999px; background: var(--bg);
+  overflow: hidden; margin-top: var(--s3);
+}
+.jobbar__fill {
+  height: 100%; border-radius: 999px; background: var(--brand);
+  transition: width .4s ease;
+}
+/* Queued: no percentage yet, so a moving band rather than a false zero. */
+.jobbar--waiting .jobbar__fill {
+  width: 40%; animation: jobslide 1.4s ease-in-out infinite;
+}
+@keyframes jobslide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jobbar--waiting .jobbar__fill { animation: none; width: 100%; opacity: .35; }
+}
+
+/* Past reports. A list, not a table — four short fields per row. */
+.joblist { display: flex; flex-direction: column; gap: var(--s2); }
+.jobrow {
+  display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap;
+  padding: var(--s3) var(--s4);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  text-decoration: none; color: inherit; min-height: 44px;
+}
+.jobrow:hover { border-color: var(--brand); }
+.jobrow__when { font-weight: 600; font-size: var(--t-meta); }
+.jobrow__meta { color: var(--muted); font-size: var(--t-label); }
+.jobrow__go { margin-left: auto; color: var(--brand);
+              font-size: var(--t-label); font-weight: 600; }
+
+@media (min-width: 820px) {
+  /* Seven sections in one column ran the request form to about 1300px on a
+     desktop, so the primary action sat below the fold on the screen whose
+     whole purpose is pressing it. Two columns halve that; the rows stay
+     44px, so nothing about the touch target changes. */
+  .sectionlist {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: var(--s1) var(--s4);
+  }
+}
+
+/* ------------------------------------------------- teacher shell footer
+   Who is signed in, and the way out. At the foot of the desktop sidebar;
+   on a phone it rides along in the scrolling nav strip. */
+
+.whoami {
+  display: flex; align-items: center; gap: var(--s2);
+  margin-top: auto; padding: var(--s2) var(--s3);
+  background: var(--bg); border-radius: var(--radius-sm);
+  min-height: 44px;
+}
+.whoami__body { min-width: 0; flex: 1; }
+.whoami__name {
+  display: block; font-weight: 600; font-size: var(--t-label);
+  line-height: 1.2; overflow-wrap: anywhere;
+}
+.whoami__out {
+  display: grid; place-items: center; flex-shrink: 0;
+  width: 44px; height: 44px; border-radius: var(--radius-ctl);
+  color: var(--muted);
+}
+.whoami__out:hover { color: var(--brand); background: var(--card); }
+
+@media (max-width: 900px) {
+  /* The identity pill in the page header was the same fact as the sidebar
+     footer, and on a phone it sat directly above the page title and crowded
+     it — reported on four separate screens. The sidebar's own footer keeps
+     the name and the logout, so nothing is lost; only the duplicate goes. */
+  .shell--teacher .topbar .who { display: none; }
+  .shell--teacher .topbar { margin-bottom: var(--s4); }
+
+  /* In the folded sidebar the footer shares the brand's row rather than
+     claiming one of its own — it wrapped to a second line at 375px and cost
+     about 90px above the page title, which is the space the fix was meant to
+     give back.
+
+     `order` puts it after the brand and before the theme switch; all three
+     sit on one line, and the nav strip wraps below them. */
+  .whoami {
+    order: 1; margin-top: 0; margin-left: 0;
+    padding: var(--s1); background: transparent;
+    flex: 0 0 auto; min-height: 0;
+  }
+  .whoami__body { display: none; }
+  .whoami .avatar { width: 28px; height: 28px; font-size: .7rem; }
+  /* The logout target stays 44px. Shrinking it to match the smaller avatar
+     beside it was tried and reverted: it is the one control on this bar that
+     must not be mis-tapped, and RFP §629-635 does not bend for tidiness. */
+}
+
+@media (max-width: 560px) {
+  /* At 375px a domain name and a level label like "Хүлээгдэж буй түвшнээс
+     ахисан" cannot share a line: both wrap, the badge grows to two lines of
+     its own, and the row reads as two competing blocks. Stacked, the domain
+     leads and the level sits under it — which is also the order the question
+     is asked in. */
+  .levelrow { flex-direction: column; align-items: flex-start; gap: var(--s1); }
+  .levelrow .badge { align-self: flex-start; }
+}
+
+/* `.table-wrap` scrolls its table, but only if its own container can be
+   narrower than that table. `.card` is a plain block with no `min-width`, so
+   a wide table pushed the card past the viewport and the *page* scrolled
+   sideways instead — the same `min-width: auto` mechanism documented on
+   `.table-wrap` itself, one level up.
+
+   Found at 375px on the parent child page, where a longer kindergarten name
+   made the enrolment history 407px wide. */
+.card, .panel, .surface { min-width: 0; }
+.card > .table-wrap, .panel > .table-wrap, .surface > .table-wrap { max-width: 100%; }

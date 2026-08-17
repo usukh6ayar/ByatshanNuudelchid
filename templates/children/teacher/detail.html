@@ -1,161 +1,340 @@
 {% extends base_template|default:default_layout|default:"base_teacher.html" %}
-{% comment %} Modelled on docs/design/screens/teacher-child-profile-360.jpeg.
-   Only the sections backed by data that exists today are rendered. {% endcomment %}
+{% comment %} The teacher's workspace for one child — redesigned 2026-08-16.
+
+   **Deliberately not the parent profile.** That screen opens on a large
+   photograph and reads as a family keepsake: "my child's story". This one
+   answers a different question — "what can I understand and do for this
+   child?" — so it opens on a compact identity strip with the actions
+   directly beneath, and gives its space to the working record: recent
+   observations, where the assessment stands, the guardians' phone numbers.
+
+   Same design system, different job. The two screens share their type,
+   colour, spacing, badges and components; they share almost no layout.
+
+   It replaced three stacked cards — hero, guardians, a six-column enrolment
+   history — and a row of five equal-weight buttons at the very bottom, which
+   is where a teacher looked last for the thing they came to do.
+
+   Every section links out rather than reproducing what it points at: this
+   is the hub, and the observation list, the assessment screen and the
+   portfolio each own their own record. {% endcomment %}
 
 {% block title %}{{ child.full_name }}{% endblock %}
-{% block heading %}{{ child.full_name }}{% endblock %}
+{% block heading %}Хүүхдийн хуудас{% endblock %}
 
 {% block content %}
-  {% comment %} The hero card, full width, as teacher-child-profile-360.jpeg
-     draws it: photograph on the left, the registration facts spread across
-     the whole width rather than squeezed into a half-width column. {% endcomment %}
-  <div class="card">
-    <div class="hero">
-      {% comment %} RFP §3.4. Served through the permission check, never linked
-         directly (spec section 7.1). The initial stands in when there is
-         no photo — an empty box reads as a broken page. {% endcomment %}
-      {% if child.photo %}
-        <img class="hero__photo"
-             src="{% url 'media:serve' child.photo.public_id 'full' %}"
-             alt="{{ child.full_name }}-ийн зураг">
-      {% else %}
-        <span class="avatar hero__photo" aria-hidden="true">
-          {{ child.first_name|slice:":1" }}
-        </span>
+  <div class="btn-row" style="margin:0 0 var(--s4)">
+    <a class="btn btn--ghost btn--sm" href="{% url 'children:list' %}">← Жагсаалт</a>
+  </div>
+
+  {% comment %} ------------------------------------------- who is this
+     The badges are the ones that change how a teacher should act: age and
+     group for context, a lifecycle status only when it is not the ordinary
+     one, and a missing guardian because it means no family is reading this
+     child's portfolio at all. {% endcomment %}
+  <div class="idbar">
+    {% if child.photo %}
+      <img class="idbar__photo"
+           src="{% url 'media:serve' child.photo.public_id 'full' %}"
+           alt="{{ child.full_name }}-ийн зураг">
+    {% else %}
+      <span class="avatar idbar__photo" aria-hidden="true"
+        >{{ child.first_name|slice:":1" }}</span>
+    {% endif %}
+
+    <div class="idbar__body">
+      <h2 class="idbar__name">{{ child.full_name }}</h2>
+      <div class="idbar__meta">
+        <span class="badge badge--brand">{{ child.age }} нас</span>
+        {% if enrollment %}
+          <span class="badge badge--muted">{{ enrollment.group.name }}</span>
+        {% else %}
+          <span class="badge badge--muted">Бүлэггүй</span>
+        {% endif %}
+        {% if child.status != 'active' %}
+          <span class="badge badge--muted">{{ child.get_status_display }}</span>
+        {% endif %}
+        {% if not guardianships %}
+          <span class="badge badge--warn">Эцэг эх холбогдоогүй</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if child.health_notes %}
+    {% comment %} Amber, not red: an allergy or a standing medical note is a
+       fact about the child a teacher must see before acting, not an error
+       on the page. {% endcomment %}
+    <p class="notice" role="note">
+      <strong>Анхаарах:</strong> {{ child.health_notes }}
+    </p>
+  {% endif %}
+
+  {% comment %} The work, immediately under the name. These were five equal
+     buttons at the foot of the page; recording an observation is what a
+     teacher opens this screen to do, so it leads and it is the only solid
+     one. {% endcomment %}
+  <div class="workbar">
+    {% if can_record %}
+      <a class="btn" href="{% url 'observations:create' child.pk %}">
+        <svg class="ic ic--sm" aria-hidden="true"><use href="#i-plus"></use></svg>
+        Ажиглалт нэмэх
+      </a>
+    {% endif %}
+    <a class="btn btn--ghost" href="{% url 'assessment:child' child.pk %}">
+      <svg class="ic ic--sm" aria-hidden="true"><use href="#i-assessment"></use></svg>
+      Үнэлгээ
+    </a>
+    <a class="btn btn--ghost" href="{% url 'portfolio:overview' child.pk %}">
+      <svg class="ic ic--sm" aria-hidden="true"><use href="#i-portfolio"></use></svg>
+      Хувийн хавтас
+    </a>
+    <a class="btn btn--ghost" href="{% url 'reports:request' child.pk %}">
+      <svg class="ic ic--sm" aria-hidden="true"><use href="#i-report"></use></svg>
+      PDF
+    </a>
+    {% comment %} Staff only — RFP §2.2. This template also renders for a
+       guardian, and a link that answers 404 teaches the reader that the page
+       exists and that they are being refused. {% endcomment %}
+    {% if can_record %}
+      <a class="btn btn--ghost" href="{% url 'children:edit' child.pk %}">Засах</a>
+    {% endif %}
+  </div>
+
+  <div class="work" style="margin-top:var(--s5)">
+    {% comment %} ============================================ the record {% endcomment %}
+    <div>
+      <section class="section" style="margin-top:0">
+        {% url 'observations:list' child.pk as obs_url %}
+        {% include "components/section_head.html" with title="Сүүлийн ажиглалт" link=obs_url link_label="Бүгдийг харах" %}
+
+        {% if observations %}
+          <div class="obslist">
+            {% for observation in observations %}
+              <div class="obsrow">
+                <a class="obsrow__main"
+                   href="{% url 'observations:detail' child.pk observation.pk %}">
+                  <span class="obsrow__date">
+                    <b>{{ observation.observed_on|date:"d" }}</b>
+                    {{ observation.observed_on|date:"m" }} сар
+                  </span>
+                  <span class="obsrow__body">
+                    <span class="obsrow__title">{{ observation.summary }}</span>
+                    <span class="obsrow__meta">
+                      {{ observation.type.name }}
+                      · {{ observation.get_source_display }}
+                    </span>
+                  </span>
+                  {% if observation.domain_links.all %}
+                    <span class="obsrow__chips">
+                      {% for link in observation.domain_links.all %}
+                        <span class="badge"
+                              style="background:{{ link.domain.color }}1a; color:{{ link.domain.color }}">
+                          {{ link.domain.name }}{% if link.level %} · {{ link.level.label }}{% endif %}
+                        </span>
+                      {% endfor %}
+                    </span>
+                  {% endif %}
+                </a>
+
+                <div class="obsrow__flags">
+                  {% if observation.visible_to_parents %}
+                    <span class="badge badge--ok">Эцэг эхэд харагдана</span>
+                  {% else %}
+                    <span class="badge badge--muted">Хувийн</span>
+                  {% endif %}
+                  {% if observation.media_links.all %}
+                    <span class="obsrow__photo">
+                      <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
+                      {{ observation.media_links.all|length }}
+                      <span class="sr-only">зураг хавсаргасан</span>
+                    </span>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+          {% if observation_count > observations|length %}
+            <div class="btn-row" style="margin-top:var(--s3)">
+              <a class="btn btn--ghost btn--sm" href="{% url 'observations:list' child.pk %}">
+                Бүх {{ observation_count }} ажиглалтыг харах →
+              </a>
+            </div>
+          {% endif %}
+        {% elif can_record %}
+          {% url 'observations:create' child.pk as create_obs %}
+          {% include "components/empty.html" with icon="observation" message="Ажиглалт хараахан бүртгэгдээгүй байна." action=create_obs action_label="Эхний ажиглалтаа бүртгэх" %}
+        {% else %}
+          {% include "components/empty.html" with icon="observation" message="Ажиглалт хараахан бүртгэгдээгүй байна." %}
+        {% endif %}
+      </section>
+
+      {% comment %} ------------------------------ assessment snapshot
+         §6.4's levels as they stand, one row per domain. No chart and no
+         average: "where is this child now" is the question, and a computed
+         figure would be a number this screen invented. {% endcomment %}
+      <section class="section">
+        {% url 'assessment:child' child.pk as assess_url %}
+        {% include "components/section_head.html" with title="Хөгжлийн үнэлгээ" link=assess_url link_label="Дэлгэрэнгүй" %}
+
+        {% if assessments %}
+          <div class="panel">
+            <div class="levels">
+              {% for assessment in assessments %}
+                <div class="levelrow">
+                  <span class="levelrow__name">
+                    <span class="levelrow__dot" aria-hidden="true"
+                          style="background:{{ assessment.domain.color }}"></span>
+                    {{ assessment.domain.name }}
+                    <span class="levelrow__term">· {{ assessment.term.name }}</span>
+                  </span>
+                  {% comment %} The **level's** own colour, not the domain's.
+                     Tinting a level badge with its domain's colour put "1.
+                     Дэмжлэг шаардлагатай" in blue beside "3. Хүлээгдэж буй
+                     түвшинд" in red, which reads as a severity scale running
+                     the wrong way. `AssessmentLevel.color` is configured per
+                     kindergarten for exactly this (§6.2). {% endcomment %}
+                  <span class="badge"
+                        style="background:{{ assessment.level.color }}1a; color:{{ assessment.level.color }}">
+                    {{ assessment.level.value }}. {{ assessment.level.label }}
+                  </span>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% else %}
+          {% include "components/empty.html" with icon="assessment" message="Энэ хүүхдэд үнэлгээ хараахан хийгдээгүй байна." action=assess_url action_label="Үнэлгээ хийх" %}
+        {% endif %}
+      </section>
+
+      {% comment %} ------------------------------------ recent photos
+         Reached through the observations this user may read — the gate is in
+         `recent_media_for_child`, never here. Rendered only when there is
+         something to show. {% endcomment %}
+      {% if moments %}
+        <section class="section">
+          {% include "components/section_head.html" with title="Сүүлийн зургууд" %}
+          <div class="moments">
+            {% for link in moments %}
+              <a href="{% url 'observations:detail' child.pk link.observation_id %}"
+                 title="{{ link.caption|default:link.observation.summary }}">
+                <img src="{% url 'media:serve' link.media_file.public_id 'full' %}"
+                     alt="{{ link.caption|default:link.observation.summary }}"
+                     loading="lazy">
+              </a>
+            {% endfor %}
+          </div>
+        </section>
       {% endif %}
+    </div>
 
-      <div class="hero__body">
-        <h2 class="hero__name">
-          {{ child.full_name }}
-          <span class="badge {% if child.status == 'active' %}badge--ok{% else %}badge--muted{% endif %}">
-            {{ child.get_status_display }}
-          </span>
-        </h2>
-
-        <dl class="facts--cols">
+    {% comment %} ========================================== reference {% endcomment %}
+    <div>
+      <div class="panel">
+        <h2 class="panel__title">Бүртгэлийн мэдээлэл</h2>
+        <dl>
           <div><dt>Код</dt><dd>{{ child.national_id }}</dd></div>
           <div><dt>Хүйс</dt><dd>{{ child.get_sex_display }}</dd></div>
           <div>
-            <dt>Төрсөн огноо</dt>
-            <dd>{{ child.date_of_birth|date:"Y.m.d" }} ({{ child.age }} нас)</dd>
+            <dt>Төрсөн</dt>
+            <dd>{{ child.date_of_birth|date:"Y.m.d" }}</dd>
           </div>
           <div><dt>Цэцэрлэг</dt><dd>{{ child.kindergarten.name }}</dd></div>
           <div>
-            <dt>Бүлэг</dt>
-            <dd>
-              {% if enrollment %}
-                {{ enrollment.group.name }} · {{ enrollment.school_year.name }}
-              {% else %}—{% endif %}
-            </dd>
+            <dt>Хичээлийн жил</dt>
+            <dd>{% if enrollment %}{{ enrollment.school_year.name }}{% else %}—{% endif %}</dd>
           </div>
           <div>
-            <dt>Элссэн огноо</dt>
+            <dt>Элссэн</dt>
             <dd>{{ child.enrolled_on|date:"Y.m.d"|default:"—" }}</dd>
           </div>
         </dl>
       </div>
-    </div>
 
-    {% if child.health_notes %}
-      <p class="msg msg--error" style="margin:16px 0 0" role="note">
-        <strong>Анхаарах:</strong> {{ child.health_notes }}
-      </p>
-    {% endif %}
-  </div>
-
-  <div class="card">
-    <div class="card__head">
-      <h2>Эцэг эх, асран хамгаалагч</h2>
-      <a href="{% url 'children:guardian_add' child.pk %}">Нэмэх</a>
-    </div>
-
-    {% if guardianships %}
-      {% comment %} One row per guardian with their contact details, the way
-         the mockup lists them — a name with no telephone number beside it is
-         not much use to a teacher who needs to ring them. {% endcomment %}
-      <div class="feed">
-        {% for link in guardianships %}
-          <div class="feed__item">
-            <span class="avatar avatar--sm" aria-hidden="true">
-              {{ link.guardian_user.first_name|first|default:"·" }}
-            </span>
-            <div class="feed__body">
-              <div class="feed__title">
-                {{ link.guardian_user }}
-                <span class="badge badge--muted">{{ link.get_relation_display }}</span>
-                {% if link.is_primary %}<span class="badge badge--ok">Үндсэн</span>{% endif %}
+      {% comment %} A name without a telephone number is not much use to a
+         teacher who needs to ring them, so the contact details come with
+         it. Adding a guardian goes through the existing screen. {% endcomment %}
+      <div class="panel">
+        <h2 class="panel__title">Эцэг эх, асран хамгаалагч</h2>
+        {% if guardianships %}
+          <div class="feed">
+            {% for link in guardianships %}
+              <div class="feed__item">
+                <span class="avatar avatar--sm" aria-hidden="true"
+                  >{{ link.guardian_user.first_name|first|default:"·" }}</span>
+                <div class="feed__body">
+                  <div class="feed__title">
+                    {{ link.guardian_user }}
+                    {% if link.is_primary %}<span class="badge badge--ok">Үндсэн</span>{% endif %}
+                  </div>
+                  <div class="feed__meta">
+                    {{ link.get_relation_display }}
+                    {% if link.guardian_user.phone %} · {{ link.guardian_user.phone }}{% endif %}
+                  </div>
+                </div>
               </div>
-              <div class="feed__meta">
-                {{ link.guardian_user.phone|default:"" }}
-                {% if link.guardian_user.phone and link.guardian_user.email %} · {% endif %}
-                {{ link.guardian_user.email|default:"" }}
-              </div>
-            </div>
+            {% endfor %}
           </div>
-        {% endfor %}
+          {% if can_record %}
+            <div class="btn-row" style="margin-top:var(--s3)">
+              <a class="btn btn--ghost btn--sm"
+                 href="{% url 'children:guardian_add' child.pk %}">Асран хамгаалагч нэмэх</a>
+            </div>
+          {% endif %}
+        {% else %}
+          {% url 'children:guardian_add' child.pk as guardian_url %}
+          {% if can_record %}
+            {% include "components/empty.html" with icon="user" message="Асран хамгаалагч холбогдоогүй байна. Эцэг эх хүүхдийнхээ хавтсыг үзэх боломжгүй." action=guardian_url action_label="Асран хамгаалагч нэмэх" %}
+          {% else %}
+            {% include "components/empty.html" with icon="user" message="Асран хамгаалагч холбогдоогүй байна." %}
+          {% endif %}
+        {% endif %}
       </div>
-    {% else %}
-      <p class="empty" style="padding:18px 0">
-        <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
-        Асран хамгаалагч холбогдоогүй байна.
-      </p>
-    {% endif %}
-  </div>
 
-  <div class="card">
-    <div class="card__head">
-      <h2>Бүртгэлийн түүх</h2>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">Хичээлийн жил</th>
-            <th scope="col">Цэцэрлэг</th>
-            <th scope="col">Бүлэг</th>
-            <th scope="col">Эхэлсэн</th>
-            <th scope="col">Дууссан</th>
-            <th scope="col">Төлөв</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in history %}
-            <tr>
-              <td>{{ row.school_year.name }}</td>
-              <td>{{ row.kindergarten.name }}</td>
-              <td>{{ row.group.name }}</td>
-              <td>{{ row.started_on|date:"Y.m.d" }}</td>
-              <td>{{ row.ended_on|date:"Y.m.d"|default:"—" }}</td>
-              <td>
-                <span class="badge {% if row.status == 'active' %}badge--ok{% else %}badge--muted{% endif %}">
-                  {{ row.get_status_display }}
-                </span>
-              </td>
-            </tr>
+      {% comment %} RFP §4.3's four age pages plus About Me — a route in, not
+         a copy of what is behind them. A dashed chip is a page waiting to be
+         written rather than one that does not exist. {% endcomment %}
+      <div class="panel">
+        <h2 class="panel__title">Хувийн хавтас</h2>
+        <div class="agerow">
+          {% if about %}
+            <a href="{% url 'portfolio:overview' child.pk %}"><b>Миний тухай</b>бөглөсөн</a>
+          {% else %}
+            <span><b>Миний тухай</b>хоосон</span>
+          {% endif %}
+          {% for age, profile in age_profiles.items %}
+            {% if profile %}
+              <a href="{% url 'portfolio:overview' child.pk %}#age-{{ age }}"
+                ><b>{{ age }} нас</b>бөглөсөн</a>
+            {% else %}
+              <span><b>{{ age }} нас</b>хоосон</span>
+            {% endif %}
           {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
+        </div>
+      </div>
 
-  <div class="btn-row">
-    <a class="btn" href="{% url 'portfolio:overview' child.pk %}">
-      Хувийн хавтас үзэх
-    </a>
-    {% comment %} Staff only — RFP §2.2. This template also renders for a
-       guardian, and a link that answers 404 teaches the reader that the page
-       exists and that they are being refused. Showing nothing says less. {% endcomment %}
-    {% if can_record %}
-      <a class="btn btn--ghost" href="{% url 'children:edit' child.pk %}">
-        Мэдээлэл засах
-      </a>
-    {% endif %}
-    <a class="btn btn--ghost" href="{% url 'observations:list' child.pk %}">
-      Ажиглалт
-    </a>
-    <a class="btn btn--ghost" href="{% url 'assessment:child' child.pk %}">
-      Хөгжлийн үнэлгээ
-    </a>
-    <a class="btn btn--ghost" href="{% url 'children:list' %}">← Жагсаалт руу буцах</a>
+      {% comment %} Compact and secondary: the current group is in the
+         identity bar above, and this is the trail behind it. {% endcomment %}
+      {% if history %}
+        <div class="panel">
+          <h2 class="panel__title">Бүртгэлийн түүх</h2>
+          <div class="feed">
+            {% for row in history %}
+              <div class="feed__item" style="padding-left:0">
+                <div class="feed__body">
+                  <div class="feed__title">{{ row.group.name }}</div>
+                  <div class="feed__meta">
+                    {{ row.school_year.name }} ·
+                    {{ row.started_on|date:"Y.m.d" }}
+                    {% if row.status != 'active' %} · {{ row.get_status_display }}{% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
   </div>
 {% endblock %}

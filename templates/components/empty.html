@@ -1,0 +1,18 @@
+{% comment %} An empty state.
+
+   Context: `icon` (sprite id without `#i-`), `message`, and optionally
+   `action` + `action_label`.
+
+   The action is the point of this component. The audit found one treatment
+   serving both "nothing has happened yet" and "your filter matched
+   nothing" — a grey icon and one line, offering no way out. A first-run
+   screen should hand the reader the thing they came to do. {% endcomment %}
+<div class="empty">
+  <svg class="ic" aria-hidden="true"><use href="#i-{{ icon }}"></use></svg>
+  <p>{{ message }}</p>
+  {% if action %}
+    <div class="empty__action">
+      <a class="btn btn--sm" href="{{ action }}">{{ action_label }}</a>
+    </div>
+  {% endif %}
+</div>

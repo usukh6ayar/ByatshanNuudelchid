@@ -1,118 +1,196 @@
 {% extends "base_teacher.html" %}
-{% comment %} RFP §6.3 — "багш бүлгийн бүх хүүхдийг нэг дэлгэц дээрээс хурдан үнэлэх".
-   One form, one save, one transaction: a teacher who changes their mind
-   half way down the list has not already written five rows. {% endcomment %}
+{% comment %} RFP §6.3 — "багш бүлгийн бүх хүүхдийг нэг дэлгэц дээрээс хурдан
+   үнэлэх". Redesigned 2026-08-16.
+
+   **What this screen actually is.** One development domain across the whole
+   group, for one term — not a children × domains matrix.
+   `selectors.group_grid(user, group, term, domain)` takes a single domain and
+   the view resolves it from `?domain=`; the domain and term selectors at the
+   top are how a teacher moves between them. So the shape is three columns —
+   child, previous term, this term's level — and it never needed the
+   horizontal scroll the old table had.
+
+   **The one real change: the level control.** It was a `<select>` per child:
+   open, scroll, pick, eighteen times. It is now four radio chips with the
+   same field name and the same values, so a level is one tap and all four
+   options are visible without opening anything. The data contract is
+   untouched — `level_<enrollment_id>` posting a level id, an empty value
+   meaning "leave alone" — which is exactly what the view's
+   `if key.startswith("level_") and value` already filtered.
+
+   Still one form, one save, one transaction: a teacher who changes their
+   mind half way down the list has not already written five rows. {% endcomment %}
 
 {% block title %}Түргэн үнэлгээ{% endblock %}
-{% block heading %}Түргэн үнэлгээ — {{ group.name }}{% endblock %}
+{% block heading %}Түргэн үнэлгээ{% endblock %}
+{% block lede %}
+  <p class="lede">Бүлгийн бүх хүүхдийг нэг чиглэлээр дараалан үнэлнэ.</p>
+{% endblock %}
 
 {% block content %}
-  <div class="card">
-    <form method="get" class="filters">
-      <div>
-        <label for="id_domain">Хөгжлийн чиглэл</label>
-        <select name="domain" id="id_domain">
-          {% for item in domains %}
-            <option value="{{ item.pk }}"
-              {% if domain.pk == item.pk %}selected{% endif %}>{{ item.name }}</option>
-          {% endfor %}
-        </select>
+  {% comment %} The context, in words, before anything else: which group,
+     which year, which domain, which term. All four are real values from the
+     backend — §9. {% endcomment %}
+  <div class="idbar">
+    <div class="idbar__body">
+      <h2 class="idbar__name">{{ group.name }}</h2>
+      <div class="idbar__meta">
+        <span class="badge badge--muted">{{ group.school_year.name }}</span>
+        {% if domain %}
+          <span class="badge"
+                style="background:{{ domain.color }}1a; color:{{ domain.color }}">
+            {{ domain.name }}
+          </span>
+        {% endif %}
+        {% if term %}<span class="badge badge--brand">{{ term.name }}</span>{% endif %}
       </div>
-      <div>
-        <label for="id_term">Улирал</label>
-        <select name="term" id="id_term">
-          {% for item in terms %}
-            <option value="{{ item.pk }}"
-              {% if term.pk == item.pk %}selected{% endif %}>{{ item.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <button type="submit" class="btn">Харах</button>
-    </form>
+    </div>
   </div>
 
+  <form method="get" class="filterbar" style="margin-top:var(--s4)">
+    {% comment %} The group selector, added 2026-08-17 with the navigation
+       work. The sidebar's "Үнэлгээ" link has to point at *some* group, and a
+       teacher may hold several — so the screen states which one it is on and
+       lets them switch, rather than the navigation choosing silently.
+
+       Rendered only when there is a choice to make: one group is not a
+       decision, and a select with a single option is furniture.
+
+       `assignable_groups` is what populates it, which is also what the view
+       validates against — a group id outside it is simply not found (§21.4).
+       {% endcomment %}
+    {% if nav_groups|length > 1 %}
+      <div>
+        <label for="id_group">Бүлэг</label>
+        <select name="group" id="id_group"
+                onchange="this.form.action=this.value; this.form.submit()">
+          {% for item in nav_groups %}
+            <option value="{% url 'assessment:group_grid' item.pk %}"
+              {% if item.pk == group.pk %}selected{% endif %}>
+              {{ item.name }} ({{ item.school_year.name }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    {% endif %}
+    <div>
+      <label for="id_domain">Хөгжлийн чиглэл</label>
+      <select name="domain" id="id_domain">
+        {% for item in domains %}
+          <option value="{{ item.pk }}"
+            {% if domain.pk == item.pk %}selected{% endif %}>{{ item.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="id_term">Улирал</label>
+      <select name="term" id="id_term">
+        {% for item in terms %}
+          <option value="{{ item.pk }}"
+            {% if term.pk == item.pk %}selected{% endif %}>{{ item.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filterbar__go">
+      <button type="submit" class="btn btn--ghost">Харах</button>
+    </div>
+  </form>
+
   {% if not term %}
-    <div class="card">
-      <p class="empty">
-        {{ group.school_year.name }} хичээлийн жилд улирал тохируулаагүй байна.
-        Администратор улирлыг үүсгэсний дараа үнэлгээ хийнэ.
-      </p>
-    </div>
+    {% include "components/empty.html" with icon="assessment" message="Энэ хичээлийн жилд улирал тохируулаагүй байна. Администратор улирлыг үүсгэсний дараа үнэлгээ хийнэ." %}
   {% elif not domain %}
-    <div class="card">
-      <p class="empty">Хөгжлийн чиглэл тохируулаагүй байна.</p>
-    </div>
+    {% include "components/empty.html" with icon="assessment" message="Хөгжлийн чиглэл тохируулаагүй байна. Администратор чиглэлүүдийг үүсгэсний дараа үнэлгээ хийнэ." %}
+  {% elif not rows %}
+    {% include "components/empty.html" with icon="children" message="Энэ бүлэгт идэвхтэй хүүхэд бүртгэлгүй байна." %}
   {% else %}
-    <div class="card">
-      <p>
-        <strong>{{ domain.name }}</strong> · {{ term.name }} ·
-        {# §6.3 — "хийгдээгүй үнэлгээг ялгаж харуулах" #}
+
+    {% comment %} §12 — how much work is left, from the selector's own
+       `total` and `missing`. Stated as two real counts rather than as
+       "assessed / total": the template has no arithmetic, and computing the
+       difference in the view would be a backend change for a number the
+       teacher can read either way. {% endcomment %}
+    <div class="listmeta" style="margin-top:var(--s5)">
+      <span>
+        Нийт {{ total }} хүүхэд ·
         {% if missing %}
-          <span class="badge badge--warn">{{ missing }} хүүхэд үнэлэгдээгүй</span>
+          <span class="badge badge--warn">{{ missing }} үнэлэгдээгүй</span>
         {% else %}
           <span class="badge badge--ok">Бүгд үнэлэгдсэн</span>
         {% endif %}
-      </p>
+      </span>
 
-      <form method="post">
-        {% csrf_token %}
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Хүүхэд</th>
-                <th>Өмнөх улирал</th>
-                <th>Үнэлгээ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for row in rows %}
-                <tr>
-                  <td class="name">
-                    <a href="{% url 'assessment:child' row.child.pk %}">
-                      {{ row.child.full_name }}
-                    </a>
-                  </td>
-                  <td>
-                    {% if row.previous %}
-                      <span class="brand__sub">
-                        {{ row.previous.value }}. {{ row.previous.label }}
-                      </span>
-                    {% else %}
-                      <span class="brand__sub">—</span>
-                    {% endif %}
-                  </td>
-                  <td>
-                    <label class="sr-only"
-                           for="id_level_{{ row.enrollment.pk }}">
-                      {{ row.child.full_name }} — үнэлгээ
-                    </label>
-                    <select name="level_{{ row.enrollment.pk }}"
-                            id="id_level_{{ row.enrollment.pk }}">
-                      <option value="">— сонгоогүй —</option>
-                      {% for level in levels %}
-                        <option value="{{ level.pk }}"
-                          {% if row.assessment.level_id == level.pk %}selected{% endif %}>
-                          {{ level.value }}. {{ level.label }}
-                        </option>
-                      {% endfor %}
-                    </select>
-                  </td>
-                </tr>
-              {% empty %}
-                <tr><td colspan="3" class="empty">Бүлэгт хүүхэд бүртгэлгүй байна.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-        {% if rows %}
-          <div class="btn-row">
-            <button type="submit" class="btn">Бүгдийг хадгалах</button>
-          </div>
-        {% endif %}
-      </form>
+      {% comment %} §14 — what 1 to 4 mean, stated once here rather than
+         repeated on every chip of every row. The colours come from
+         `AssessmentLevel.color` (§6.2), never from the domain. {% endcomment %}
+      <span class="levelkey">
+        {% for level in levels %}
+          <span><i style="background:{{ level.color }}"></i>{{ level.value }}. {{ level.label }}</span>
+        {% endfor %}
+      </span>
     </div>
+
+    <form method="post" class="gridform">
+      {% csrf_token %}
+
+      <div class="obslist" style="margin-top:var(--s3)">
+        {% for row in rows %}
+          <div class="gridrow{% if not row.assessment %} gridrow--todo{% endif %}">
+            <div class="gridrow__who">
+              {% include "components/avatar.html" with person=row.child size="sm" %}
+              <a class="gridrow__name" href="{% url 'assessment:child' row.child.pk %}">
+                {{ row.child.full_name }}
+              </a>
+            </div>
+
+            <div class="gridrow__prev">
+              {% comment %} §6.3 — "өмнөх үнэлгээтэй харьцуулах". {% endcomment %}
+              {% if row.previous %}
+                Өмнөх: {{ row.previous.value }}. {{ row.previous.label }}
+              {% else %}
+                Өмнөх: —
+              {% endif %}
+            </div>
+
+            {% comment %} A real radio group, so arrow keys move between the
+               levels and a screen reader announces the position without any
+               ARIA. The legend carries the child's name because the column
+               header alone does not say whose row this is. {% endcomment %}
+            <fieldset class="levelset">
+              <legend class="sr-only">{{ row.child.full_name }} — үнэлгээ</legend>
+
+              {% for level in levels %}
+                <label class="levelchip">
+                  <input type="radio" name="level_{{ row.enrollment.pk }}"
+                         value="{{ level.pk }}"
+                         {% if row.assessment.level_id == level.pk %}checked{% endif %}>
+                  <span style="{% if row.assessment.level_id == level.pk %}border-color:{{ level.color }}; background:{{ level.color }}14;{% endif %}">
+                    <b style="background:{{ level.color }}">{{ level.value }}</b>
+                    <span class="levelchip__text">{{ level.label }}</span>
+                  </span>
+                </label>
+              {% endfor %}
+
+              {% comment %} Posts an empty value, which the view filters out —
+                 the same thing the old select's "— сонгоогүй —" did. {% endcomment %}
+              <label class="levelchip levelchip--none">
+                <input type="radio" name="level_{{ row.enrollment.pk }}" value=""
+                       {% if not row.assessment %}checked{% endif %}>
+                <span><b>—</b><span class="levelchip__text">Үнэлээгүй</span></span>
+              </label>
+            </fieldset>
+          </div>
+        {% endfor %}
+      </div>
+
+      {% comment %} Sticky, because the list is as long as the group and a
+         save button at the foot of eighteen children is a scroll away from
+         wherever the teacher finished. {% endcomment %}
+      <div class="gridsave">
+        <button type="submit" class="btn">Бүгдийг хадгалах</button>
+        <span class="gridsave__note">
+          Бүх өөрчлөлт нэг дор хадгалагдана.
+        </span>
+      </div>
+    </form>
   {% endif %}
 {% endblock %}

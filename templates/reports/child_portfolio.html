@@ -13,20 +13,38 @@
    never decides what a reader may see: builder.py scoped every queryset to
    the person who requested the report. {% endcomment %}
 <style>
+  /* RFP §10.3. Redesigned 2026-08-17 to carry the product's own visual
+     language into the printed document: the same lavender, the same warm
+     neutrals, the same restraint. It read as a database export before —
+     correct, complete, and plainly machine output.
+
+     Every §10.3 requirement is still met by something here:
+     · Cyrillic          — DejaVu Sans, installed in the image, named in CSS
+     · A4                — @page size
+     · page numbers      — @bottom-center counters
+     · logo and name     — the mark on the cover, the name as a running title
+     · child photo       — inlined as a data URI, never fetched
+     · no distortion     — object-fit on every image
+     · reasonable size   — one photograph, no decoration
+
+     Print-safe throughout: no gradient, no shadow, no web font. Colour is
+     used only where it survives a greyscale printer, and every heading is
+     legible without it. */
+
   @page {
     size: A4;
-    margin: 20mm 16mm 18mm 16mm;
+    margin: 18mm 16mm 16mm 16mm;
     @top-right {
       content: "{{ kindergarten.name }}";
       font-family: "DejaVu Sans", sans-serif;
       font-size: 8pt;
-      color: #8a8a8a;
+      color: #9a97a3;
     }
     @bottom-center {
       content: "Хуудас " counter(page) " / " counter(pages);
       font-family: "DejaVu Sans", sans-serif;
-      font-size: 9pt;
-      color: #666;
+      font-size: 8.5pt;
+      color: #817e8a;
     }
   }
   /* The cover carries the title, so it does not need the running header. */
@@ -34,54 +52,135 @@
 
   body {
     font-family: "DejaVu Sans", sans-serif;
-    font-size: 10.5pt;
-    line-height: 1.5;
-    color: #1a1a1a;
+    font-size: 10pt;
+    line-height: 1.55;
+    color: #25232a;
   }
 
-  h1 { font-size: 20pt; margin: 0 0 2mm; }
-  h2 { font-size: 13pt; margin: 0 0 4mm; color: #2f5d45;
-       border-bottom: 1.5pt solid #cfe0d6; padding-bottom: 2mm; }
-  h3 { font-size: 11pt; margin: 5mm 0 2mm; }
-  p  { margin: 0 0 3mm; }
+  h1 { font-size: 21pt; margin: 0 0 2mm; letter-spacing: -0.2pt; }
 
-  /* §10.3 — "цэцэрлэгийн лого, нэртэй". The running title carries the name
-     on every page; the cover carries the mark, where there is room for it
-     to be recognisable. object-fit keeps §10.3's "зураг суналт, гажилтгүй"
-     true whatever aspect ratio a future per-kindergarten logo arrives in. */
-  .cover { text-align: center; padding-top: 22mm; }
+  /* The section rule is a short lavender bar above the heading rather than a
+     line beneath it: it marks the start of a section without drawing a box,
+     and it reads as a deliberate mark rather than a table border. */
+  h2 {
+    font-size: 14pt;
+    margin: 0 0 5mm;
+    padding-top: 3mm;
+    border-top: 2.2pt solid #6c63ff;
+    color: #25232a;
+  }
+  h3 {
+    font-size: 10.5pt;
+    margin: 6mm 0 2mm;
+    color: #574fd6;
+  }
+  p  { margin: 0 0 2.5mm; }
+
+  /* ------------------------------------------------------------- cover */
+
+  .cover { text-align: center; padding-top: 16mm; }
   /* Block, or it shares a line with the photograph below it — both are
      inline images in a centred box. object-fit keeps §10.3's "зураг суналт,
      гажилтгүй" true whatever aspect ratio a per-kindergarten logo arrives
      in; the height is what is fixed, because the wordmark under the arc
      makes this mark taller than it is wide. */
   .cover .logo {
-    display: block; height: 24mm; width: auto; max-width: 60mm;
-    object-fit: contain; margin: 0 auto 9mm;
+    display: block; height: 20mm; width: auto; max-width: 60mm;
+    object-fit: contain; margin: 0 auto 10mm;
+  }
+  /* A soft tinted field behind the photograph, so the cover of a keepsake
+     does not look like the first page of a form. Flat colour, not a
+     gradient: this has to print. */
+  .cover .frame {
+    background: #f4f2ff;
+    border-radius: 6mm;
+    padding: 9mm 9mm 8mm;
+    margin: 0 6mm 9mm;
   }
   .cover .photo {
-    width: 55mm; height: 55mm; object-fit: contain;
-    border: 1pt solid #ddd; border-radius: 3mm; margin-bottom: 8mm;
+    width: 52mm; height: 52mm; object-fit: cover;
+    border-radius: 4mm; border: 2.5pt solid #ffffff;
+    margin-bottom: 6mm;
   }
-  .cover .sub { color: #666; font-size: 11pt; }
-  .cover .stamp { margin-top: 25mm; color: #8a8a8a; font-size: 9pt; }
+  .cover .sub { color: #57545f; font-size: 10.5pt; margin: 0 0 1mm; }
+  .cover .chip {
+    display: inline-block; margin-top: 3mm;
+    background: #ffffff; color: #574fd6;
+    border-radius: 10mm; padding: 1.5mm 5mm;
+    font-size: 9.5pt; font-weight: bold;
+  }
+  .cover .stamp { margin-top: 20mm; color: #9a97a3; font-size: 8.5pt; }
 
   /* Each §10.1 section starts on its own page: the document is printed,
      punched and kept, and a section split across a fold is unreadable. */
   section { page-break-before: always; }
 
-  table { width: 100%; border-collapse: collapse; margin-bottom: 5mm; }
-  th, td { border: 0.5pt solid #d8d8d8; padding: 2.2mm 3mm;
-           text-align: left; font-size: 9.5pt; vertical-align: top; }
-  th { background: #f4f7f5; font-weight: 600; }
+  /* -------------------------------------------------------------- facts
+     A two-column grid rather than the float-and-margin pair this used
+     before. A float only clears if the value is shorter than the label
+     column, so a long "Танилцуулга" used to ride up beside the next term. */
 
-  dl.facts { margin: 0; }
-  dl.facts dt { font-weight: 600; float: left; width: 45mm; clear: left; }
-  dl.facts dd { margin: 0 0 2mm 45mm; }
+  dl.facts { margin: 0; display: table; width: 100%; }
+  dl.facts dt {
+    display: table-cell; width: 42mm; padding: 1.4mm 4mm 1.4mm 0;
+    font-weight: bold; color: #57545f; font-size: 9.5pt;
+    border-top: 0.5pt solid #efedea;
+  }
+  dl.facts dd {
+    display: table-cell; margin: 0; padding: 1.4mm 0;
+    border-top: 0.5pt solid #efedea;
+  }
+  /* `display: table-cell` on a dt/dd pair needs a row to sit in; the pair is
+     wrapped in a div by the markup below for exactly that reason. */
+  dl.facts > div { display: table-row; }
+  dl.facts > div:first-child dt,
+  dl.facts > div:first-child dd { border-top: 0; }
 
-  .entry { margin-bottom: 5mm; page-break-inside: avoid; }
-  .entry .meta { color: #666; font-size: 9pt; margin-bottom: 1mm; }
-  .muted { color: #8a8a8a; }
+  /* -------------------------------------------------------------- tables
+     Horizontal rules only. A full grid reads as a spreadsheet, which is the
+     thing this document should least resemble. */
+
+  table {
+    width: 100%; border-collapse: collapse; margin-bottom: 4mm;
+    font-size: 9.5pt;
+  }
+  th, td {
+    padding: 2.2mm 3mm; text-align: left; vertical-align: top;
+    border-bottom: 0.5pt solid #efedea;
+  }
+  th {
+    font-weight: bold; color: #57545f; font-size: 8.5pt;
+    border-bottom: 1pt solid #ded9f5;
+    text-transform: uppercase; letter-spacing: 0.3pt;
+  }
+  tr { page-break-inside: avoid; }
+
+  /* ------------------------------------------------------------ entries
+     One observation. The lavender rule down the left groups the entry
+     without boxing it, and keeps a run of them readable at a glance. */
+
+  .entry {
+    margin-bottom: 5mm; padding-left: 4mm;
+    border-left: 1.5pt solid #e4e1f7;
+    page-break-inside: avoid;
+  }
+  .entry .meta {
+    color: #817e8a; font-size: 8.5pt; margin-bottom: 1.5mm;
+  }
+  .entry .title { font-weight: bold; font-size: 10.5pt; margin: 0 0 1.5mm; }
+  /* The child's own words. Set apart, because in a keepsake they are the
+     part a family reads twice. */
+  .entry .said {
+    color: #574fd6; margin: 1.5mm 0;
+  }
+  .entry .next {
+    font-size: 9.5pt; color: #57545f; margin-top: 2mm;
+  }
+
+  .muted { color: #9a97a3; }
+
+  /* A short line under a section heading saying what the section is. */
+  .lede { color: #817e8a; font-size: 9.5pt; margin: -3mm 0 5mm; }
 </style>
 
 {# ------------------------------------------------------------- cover #}
@@ -90,17 +189,25 @@
     <img class="logo" src="{{ logo_data_uri }}" alt="Бяцхан нүүдэлчид">
   {% endif %}
 
-  {% if photo_data_uri %}
-    <img class="photo" src="{{ photo_data_uri }}"
-         alt="{{ child.full_name }}-ийн зураг">
-  {% endif %}
+  {% comment %} The tinted field holds the photograph and the name together,
+     so the cover reads as the front of a keepsake rather than the header of
+     a form. Flat colour — this page gets printed. {% endcomment %}
+  <div class="frame">
+    {% if photo_data_uri %}
+      <img class="photo" src="{{ photo_data_uri }}"
+           alt="{{ child.full_name }}-ийн зураг">
+    {% endif %}
 
-  <h1>{{ child.full_name }}</h1>
-  <p class="sub">Хүүхдийн хөгжлийн цахим хувийн хавтас</p>
+    <h1>{{ child.full_name }}</h1>
+    <p class="sub">Хүүхдийн хөгжлийн цахим хувийн хавтас</p>
+    {% if enrollment %}
+      <span class="chip">
+        {{ enrollment.group.name }} · {{ enrollment.school_year.name }}
+      </span>
+    {% endif %}
+  </div>
+
   <p class="sub">{{ kindergarten.name }}</p>
-  {% if enrollment %}
-    <p class="sub">{{ enrollment.group.name }} · {{ enrollment.school_year.name }}</p>
-  {% endif %}
 
   <p class="stamp">
     Үүсгэсэн: {% now "Y.m.d" %}
@@ -113,13 +220,12 @@
   <section>
     <h2>Үндсэн мэдээлэл</h2>
     <dl class="facts">
-      <dt>Овог, нэр</dt><dd>{{ child.full_name }}</dd>
-      <dt>Төрсөн огноо</dt><dd>{{ child.date_of_birth|date:"Y.m.d" }}</dd>
-      <dt>Хүйс</dt><dd>{{ child.get_sex_display }}</dd>
-      <dt>Бүртгэлийн дугаар</dt><dd>{{ child.national_id }}</dd>
-      <dt>Элссэн огноо</dt>
-      <dd>{{ child.enrolled_on|date:"Y.m.d"|default:"—" }}</dd>
-      <dt>Төлөв</dt><dd>{{ child.get_status_display }}</dd>
+      <div><dt>Овог, нэр</dt><dd>{{ child.full_name }}</dd></div>
+      <div><dt>Төрсөн огноо</dt><dd>{{ child.date_of_birth|date:"Y.m.d" }}</dd></div>
+      <div><dt>Хүйс</dt><dd>{{ child.get_sex_display }}</dd></div>
+      <div><dt>Бүртгэлийн дугаар</dt><dd>{{ child.national_id }}</dd></div>
+      <div><dt>Элссэн огноо</dt><dd>{{ child.enrolled_on|date:"Y.m.d"|default:"—" }}</dd></div>
+      <div><dt>Төлөв</dt><dd>{{ child.get_status_display }}</dd></div>
     </dl>
 
     {% if guardianships %}
@@ -167,24 +273,22 @@
     {% if about %}
       <dl class="facts">
         {% if about.introduction %}
-          <dt>Танилцуулга</dt><dd>{{ about.introduction|linebreaksbr }}</dd>
+          <div><dt>Танилцуулга</dt><dd>{{ about.introduction|linebreaksbr }}</dd></div>
         {% endif %}
         {% if about.name_meaning %}
-          <dt>Нэрний утга</dt><dd>{{ about.name_meaning|linebreaksbr }}</dd>
+          <div><dt>Нэрний утга</dt><dd>{{ about.name_meaning|linebreaksbr }}</dd></div>
         {% endif %}
         {% if about.memorable_sayings %}
-          <dt>Сонирхолтой үг</dt>
-          <dd>{{ about.memorable_sayings|linebreaksbr }}</dd>
+          <div><dt>Сонирхолтой үг</dt><dd>{{ about.memorable_sayings|linebreaksbr }}</dd></div>
         {% endif %}
         {% if about.dream %}
-          <dt>Миний мөрөөдөл</dt><dd>{{ about.dream|linebreaksbr }}</dd>
+          <div><dt>Миний мөрөөдөл</dt><dd>{{ about.dream|linebreaksbr }}</dd></div>
         {% endif %}
         {% if about.distinguishing_traits %}
-          <dt>Миний онцлог</dt>
-          <dd>{{ about.distinguishing_traits|linebreaksbr }}</dd>
+          <div><dt>Миний онцлог</dt><dd>{{ about.distinguishing_traits|linebreaksbr }}</dd></div>
         {% endif %}
-        {% if about.height_cm %}<dt>Өндөр</dt><dd>{{ about.height_cm }} см</dd>{% endif %}
-        {% if about.weight_kg %}<dt>Жин</dt><dd>{{ about.weight_kg }} кг</dd>{% endif %}
+        {% if about.height_cm %}<div><dt>Өндөр</dt><dd>{{ about.height_cm }} см</dd></div>{% endif %}
+        {% if about.weight_kg %}<div><dt>Жин</dt><dd>{{ about.weight_kg }} кг</dd></div>{% endif %}
       </dl>
     {% else %}
       <p class="muted">Бөглөгдөөгүй байна.</p>
@@ -197,10 +301,10 @@
   <section>
     <h2>Төрсөн өдөр</h2>
     <dl class="facts">
-      <dt>Төрсөн огноо</dt><dd>{{ birth.date_of_birth|date:"Y.m.d" }}</dd>
-      <dt>Одоогийн нас</dt><dd>{{ birth.age }}</dd>
-      <dt>Өрнийн орд</dt><dd>{{ birth.zodiac_sign }}</dd>
-      <dt>Монгол жил</dt><dd>{{ birth.year_animal }}</dd>
+      <div><dt>Төрсөн огноо</dt><dd>{{ birth.date_of_birth|date:"Y.m.d" }}</dd></div>
+      <div><dt>Одоогийн нас</dt><dd>{{ birth.age }}</dd></div>
+      <div><dt>Өрнийн орд</dt><dd>{{ birth.zodiac_sign }}</dd></div>
+      <div><dt>Монгол жил</dt><dd>{{ birth.year_animal }}</dd></div>
     </dl>
 
     {% if birthdays %}
@@ -228,28 +332,28 @@
       <h3>{{ age }} нас</h3>
       <dl class="facts">
         {% if profile.favorite_color %}
-          <dt>Дуртай өнгө</dt><dd>{{ profile.favorite_color }}</dd>
+          <div><dt>Дуртай өнгө</dt><dd>{{ profile.favorite_color }}</dd></div>
         {% endif %}
         {% if profile.favorite_food %}
-          <dt>Дуртай хоол</dt><dd>{{ profile.favorite_food }}</dd>
+          <div><dt>Дуртай хоол</dt><dd>{{ profile.favorite_food }}</dd></div>
         {% endif %}
         {% if profile.favorite_toy %}
-          <dt>Дуртай тоглоом</dt><dd>{{ profile.favorite_toy }}</dd>
+          <div><dt>Дуртай тоглоом</dt><dd>{{ profile.favorite_toy }}</dd></div>
         {% endif %}
         {% if profile.favorite_activity %}
-          <dt>Дуртай үйл ажиллагаа</dt><dd>{{ profile.favorite_activity }}</dd>
+          <div><dt>Дуртай үйл ажиллагаа</dt><dd>{{ profile.favorite_activity }}</dd></div>
         {% endif %}
         {% if profile.personality %}
-          <dt>Зан чанар</dt><dd>{{ profile.personality|linebreaksbr }}</dd>
+          <div><dt>Зан чанар</dt><dd>{{ profile.personality|linebreaksbr }}</dd></div>
         {% endif %}
         {% if profile.new_skills %}
-          <dt>Шинэ чадвар</dt><dd>{{ profile.new_skills|linebreaksbr }}</dd>
+          <div><dt>Шинэ чадвар</dt><dd>{{ profile.new_skills|linebreaksbr }}</dd></div>
         {% endif %}
         {% if profile.teacher_note %}
-          <dt>Багшийн тэмдэглэл</dt><dd>{{ profile.teacher_note|linebreaksbr }}</dd>
+          <div><dt>Багшийн тэмдэглэл</dt><dd>{{ profile.teacher_note|linebreaksbr }}</dd></div>
         {% endif %}
         {% if profile.parent_note %}
-          <dt>Эцэг эхийн тэмдэглэл</dt><dd>{{ profile.parent_note|linebreaksbr }}</dd>
+          <div><dt>Эцэг эхийн тэмдэглэл</dt><dd>{{ profile.parent_note|linebreaksbr }}</dd></div>
         {% endif %}
       </dl>
     {% empty %}
@@ -270,7 +374,7 @@
           {% if observation.created_by %} · {{ observation.created_by }}{% endif %}
         </p>
         {% if observation.activity_name %}
-          <p><strong>{{ observation.activity_name }}</strong></p>
+          <p class="title">{{ observation.activity_name }}</p>
         {% endif %}
         {% if observation.situation %}<p>{{ observation.situation }}</p>{% endif %}
         {% if observation.child_did %}<p>{{ observation.child_did }}</p>{% endif %}
@@ -278,13 +382,13 @@
           {% comment %} The guillemets are the template's. `unquoted` removes
              any the teacher typed, so a quoted entry does not print as
              ««…»». {% endcomment %}
-          <p>«{{ observation.child_said|unquoted }}»</p>
+          <p class="said">«{{ observation.child_said|unquoted }}»</p>
         {% endif %}
         {% if observation.teacher_comment %}
           <p>{{ observation.teacher_comment }}</p>
         {% endif %}
         {% if observation.next_steps %}
-          <p><em>Дараагийн дэмжлэг:</em> {{ observation.next_steps }}</p>
+          <p class="next"><strong>Дараагийн дэмжлэг:</strong> {{ observation.next_steps }}</p>
         {% endif %}
       </div>
     {% empty %}
@@ -309,7 +413,7 @@
           {% comment %} The guillemets are the template's. `unquoted` removes
              any the teacher typed, so a quoted entry does not print as
              ««…»». {% endcomment %}
-          <p>«{{ observation.child_said|unquoted }}»</p>
+          <p class="said">«{{ observation.child_said|unquoted }}»</p>
         {% endif %}
       </div>
     {% empty %}

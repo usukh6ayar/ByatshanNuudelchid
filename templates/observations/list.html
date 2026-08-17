@@ -1,148 +1,260 @@
 {% extends base_template %}
-{% comment %} RFP §5.1, §5.2. Both roles read this list; the permission layer already
-   decided which rows are in it, so the template does no filtering. {% endcomment %}
+{% comment %} RFP §5.1, §5.2 — one child's observations, redesigned 2026-08-16
+   as the screen the entry form returns to.
+
+   Both roles read this list. The permission layer has already decided which
+   rows are in it (`selectors.child_observations`), so the template does no
+   filtering — it only presents. The visibility badge below is a *label on a
+   row the reader is already allowed to see*, never a gate.
+
+   It was twenty `.card`s stacked, each with its own border and shadow, which
+   reads as twenty separate things instead of one list. Now one row per
+   observation: a grid that lines up into columns on a desktop and folds into
+   a card on a phone, from the same markup.
+
+   Not a `<table>`. The same markup has to serve both layouts, and reflowing
+   table cells into a card costs exactly the semantics that made a table
+   worth using. A list of links is what this is, and what a screen reader
+   should hear. {% endcomment %}
 
 {% block title %}Ажиглалт{% endblock %}
-{% block heading %}Ажиглалт — {{ child.full_name }}{% endblock %}
+{% block heading %}Ажиглалт{% endblock %}
+{% block lede %}
+  <p class="lede">Бүртгэсэн ажиглалтууд, шинээс нь эхэлж.</p>
+{% endblock %}
 
 {% block content %}
-  <div class="card">
-    <form method="get" class="filters">
-      <div>
-        <label for="id_type">Ажиглалтын төрөл</label>
-        <select name="type" id="id_type">
-          <option value="">Бүгд</option>
-          {% for type in types %}
-            <option value="{{ type.pk }}"
-              {% if filters.type == type.pk|stringformat:"s" %}selected{% endif %}>
-              {{ type.name }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
-      <div>
-        <label for="id_source">Оруулсан</label>
-        <select name="source" id="id_source">
-          <option value="">Бүгд</option>
-          {% for value, label in sources %}
-            <option value="{{ value }}"
-              {% if filters.source == value %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      {% comment %} RFP §11 — "хөгжлийн чиглэлээр", "үнэлгээний түвшнээр",
-         "огнооны интервалаар" {% endcomment %}
-      <div>
-        <label for="id_domain">Хөгжлийн чиглэл</label>
-        <select name="domain" id="id_domain">
-          <option value="">Бүгд</option>
-          {% for item in domains %}
-            <option value="{{ item.pk }}"
-              {% if filters.domain == item.pk|stringformat:"s" %}selected{% endif %}>
-              {{ item.name }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
-      <div>
-        <label for="id_level">Үнэлгээний түвшин</label>
-        <select name="level" id="id_level">
-          <option value="">Бүгд</option>
-          {% for item in levels %}
-            <option value="{{ item.pk }}"
-              {% if filters.level == item.pk|stringformat:"s" %}selected{% endif %}>
-              {{ item.value }}. {{ item.label }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
-      <div>
-        <label for="id_from">Эхлэх огноо</label>
-        <input type="date" name="from" id="id_from" value="{{ filters.from }}">
-      </div>
-      <div>
-        <label for="id_to">Дуусах огноо</label>
-        <input type="date" name="to" id="id_to" value="{{ filters.to }}">
-      </div>
-
-      <button type="submit" class="btn">Шүүх</button>
-      {% if can_record %}
-        <a class="btn" href="{% url 'observations:create' child.pk %}">
-          Шинэ ажиглалт
-        </a>
-      {% elif is_guardian %}
-        {# §5.4 — the family's own contribution #}
-        <a class="btn" href="{% url 'observations:parent_create' child.pk %}">
-          Миний ажиглалт нэмэх
-        </a>
-      {% endif %}
-    </form>
+  {% comment %} Which child, in the same strip the entry form uses — this
+     list is scoped to one child by the URL, so the page must say who.
+     {% endcomment %}
+  <div class="subject">
+    {% include "components/avatar.html" with person=child %}
+    <span class="subject__body">
+      <span class="subject__name">{{ child.full_name }}</span>
+      <span class="subject__meta">
+        <span class="badge badge--brand">{{ child.age }} нас</span>
+        {% for enrollment in child.active_enrollments %}
+          <span class="badge badge--muted">{{ enrollment.group.name }}</span>
+        {% endfor %}
+      </span>
+    </span>
   </div>
 
-  {% for observation in page %}
-    <div class="card">
-      <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap">
-        <div>
-          <h2 style="margin-bottom:4px">
-            <a href="{% url 'observations:detail' child.pk observation.pk %}">
-              {{ observation.summary }}
-            </a>
-          </h2>
-          <p class="brand__sub" style="margin:0">
-            {{ observation.observed_on|date:"Y.m.d" }} ·
-            {{ observation.type.name }} ·
-            {{ observation.get_source_display }}
-            {% if observation.created_by %} — {{ observation.created_by }}{% endif %}
-          </p>
-        </div>
-        <div style="text-align:right">
+  {% comment %} The primary action sits above the filters: a teacher arrives
+     here to record far more often than to search. {% endcomment %}
+  <div class="btn-row" style="margin-top:var(--s4)">
+    {% if can_record %}
+      <a class="btn" href="{% url 'observations:create' child.pk %}">
+        <svg class="ic ic--sm" aria-hidden="true"><use href="#i-plus"></use></svg>
+        Ажиглалт нэмэх
+      </a>
+    {% elif is_guardian %}
+      {# §5.4 — the family's own contribution #}
+      <a class="btn" href="{% url 'observations:parent_create' child.pk %}">
+        <svg class="ic ic--sm" aria-hidden="true"><use href="#i-plus"></use></svg>
+        Миний ажиглалт нэмэх
+      </a>
+    {% endif %}
+  </div>
+
+  {% comment %} RFP §11's filters, exactly the six the view already reads:
+     type, source, domain, level and the date interval. Nothing new. Two
+     columns on a phone, six across on a wide screen. {% endcomment %}
+  {% comment %} Collapsed unless something is being filtered.
+
+     Open, the six controls stand about 600px tall on a 375px screen and the
+     first observation lands below the fold — on the list a teacher opens to
+     read, not to search. `<details>` is the native disclosure: no JavaScript,
+     it keeps its own keyboard and screen-reader behaviour, and it degrades to
+     a permanently open block in anything that does not support it.
+
+     The `open` attribute is decided on the server from the filters actually
+     applied, because CSS cannot open a `<details>` and a filter that is
+     narrowing the list must never be doing so invisibly. {% endcomment %}
+  <details class="filterwrap" {% if filters.type or filters.source or filters.domain or filters.level or filters.from or filters.to %}open{% endif %}>
+    <summary>
+      <svg class="ic ic--sm" aria-hidden="true"><use href="#i-review"></use></svg>
+      Шүүлт
+      {% if filters.type or filters.source or filters.domain or filters.level or filters.from or filters.to %}
+        <span class="badge badge--brand">идэвхтэй</span>
+      {% endif %}
+    </summary>
+    <form method="get" class="filterbar">
+    <div>
+      <label for="id_type">Төрөл</label>
+      <select name="type" id="id_type">
+        <option value="">Бүгд</option>
+        {% for type in types %}
+          <option value="{{ type.pk }}"
+            {% if filters.type == type.pk|stringformat:"s" %}selected{% endif %}>
+            {{ type.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="id_source">Оруулсан</label>
+      <select name="source" id="id_source">
+        <option value="">Бүгд</option>
+        {% for value, label in sources %}
+          <option value="{{ value }}"
+            {% if filters.source == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="id_domain">Хөгжлийн чиглэл</label>
+      <select name="domain" id="id_domain">
+        <option value="">Бүгд</option>
+        {% for item in domains %}
+          <option value="{{ item.pk }}"
+            {% if filters.domain == item.pk|stringformat:"s" %}selected{% endif %}>
+            {{ item.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="id_level">Түвшин</label>
+      <select name="level" id="id_level">
+        <option value="">Бүгд</option>
+        {% for item in levels %}
+          <option value="{{ item.pk }}"
+            {% if filters.level == item.pk|stringformat:"s" %}selected{% endif %}>
+            {{ item.value }}. {{ item.label }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="id_from">Эхлэх огноо</label>
+      <input type="date" name="from" id="id_from" value="{{ filters.from }}">
+    </div>
+    <div>
+      <label for="id_to">Дуусах огноо</label>
+      <input type="date" name="to" id="id_to" value="{{ filters.to }}">
+    </div>
+      <div class="filterbar__go">
+        <button type="submit" class="btn">Шүүх</button>
+        <a class="btn btn--ghost" href="{% url 'observations:list' child.pk %}">Цэвэрлэх</a>
+      </div>
+    </form>
+  </details>
+
+  {% if page.paginator.count %}
+    <div class="listmeta">
+      <span>Нийт {{ page.paginator.count }} ажиглалт</span>
+      {% if page.paginator.num_pages > 1 %}
+        <span>{{ page.number }} / {{ page.paginator.num_pages }} хуудас</span>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div class="obshead" aria-hidden="true">
+    <span>Огноо</span>
+    <span>Ажиглалт</span>
+    <span>Төлөв</span>
+    <span></span>
+  </div>
+
+  <div class="obslist">
+    {% for observation in page %}
+      <div class="obsrow">
+        <a class="obsrow__main"
+           href="{% url 'observations:detail' child.pk observation.pk %}">
+          <span class="obsrow__date">
+            <b>{{ observation.observed_on|date:"d" }}</b>
+            {{ observation.observed_on|date:"m" }} сар
+          </span>
+          <span class="obsrow__body">
+            <span class="obsrow__title">{{ observation.summary }}</span>
+            <span class="obsrow__meta">
+              {{ observation.type.name }}
+              · {{ observation.get_source_display }}
+              {% if observation.created_by %} · {{ observation.created_by }}{% endif %}
+            </span>
+          </span>
+          {% if observation.domain_links.all %}
+            <span class="obsrow__chips">
+              {% for link in observation.domain_links.all %}
+                <span class="badge"
+                      style="background:{{ link.domain.color }}1a; color:{{ link.domain.color }}">
+                  {{ link.domain.name }}{% if link.level %} · {{ link.level.label }}{% endif %}
+                </span>
+              {% endfor %}
+            </span>
+          {% endif %}
+        </a>
+
+        <div class="obsrow__flags">
+          {% comment %} §5.1 — who may see this. Since 2026-08-16 a teacher's
+             observation starts closed, so "Хувийн" is the common case and is
+             deliberately quiet rather than a warning: it is the normal state
+             of a working note, not a problem. {% endcomment %}
+          {% if observation.visible_to_parents %}
+            <span class="badge badge--ok">Эцэг эхэд харагдана</span>
+          {% else %}
+            <span class="badge badge--muted">Хувийн</span>
+          {% endif %}
+
           {% if observation.source == 'parent' %}
-            <span class="badge {% if observation.review_status == 'approved' %}badge--ok{% else %}badge--muted{% endif %}">
+            <span class="badge {% if observation.review_status == 'approved' %}badge--ok{% else %}badge--warn{% endif %}">
               {{ observation.get_review_status_display }}
             </span>
           {% endif %}
-          {% if not observation.visible_to_parents %}
-            <span class="badge badge--muted">Эцэг эхэд харагдахгүй</span>
+
+          {% if observation.media_links.all %}
+            <span class="obsrow__photo">
+              <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
+              {{ observation.media_links.all|length }}
+              <span class="sr-only">зураг хавсаргасан</span>
+            </span>
           {% endif %}
         </div>
+
+        {% if can_record %}
+          <a class="obsrow__edit"
+             href="{% url 'observations:edit' child.pk observation.pk %}">
+            Засах<span class="sr-only"> — {{ observation.summary }}</span>
+          </a>
+        {% endif %}
       </div>
-
-      {% if observation.domain_links.all %}
-        <p style="margin:10px 0 0">
-          {% for link in observation.domain_links.all %}
-            <span class="badge" style="background:{{ link.domain.color }}1a; color:{{ link.domain.color }}">
-              {{ link.domain.name }}{% if link.level %} · {{ link.level.label }}{% endif %}
-            </span>
-          {% endfor %}
-        </p>
-      {% endif %}
-    </div>
-  {% empty %}
-    <div class="card">
-      <p>Ажиглалт бүртгэгдээгүй байна.</p>
-      {% if can_record %}
-        <a class="btn" href="{% url 'observations:create' child.pk %}">
-          Эхний ажиглалтаа бүртгэх
-        </a>
+    {% empty %}
+      {% comment %} Two empty states, one for each reason the list can be
+         bare: nothing recorded yet, or a filter that matched nothing. Both
+         offer the way out of themselves. {% endcomment %}
+      {% if filters.type or filters.source or filters.domain or filters.level or filters.from or filters.to %}
+        {% url 'observations:list' child.pk as clear_url %}
+        {% include "components/empty.html" with icon="observation" message="Энэ шүүлтэд тохирох ажиглалт олдсонгүй." action=clear_url action_label="Шүүлтийг цэвэрлэх" %}
+      {% elif can_record %}
+        {% url 'observations:create' child.pk as create_url %}
+        {% include "components/empty.html" with icon="observation" message="Ажиглалт хараахан бүртгэгдээгүй байна. Хүүхдийн өдөр тутмын хөгжлийг эндээс тэмдэглэж эхэлнэ." action=create_url action_label="Эхний ажиглалтаа бүртгэх" %}
       {% elif is_guardian %}
-        <a class="btn" href="{% url 'observations:parent_create' child.pk %}">
-          Гэрт ажигласнаа бичих
-        </a>
+        {% url 'observations:parent_create' child.pk as parent_url %}
+        {% include "components/empty.html" with icon="observation" message="Ажиглалт хараахан байхгүй байна." action=parent_url action_label="Гэрт ажигласнаа бичих" %}
+      {% else %}
+        {% include "components/empty.html" with icon="observation" message="Ажиглалт бүртгэгдээгүй байна." %}
       {% endif %}
-    </div>
-  {% endfor %}
+    {% endfor %}
+  </div>
 
+  {% comment %} The querystring is rebuilt from `filters` rather than from
+     `request.GET.urlencode`, which already carried `page` and produced
+     `?page=2&page=3`. Django reads the last value so it happened to work,
+     which is the kind of thing that stops working quietly. {% endcomment %}
   {% if page.has_other_pages %}
-    <div class="pagination">
-      <span>Нийт {{ page.paginator.count }} ажиглалт</span>
-      {% if page.has_previous %}
-        <a href="?{{ request.GET.urlencode }}&page={{ page.previous_page_number }}">← Өмнөх</a>
-      {% endif %}
-      <span>{{ page.number }} / {{ page.paginator.num_pages }}</span>
-      {% if page.has_next %}
-        <a href="?{{ request.GET.urlencode }}&page={{ page.next_page_number }}">Дараах →</a>
-      {% endif %}
-    </div>
+    {% with q="type="|add:filters.type|add:"&source="|add:filters.source|add:"&domain="|add:filters.domain|add:"&level="|add:filters.level|add:"&from="|add:filters.from|add:"&to="|add:filters.to %}
+      <nav class="pager" aria-label="Хуудаслалт">
+        {% if page.has_previous %}
+          <a href="?{{ q }}&page={{ page.previous_page_number }}" rel="prev">← Өмнөх</a>
+        {% endif %}
+        <span class="pager__now" aria-current="page">
+          {{ page.number }} / {{ page.paginator.num_pages }}
+        </span>
+        {% if page.has_next %}
+          <a href="?{{ q }}&page={{ page.next_page_number }}" rel="next">Дараах →</a>
+        {% endif %}
+      </nav>
+    {% endwith %}
   {% endif %}
 {% endblock %}

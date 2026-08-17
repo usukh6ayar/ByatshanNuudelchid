@@ -1,79 +1,134 @@
 {% extends base_template %}
-{% comment %} RFP §8.1. One screen, two audiences: a teacher sees what they published
-   and their own drafts, a family sees what reaches their child. {% endcomment %}
+{% comment %} RFP §8.1 — redesigned 2026-08-16. One screen, two audiences: a
+   teacher sees what they published and their own drafts, a family sees what
+   reaches their child. The view picks the queryset (`for_staff` vs
+   `for_guardian`); this template only presents what it is handed and never
+   filters.
+
+   **Targeting is shown to staff only, and that is not a style choice.**
+   `for_staff` prefetches `targets__group` and `targets__child`;
+   `for_guardian` does not, because a family has no use for the routing. So
+   rendering the audience on the parent list would be one query per row —
+   the N+1 CLAUDE.md §3.5 forbids — as well as telling a family which other
+   groups were written to.
+
+   **No attachment indicator here.** The list querysets do not prefetch
+   `attachments`, so a paperclip per row would be a query per row. Adding the
+   prefetch is a one-line selector change and out of scope for a
+   presentation task; the detail screen shows the files. {% endcomment %}
 
 {% block title %}Мэдэгдэл{% endblock %}
-{% block heading %}
-  Мэдэгдэл
-  {% if unread %}<span class="badge badge--warn">{{ unread }} шинэ</span>{% endif %}
+{% block heading %}Мэдэгдэл{% endblock %}
+{% block lede %}
+  <p class="lede">
+    {% if is_staff %}
+      Нийтэлсэн мэдэгдэл, ноорог.
+    {% else %}
+      Цэцэрлэгээс ирсэн мэдээлэл.
+    {% endif %}
+  </p>
 {% endblock %}
 
 {% block content %}
   {% if is_staff %}
     <div class="btn-row" style="margin-top:0">
-      <a class="btn" href="{% url 'comms:create' %}">Шинэ мэдэгдэл</a>
+      <a class="btn" href="{% url 'comms:create' %}">
+        <svg class="ic ic--sm" aria-hidden="true"><use href="#i-plus"></use></svg>
+        Шинэ мэдэгдэл
+      </a>
     </div>
   {% endif %}
 
-  {% for announcement in page %}
-    <div class="card">
-      <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap">
-        <div>
-          <h2 style="margin-bottom:4px">
-            <a href="{% url 'comms:detail' announcement.pk %}">
-              {{ announcement.title }}
-            </a>
-          </h2>
-          <p class="brand__sub" style="margin:0">
-            {% if announcement.published_at %}
-              {{ announcement.published_at|date:"Y.m.d" }}
-            {% else %}
-              Нийтлээгүй
-            {% endif %}
-            {% if announcement.author %} · {{ announcement.author }}{% endif %}
-          </p>
-        </div>
-        <div style="text-align:right">
-          {% if announcement.is_important %}
-            <span class="badge badge--warn">Чухал</span>
-          {% endif %}
-          {% if is_staff %}
-            <span class="badge {% if announcement.status == 'published' %}badge--ok{% else %}badge--muted{% endif %}">
-              {{ announcement.get_status_display }}
-            </span>
-          {% elif not announcement.is_read %}
-            <span class="badge badge--warn">Шинэ</span>
-          {% endif %}
-        </div>
-      </div>
-
-      <p style="margin:10px 0 0">{{ announcement.body|truncatewords:30 }}</p>
-
-      {% if is_staff and announcement.targets.all %}
-        <p class="brand__sub" style="margin:10px 0 0">
-          Хүлээн авагч:
-          {% for target in announcement.targets.all %}
-            {{ target }}{% if not forloop.last %}, {% endif %}
-          {% endfor %}
-        </p>
+  {% if page.paginator.count %}
+    <div class="listmeta">
+      <span>Нийт {{ page.paginator.count }} мэдэгдэл</span>
+      {% if unread %}
+        <span class="badge badge--brand">{{ unread }} шинэ</span>
       {% endif %}
     </div>
-  {% empty %}
-    <div class="card">
-      <p class="empty">Мэдэгдэл байхгүй байна.</p>
-    </div>
-  {% endfor %}
+  {% endif %}
+
+  <div class="notes">
+    {% for announcement in page %}
+      {% comment %} `is_read` is annotated by `with_read_flag` and exists only
+         on the guardian queryset — a staff row has no read state of its own,
+         so it is never drawn as unread. {% endcomment %}
+      <a class="note{% if not is_staff and not announcement.is_read %} note--new{% endif %}"
+         href="{% url 'comms:detail' announcement.pk %}">
+        {% if is_staff %}
+          <span class="note__dot note__dot--read" aria-hidden="true"></span>
+        {% else %}
+          <span class="note__dot{% if announcement.is_read %} note__dot--read{% endif %}"
+                aria-hidden="true"></span>
+        {% endif %}
+
+        <span class="note__body">
+          <span class="note__title">{{ announcement.title }}</span>
+
+          <span class="note__meta">
+            {% if not is_staff and not announcement.is_read %}
+              {% comment %} The unread state in words, so it is not carried
+                 by weight and a dot alone (§13). {% endcomment %}
+              <span class="badge badge--brand">Шинэ</span>
+            {% endif %}
+
+            {% if announcement.is_important %}
+              <span class="badge badge--warn">Чухал</span>
+            {% endif %}
+
+            {% if is_staff %}
+              <span class="badge {% if announcement.status == 'published' %}badge--ok{% else %}badge--muted{% endif %}">
+                {{ announcement.get_status_display }}
+              </span>
+            {% endif %}
+
+            <span>
+              {% if announcement.published_at %}
+                {{ announcement.published_at|date:"Y.m.d" }}
+              {% else %}
+                Нийтлээгүй
+              {% endif %}
+            </span>
+
+            {% if announcement.author %}
+              <span>{{ announcement.author }}</span>
+            {% endif %}
+
+            {% comment %} §8.1 — who it was written to. Staff only; see the
+               note at the top of this file. {% endcomment %}
+            {% if is_staff %}
+              {% for target in announcement.targets.all %}
+                <span class="badge badge--muted">{{ target }}</span>
+              {% empty %}
+                <span class="badge badge--muted">Бүх эцэг эх</span>
+              {% endfor %}
+            {% endif %}
+          </span>
+
+          <span class="note__preview">{{ announcement.body|truncatewords:22 }}</span>
+        </span>
+      </a>
+    {% empty %}
+      {% if is_staff %}
+        {% url 'comms:create' as create_url %}
+        {% include "components/empty.html" with icon="bell" message="Мэдэгдэл хараахан үүсгээгүй байна. Эцэг эхэд хүргэх мэдээллээ эндээс нийтэлнэ." action=create_url action_label="Шинэ мэдэгдэл" %}
+      {% else %}
+        {% include "components/empty.html" with icon="bell" message="Одоогоор мэдэгдэл алга байна. Цэцэрлэгээс мэдээлэл ирэхэд энд харагдана." %}
+      {% endif %}
+    {% endfor %}
+  </div>
 
   {% if page.has_other_pages %}
-    <div class="pagination">
-      <span>Нийт {{ page.paginator.count }}</span>
+    <nav class="pager" aria-label="Хуудаслалт">
       {% if page.has_previous %}
-        <a href="?page={{ page.previous_page_number }}">← Өмнөх</a>
+        <a href="?page={{ page.previous_page_number }}" rel="prev">← Өмнөх</a>
       {% endif %}
-      <span>{{ page.number }} / {{ page.paginator.num_pages }}</span>
+      <span class="pager__now" aria-current="page">
+        {{ page.number }} / {{ page.paginator.num_pages }}
+      </span>
       {% if page.has_next %}
-        <a href="?page={{ page.next_page_number }}">Дараах →</a>
+        <a href="?page={{ page.next_page_number }}" rel="next">Дараах →</a>
       {% endif %}
-    </div>
+    </nav>
   {% endif %}
 {% endblock %}

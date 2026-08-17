@@ -1,0 +1,18 @@
+{% comment %} The header of a flat section: title left, optional link right.
+
+   Context: `title`, optional `link` + `link_label`, optional `note`,
+   optional `badge`.
+
+   A header include rather than a section wrapper, because a Django
+   `{% include %}` cannot wrap the caller's content — the caller opens its
+   own `<section class="section">` and drops this in first. That keeps the
+   markup honest instead of inventing a tag pair the template language does
+   not have. {% endcomment %}
+<div class="section__head">
+  <h2>
+    {{ title }}
+    {% if badge %}<span class="badge badge--warn">{{ badge }}</span>{% endif %}
+  </h2>
+  {% if link %}<a href="{{ link }}">{{ link_label|default:"Бүгдийг харах" }}</a>{% endif %}
+</div>
+{% if note %}<p class="section__note">{{ note }}</p>{% endif %}

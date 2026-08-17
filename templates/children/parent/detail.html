@@ -1,72 +1,318 @@
 {% extends "base_parent.html" %}
+{% comment %} The family's view of their child — brief §12, and the screen the
+   redesign treats as highest priority.
+
+   What it replaced was two cards: a photograph beside a definition list, and
+   an enrolment-history table. Accurate, and it read as a database row. This
+   is meant to read as "this is my child's story" while staying a
+   professional record, which is the line the brief draws.
+
+   Built mobile-first against 375px. The hero centres and stacks under 560px,
+   the tile grid reflows from six columns to three, and the moments strip is
+   square thumbnails at every width.
+
+   **Every section is guarded by the data it needs.** A newly registered
+   child has no observations, no photographs, no About Me and no assessments,
+   and this page then shows the hero, the links and the enrolment history and
+   stops. An empty section on a family's screen is worse than a short page:
+   it reads as something broken rather than something not yet written.
+
+   Modelled on `docs/design/screens/teacher-child-profile-360.jpeg` for the
+   hero and section rhythm, and on `overview-mobile-app-screens.jpeg` for the
+   phone layout. What that mockup draws and this does not: the radar chart,
+   the milestone timeline, the growth curve and the guardian contact actions
+   — Phase 2 and 3, per docs/design/INDEX.md. {% endcomment %}
 
 {% block title %}{{ child.full_name }}{% endblock %}
-{% block heading %}{{ child.full_name }}{% endblock %}
+{% comment %} The page title is deliberately generic and the child's name
+   lives in the hero below it. Both said the name at first build, which cost
+   about 120px of a 375px screen to print it twice before the family saw
+   anything about their child. {% endcomment %}
+{% block heading %}Хүүхдийн хуудас{% endblock %}
 
 {% block content %}
-  <div class="card">
-    <div style="display:flex; gap:16px; align-items:flex-start">
-      {% if child.photo %}
-        <img class="avatar avatar--lg"
-             src="{% url 'media:serve' child.photo.public_id 'full' %}"
-             alt="{{ child.full_name }}-ийн зураг">
-      {% else %}
-        <span class="avatar avatar--lg" aria-hidden="true">
-          {{ child.first_name|slice:":1" }}
-        </span>
-      {% endif %}
-      <dl class="facts">
-        <dt>Цэцэрлэг</dt><dd>{{ child.kindergarten.name }}</dd>
-        <dt>Бүлэг</dt>
-        <dd>
-          {% if enrollment %}
-            {{ enrollment.group.name }} · {{ enrollment.school_year.name }}
-          {% else %}—{% endif %}
-        </dd>
-        <dt>Төрсөн огноо</dt><dd>{{ child.date_of_birth|date:"Y.m.d" }}</dd>
-        <dt>Хүйс</dt><dd>{{ child.get_sex_display }}</dd>
-        <dt>Элссэн огноо</dt>
-        <dd>{{ child.enrolled_on|date:"Y.m.d"|default:"—" }}</dd>
+  {% include "components/child_switcher.html" %}
+
+  {% comment %} ---------------------------------------------- the child {% endcomment %}
+  <div class="profile">
+    {% if child.photo %}
+      <img class="profile__photo"
+           src="{% url 'media:serve' child.photo.public_id 'full' %}"
+           alt="{{ child.full_name }}-ийн зураг">
+    {% else %}
+      <span class="profile__photo avatar" aria-hidden="true"
+        >{{ child.first_name|slice:":1" }}</span>
+    {% endif %}
+
+    <div class="profile__body">
+      <h2 class="profile__name">{{ child.full_name }}</h2>
+
+      <p class="profile__meta">
+        <span class="badge badge--brand">{{ child.age }} нас</span>
+        {% if enrollment %}
+          <span class="badge badge--muted">{{ enrollment.group.name }}</span>
+        {% endif %}
+        {% if birth.year_animal %}
+          <span class="badge badge--muted">{{ birth.year_animal }} жил</span>
+        {% endif %}
+      </p>
+
+      <dl class="profile__facts">
+        <div>
+          <dt>Цэцэрлэг</dt>
+          <dd>{{ child.kindergarten.name }}</dd>
+        </div>
+        <div>
+          <dt>Бүлэг</dt>
+          <dd>
+            {% if enrollment %}
+              {{ enrollment.group.name }} · {{ enrollment.school_year.name }}
+            {% else %}—{% endif %}
+          </dd>
+        </div>
+        <div>
+          <dt>Төрсөн огноо</dt>
+          <dd>{{ child.date_of_birth|date:"Y.m.d" }}</dd>
+        </div>
+        <div>
+          <dt>Элссэн огноо</dt>
+          <dd>{{ child.enrolled_on|date:"Y.m.d"|default:"—" }}</dd>
+        </div>
       </dl>
+
+      <div class="profile__actions">
+        <a class="btn btn--sm" href="{% url 'portfolio:overview' child.pk %}">
+          <svg class="ic ic--sm" aria-hidden="true"><use href="#i-portfolio"></use></svg>
+          Хувийн хавтас
+        </a>
+        <a class="btn btn--sm btn--ghost" href="{% url 'reports:request' child.pk %}">
+          <svg class="ic ic--sm" aria-hidden="true"><use href="#i-report"></use></svg>
+          PDF тайлан
+        </a>
+      </div>
     </div>
   </div>
 
-  <div class="card">
-    <h2>Цэцэрлэгийн түүх</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">Хичээлийн жил</th>
-            <th scope="col">Цэцэрлэг</th>
-            <th scope="col">Бүлэг</th>
-            <th scope="col">Эхэлсэн</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in history %}
-            <tr>
-              <td>{{ row.school_year.name }}</td>
-              <td>{{ row.kindergarten.name }}</td>
-              <td>{{ row.group.name }}</td>
-              <td>{{ row.started_on|date:"Y.m.d" }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  {% comment %} The child-specific destinations. These are here rather than in
+     the bottom bar because that bar also serves Мэдэгдэл and Миний бүртгэл,
+     which carry no child — see components/bottom_nav.html. {% endcomment %}
+  <section class="section">
+    {% include "components/section_head.html" with title="Түргэн холбоос" %}
+    <div class="quick">
+      <a href="{% url 'observations:list' child.pk %}">
+        <svg class="ic" aria-hidden="true"><use href="#i-observation"></use></svg>
+        Ажиглалт
+      </a>
+      <a href="{% url 'assessment:child' child.pk %}">
+        <svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg>
+        Хөгжлийн үнэлгээ
+      </a>
+      <a href="{% url 'portfolio:overview' child.pk %}">
+        <svg class="ic" aria-hidden="true"><use href="#i-portfolio"></use></svg>
+        Хувийн хавтас
+      </a>
+      <a href="{% url 'reports:request' child.pk %}">
+        <svg class="ic" aria-hidden="true"><use href="#i-report"></use></svg>
+        Тайлан татах
+      </a>
     </div>
-  </div>
+  </section>
+
+  {% comment %} ------------------------------------------- recent moments
+     Photographs reached through observations this guardian may read. The
+     visibility gate is in `recent_media_for_child`, never here. {% endcomment %}
+  {% if moments %}
+    <section class="section">
+      {% include "components/section_head.html" with title="Сүүлийн мөчүүд" note="Багшийн ажиглалтад хавсаргасан зургууд" %}
+      <div class="moments">
+        {% for link in moments %}
+          <a href="{% url 'observations:detail' child.pk link.observation_id %}"
+             title="{{ link.caption|default:link.observation.summary }}">
+            <img src="{% url 'media:serve' link.media_file.public_id 'full' %}"
+                 alt="{{ link.caption|default:link.observation.summary }}"
+                 loading="lazy">
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% comment %} ---------------------------------------- teacher observations
+     The one section shown even when empty: a family arriving at a new
+     kindergarten should be told the teacher has not written yet, rather
+     than find no trace that observations exist at all. {% endcomment %}
+  <section class="section">
+    {% include "components/section_head.html" with title="Багшийн ажиглалт" %}
+    {% if observations %}
+      <div class="timeline">
+        {% for observation in observations %}
+          <a class="timeline__item"
+             href="{% url 'observations:detail' child.pk observation.pk %}">
+            <span class="timeline__date">
+              <span>{{ observation.observed_on|date:"d" }}</span>
+              {{ observation.observed_on|date:"m" }} сар
+            </span>
+            <span class="timeline__body">
+              <span class="timeline__title">{{ observation.summary }}</span>
+              <span class="timeline__meta">
+                {{ observation.type.name }}
+                {% if observation.created_by %} · {{ observation.created_by.last_name }}{% endif %}
+              </span>
+            </span>
+          </a>
+        {% endfor %}
+      </div>
+      <div class="btn-row" style="margin-top:var(--s3)">
+        <a class="btn btn--ghost btn--sm" href="{% url 'observations:list' child.pk %}">
+          Бүх ажиглалтыг харах →
+        </a>
+      </div>
+    {% else %}
+      {% include "components/empty.html" with icon="observation" message="Багш одоогоор ажиглалт бүртгээгүй байна." %}
+    {% endif %}
+  </section>
+
+  {% comment %} ------------------------------------------------ about me {% endcomment %}
+  {% if about %}
+    <section class="section">
+      {% include "components/section_head.html" with title="Миний тухай" %}
+      <div class="card">
+        <dl class="facts">
+          {% if about.introduction %}
+            <dt>Танилцуулга</dt><dd>{{ about.introduction }}</dd>
+          {% endif %}
+          {% if about.name_meaning %}
+            <dt>Нэрний утга</dt><dd>{{ about.name_meaning }}</dd>
+          {% endif %}
+          {% if about.dream %}
+            <dt>Миний мөрөөдөл</dt><dd>{{ about.dream }}</dd>
+          {% endif %}
+          {% if about.memorable_sayings %}
+            <dt>Сонирхолтой үг</dt><dd>{{ about.memorable_sayings }}</dd>
+          {% endif %}
+          {% if about.distinguishing_traits %}
+            <dt>Миний онцлог</dt><dd>{{ about.distinguishing_traits }}</dd>
+          {% endif %}
+          {% if about.height_cm %}
+            <dt>Өндөр</dt><dd>{{ about.height_cm }} см</dd>
+          {% endif %}
+          {% if about.weight_kg %}
+            <dt>Жин</dt><dd>{{ about.weight_kg }} кг</dd>
+          {% endif %}
+        </dl>
+      </div>
+    </section>
+  {% endif %}
+
+  {% comment %} --------------------------------------------- ages 2 to 5
+     RFP §4.3 gives each year its own page. All four are always drawn: an
+     unfilled year is a page waiting to be written, not a missing one, and
+     the dashed chip says so without pretending it holds anything.
+     {% endcomment %}
+  <section class="section">
+    {% include "components/section_head.html" with title="Насны хуудсууд" note="2–5 насны хөгжлийн тэмдэглэл" %}
+    <div class="ages">
+      {% for age, profile in age_profiles.items %}
+        {% if profile %}
+          <a href="{% url 'portfolio:overview' child.pk %}#age-{{ age }}">
+            <strong>{{ age }} нас</strong>
+            бөглөсөн
+          </a>
+        {% else %}
+          <span>
+            <strong>{{ age }} нас</strong>
+            хоосон
+          </span>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+
+  {% comment %} ------------------------------------------- development
+     "How is my child developing?" — RFP §6.4.
+
+     Only the levels a teacher marked visible to families. That gate is in
+     `assessment.selectors.child_assessments`, which filters
+     `visible_to_parents=True` for a guardian; nothing here re-implements it
+     and nothing here may widen it (CLAUDE.md §1.1).
+
+     A list, not a chart. Each row is a domain, its level in words, and the
+     level's own numeral — no percentage, no average, no comparison against
+     other children, because none of those figures exists in the backend and
+     inventing one would be a claim about a child that nobody made.
+
+     Domain names and level labels are read from the configured
+     `DevelopmentDomain` and `AssessmentLevel` rows (§6.1, §6.2), never
+     hardcoded — a kindergarten that renames a level sees the new name here.
+
+     The level's colour comes from the **level**, never from the domain: a
+     domain-tinted level badge reads as a severity scale running the wrong
+     way, which is a mistake this codebase has already made twice. {% endcomment %}
+  <section class="section">
+    {% url 'assessment:child' child.pk as assessment_url %}
+    {% include "components/section_head.html" with title="Хөгжлийн тойм" link=assessment_url link_label="Дэлгэрэнгүй" %}
+
+    {% if assessments %}
+      <div class="panel">
+        <div class="levels">
+          {% for assessment in assessments %}
+            <div class="levelrow">
+              <span class="levelrow__name">
+                <span class="levelrow__dot" aria-hidden="true"
+                      style="background:{{ assessment.domain.color }}"></span>
+                {{ assessment.domain.name }}
+                <span class="levelrow__term">· {{ assessment.term.name }}</span>
+              </span>
+              <span class="badge"
+                    style="background:{{ assessment.level.color }}1a; color:{{ assessment.level.color }}">
+                {{ assessment.level.label }} · {{ assessment.level.value }}
+              </span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      {% comment %} Either nothing has been assessed yet, or the teacher has
+         not opened this term to the family (§6.4's publish step). The family
+         cannot tell the two apart and does not need to — both mean "nothing
+         to read yet", and naming the second would expose a working draft.
+         {% endcomment %}
+      {% include "components/empty.html" with icon="assessment" message="Одоогоор хөгжлийн үнэлгээ бүртгэгдээгүй байна." %}
+    {% endif %}
+  </section>
+
+  {% comment %} ---------------------------------------------- enrolment {% endcomment %}
+  {% if history %}
+    <section class="section">
+      {% include "components/section_head.html" with title="Цэцэрлэгийн түүх" %}
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Хичээлийн жил</th>
+                <th scope="col">Цэцэрлэг</th>
+                <th scope="col">Бүлэг</th>
+                <th scope="col">Эхэлсэн</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in history %}
+                <tr>
+                  <td>{{ row.school_year.name }}</td>
+                  <td>{{ row.kindergarten.name }}</td>
+                  <td>{{ row.group.name }}</td>
+                  <td>{{ row.started_on|date:"Y.m.d" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  {% endif %}
 
   <div class="btn-row">
-    <a class="btn" href="{% url 'portfolio:overview' child.pk %}">
-      Хувийн хавтас үзэх
-    </a>
-    <a class="btn btn--ghost" href="{% url 'observations:list' child.pk %}">
-      Багшийн ажиглалт
-    </a>
-    <a class="btn btn--ghost" href="{% url 'assessment:child' child.pk %}">
-      Хөгжлийн үнэлгээ
-    </a>
     <a class="btn btn--ghost" href="{% url 'children:parent_home' %}">← Нүүр хуудас</a>
   </div>
 {% endblock %}

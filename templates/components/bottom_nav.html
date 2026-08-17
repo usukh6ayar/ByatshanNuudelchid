@@ -1,0 +1,43 @@
+{% comment %} The guardian's mobile navigation — shown under 900px only, by
+   CSS, so there is one nav in the markup and no duplicated link list to
+   drift out of step with the sidebar.
+
+   Drawn from `docs/design/screens/overview-mobile-app-screens.jpeg`, where
+   every variant of the parent app puts its destinations in a fixed bar at
+   the foot of the screen. The audit's problem 1 was that the phone layout
+   was the desktop sidebar folded into a scrolling strip; this is the
+   deliberate mobile layout the brief §9 asks for instead.
+
+   **Three entries, and deliberately only three.** The child-specific
+   destinations — Хавтас, Ажиглалт, Үнэлгээ, Тайлан — are not here, because
+   they need a child and two of the screens this bar appears on (Мэдэгдэл,
+   Миний бүртгэл) are shared with staff and carry no child in context. A bar
+   that is five items on one screen and three on the next is worse than a
+   short one: the thing under your thumb moves. Those links live on the
+   child profile as a tile grid, which is where the mockup's mobile screens
+   put them too.
+
+   Гарах is not here either. A logout one thumb-width from the tab used most
+   is a mistake waiting to happen; it stays in the header.
+
+   Included by `base_parent.html` only. The teacher's nav is deeper and
+   desktop-first, and six 62px targets at 375px is a mis-tap generator, so
+   that shell keeps the scrolling strip. {% endcomment %}
+<nav class="bottomnav" aria-label="Гар утасны цэс">
+  <a href="{% url 'children:parent_home' %}"
+     {% if nav == 'home' %}aria-current="page"{% endif %}>
+    <svg class="ic" aria-hidden="true"><use href="#i-home"></use></svg>
+    Нүүр
+  </a>
+  <a href="{% url 'comms:list' %}"
+     {% if nav == 'announcements' %}aria-current="page"{% endif %}>
+    <svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg>
+    Мэдэгдэл
+    {% if unread_announcements %}<span class="count">{{ unread_announcements }}</span>{% endif %}
+  </a>
+  <a href="{% url 'accounts:profile' %}"
+     {% if nav == 'profile' %}aria-current="page"{% endif %}>
+    <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
+    Бүртгэл
+  </a>
+</nav>

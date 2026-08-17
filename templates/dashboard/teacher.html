@@ -1,12 +1,25 @@
 {% extends "base_teacher.html" %}
-{% comment %} RFP §12.1, tile for tile, laid out as
-   `docs/design/screens/teacher-dashboard.jpeg` draws it: a row of tinted
-   statistics, then panels whose titles carry a link to the full screen.
+{% comment %} RFP §12.1 — the teacher's daily workspace, rebuilt 2026-08-16
+   (docs/UI_AUDIT.md).
 
-   Ordered by what a teacher acts on first — the things waiting for them,
-   then today, then the term's progress. The mockup also draws attendance,
-   meals, growth and surveys; those are Phase 2 and 3 and are not faked
-   here. {% endcomment %}
+   Ordered by what a teacher acts on, not by what is easiest to count:
+   the three things they came to do, then what is waiting for them, then
+   today, then the term's progress. The previous version opened with four
+   statistics and buried the "record an observation" action six blocks down.
+
+   **Deliberately not what the mockup draws.** `teacher-dashboard.jpeg` has
+   six KPI tiles, a donut of domain averages, a growth line chart,
+   attendance, health flags, a weekly plan and survey progress. Attendance,
+   health, growth and surveys are Phase 2 and 3 and have no data behind
+   them; the brief §13 rules out radar charts, analytics panels and
+   decorative KPI panels outright. Spacing, colour, tile shape and type
+   hierarchy come from that image. Content comes from what
+   `selectors.teacher_dashboard()` actually returns, and nothing here is
+   computed in the template.
+
+   The domain averages stay a bar per domain rather than the drawn donut:
+   it says the same thing, reads at a glance on a phone, needs no chart
+   library, and survives being printed. {% endcomment %}
 
 {% block title %}Хяналтын самбар{% endblock %}
 {% block heading %}Хяналтын самбар 👋{% endblock %}
@@ -15,77 +28,169 @@
 {% endblock %}
 
 {% block content %}
-  <div class="grid grid--tiles">
-    <div class="tile tile--blue">
-      <span class="tile__icon"><svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg></span>
-      <div>
-        <div class="tile__label">Хариуцсан хүүхэд</div>
-        <div class="tile__value">{{ child_count }}</div>
-      </div>
+  {% comment %} ------------------------------------------- quick actions
+     First, not last. §13 names three: add a child, add an observation,
+     assess. The group-scoped two are §5.2's daily case and §6.3's grid,
+     both of which were four clicks deep behind a child. {% endcomment %}
+  <section class="section" style="margin-top:0">
+    {% include "components/section_head.html" with title="Түргэн үйлдэл" %}
+    <div class="actions">
+      {% for group in groups %}
+        <a href="{% url 'observations:group' group.pk %}">
+          <svg class="ic" aria-hidden="true"><use href="#i-observation"></use></svg>
+          {{ group.name }} — бүлгээр ажиглалт
+        </a>
+        <a href="{% url 'assessment:group_grid' group.pk %}">
+          <svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg>
+          Түргэн үнэлгээ
+        </a>
+      {% endfor %}
+      <a href="{% url 'children:create' %}">
+        <svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg>
+        Хүүхэд нэмэх
+      </a>
     </div>
-    <div class="tile tile--pink">
-      <span class="tile__icon"><svg class="ic" aria-hidden="true"><use href="#i-cake"></use></svg></span>
-      <div>
-        <div class="tile__label">Өнөөдөр төрсөн өдөртэй</div>
-        <div class="tile__value">{{ birthdays_today|length }}</div>
-      </div>
+  </section>
+
+  {% comment %} ------------------------------------------------ figures
+     Four, not six. Each is a real count from a real query, and each is a
+     link to the screen that acts on it — a number a teacher cannot act on
+     is decoration. {% endcomment %}
+  <section class="section">
+    {% include "components/section_head.html" with title="Өнөөдрийн байдал" %}
+    {% comment %} Four summary items, approved 2026-08-17: children,
+       birthdays, notices, assessments still owed. Every one is a real count
+       from `selectors.teacher_dashboard` — nothing here is computed in the
+       template and nothing is a proxy for a figure the system does not have.
+
+       Each links to the screen that acts on it. A number a teacher cannot
+       act on is decoration. {% endcomment %}
+    <div class="grid grid--tiles">
+      {% url 'children:list' as children_url %}
+      {% url 'observations:review_queue' as review_url %}
+      {% url 'comms:list' as comms_url %}
+      {% include "components/stat.html" with tone="blue" icon="children" label="Хүүхэд" value=child_count href=children_url %}
+      {% include "components/stat.html" with tone="pink" icon="cake" label="Өнөөдөр төрсөн өдөр" value=birthdays_today|length %}
+      {% include "components/stat.html" with tone="sky" icon="bell" label="Сүүлийн мэдэгдэл" value=new_announcements|length href=comms_url %}
+      {% include "components/stat.html" with tone="amber" icon="review" label="Хянах ажиглалт" value=pending_reviews href=review_url %}
     </div>
-    <div class="tile tile--amber">
-      <span class="tile__icon"><svg class="ic" aria-hidden="true"><use href="#i-review"></use></svg></span>
-      <div>
-        <div class="tile__label">Хянах ажиглалт</div>
-        <div class="tile__value">{{ pending_reviews }}</div>
-      </div>
-    </div>
-    <div class="tile tile--teal">
-      <span class="tile__icon"><svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg></span>
-      <div>
-        <div class="tile__label">Үнэлгээ дутуу</div>
-        <div class="tile__value">{{ missing_assessments|length }}</div>
-      </div>
-    </div>
-  </div>
+  </section>
 
   {% if birthdays_today %}
-    <div class="card">
-      <div class="card__head">
-        <h2>🎂 Өнөөдрийн төрсөн өдөр</h2>
-      </div>
+    <section class="section">
+      {% include "components/section_head.html" with title="🎂 Өнөөдрийн төрсөн өдөр" %}
       <div class="switcher" style="margin-bottom:0">
         {% for child in birthdays_today %}
           <a href="{% url 'children:detail' child.pk %}">
-            {% if child.photo %}
-              <img class="avatar avatar--sm"
-                   src="{% url 'media:serve' child.photo.public_id 'full' %}"
-                   alt="{{ child.full_name }}">
-            {% else %}
-              <span class="avatar avatar--sm" aria-hidden="true">{{ child.first_name|first }}</span>
-            {% endif %}
+            {% include "components/avatar.html" with person=child size="sm" %}
             <span>{{ child.full_name }}</span>
           </a>
         {% endfor %}
       </div>
-    </div>
+    </section>
   {% endif %}
 
-  {% comment %} The two things a teacher starts from, on the screen they land
-     on. Recording an activity for the whole group is §5.2's daily case and
-     was four clicks deep behind a child; the §6.3 grid was the same.
-  {% endcomment %}
-  {% if groups %}
-    <div class="page-actions" style="margin:-6px 0 4px">
-      {% for group in groups %}
-        <a class="btn" href="{% url 'observations:group' group.pk %}">
-          <svg class="ic ic--sm" aria-hidden="true"><use href="#i-observation"></use></svg>
-          {{ group.name }} — бүлгээр ажиглалт
-        </a>
-        <a class="btn btn--ghost" href="{% url 'assessment:group_grid' group.pk %}">
-          <svg class="ic ic--sm" aria-hidden="true"><use href="#i-assessment"></use></svg>
-          Түргэн үнэлгээ
-        </a>
-      {% endfor %}
+  {% comment %} ------------------------------------------ what is waiting
+     The two review queues side by side: what the teacher has written, and
+     what families have sent in for approval. {% endcomment %}
+  <section class="section">
+    {% include "components/section_head.html" with title="Сүүлийн үйл явдал" %}
+    <div class="grid grid--2">
+      <div class="card">
+        <div class="card__head">
+          <h2>Сүүлийн ажиглалт</h2>
+          <a href="{% url 'children:list' %}">Бүгдийг харах</a>
+        </div>
+        <div class="feed">
+          {% for observation in recent_observations %}
+            {% url 'observations:detail' observation.child.pk observation.pk as observation_url %}
+            {% include "components/feed_item.html" with person=observation.child title=observation.summary meta=observation.child.full_name href=observation_url %}
+          {% empty %}
+            {% include "components/empty.html" with icon="observation" message="Ажиглалт бүртгэгдээгүй байна." %}
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__head">
+          <h2>
+            Эцэг эхийн ажиглалт
+            {% if pending_reviews %}
+              <span class="badge badge--warn">{{ pending_reviews }} хянах</span>
+            {% endif %}
+          </h2>
+          <a href="{% url 'observations:review_queue' %}">Хянах</a>
+        </div>
+        <div class="feed">
+          {% for observation in recent_parent_notes %}
+            {% url 'observations:detail' observation.child.pk observation.pk as observation_url %}
+            {% include "components/feed_item.html" with person=observation.child title=observation.summary meta=observation.get_review_status_display href=observation_url %}
+          {% empty %}
+            {% include "components/empty.html" with icon="review" message="Эцэг эхийн ажиглалт байхгүй байна." %}
+          {% endfor %}
+        </div>
+      </div>
     </div>
-  {% endif %}
+  </section>
+
+  {% comment %} ------------------------------------------ term progress {% endcomment %}
+  <section class="section">
+    {% include "components/section_head.html" with title="Улирлын явц" %}
+    <div class="grid grid--2">
+      <div class="card">
+        <div class="card__head">
+          <h2>Үнэлгээний явц</h2>
+          {% if term %}<span class="badge badge--muted">{{ term.name }}</span>{% endif %}
+        </div>
+
+        {% if term %}
+          {% comment %} Written out rather than routed through the meter
+             component: the label is two numbers with a separator and the
+             printed value carries a percent sign, and expressing that as
+             chained `stringformat`/`add` filters was three lines of
+             unreadable template for one bar. {% endcomment %}
+          <div class="meter">
+            <div class="meter__top">
+              <span class="meter__name">{{ assessment_progress.done }} / {{ assessment_progress.expected }} үнэлгээ</span>
+              <span class="meter__value">{{ assessment_progress.percent }}%</span>
+            </div>
+            <div class="meter__track">
+              <div class="meter__fill" style="width:{{ assessment_progress.percent }}%"></div>
+            </div>
+          </div>
+
+          {% if missing_assessments %}
+            <h3 class="subhead">Үнэлгээ дутуу хүүхдүүд</h3>
+            <div class="feed">
+              {% for child in missing_assessments %}
+                {% url 'assessment:child' child.pk as child_assessment_url %}
+                {% include "components/feed_item.html" with person=child title=child.full_name meta="Үнэлгээ хийгдээгүй" href=child_assessment_url %}
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="section__note" style="margin-top:var(--s3)">Бүх хүүхэд үнэлэгдсэн.</p>
+          {% endif %}
+        {% else %}
+          {% include "components/empty.html" with icon="assessment" message="Хичээлийн жилд улирал тохируулаагүй байна. Администратор улирлыг үүсгэсний дараа үнэлгээ хийнэ." %}
+        {% endif %}
+      </div>
+
+      <div class="card">
+        <div class="card__head">
+          <h2>Хөгжлийн чиглэлийн дундаж</h2>
+        </div>
+        {% if domain_averages %}
+          <div class="meter-list">
+            {% for row in domain_averages %}
+              {% include "components/meter.html" with name=row.name value=row.average percent=row.percent color=row.color %}
+            {% endfor %}
+          </div>
+        {% else %}
+          {% include "components/empty.html" with icon="assessment" message="Энэ улиралд үнэлгээ бүртгэгдээгүй байна." %}
+        {% endif %}
+      </div>
+    </div>
+  </section>
 
   {% comment %} The four kindergarten bands — Бага, Дунд, Ахлах, Бэлтгэл —
      and the year this cohort meets each one. A group moves up every
@@ -93,203 +198,40 @@
      Hidden when the group has no band set: guessing it from the free-text
      age category would be a guess shown as a fact. {% endcomment %}
   {% if band_track %}
-    <div class="card">
-      <div class="card__head">
-        <h2>Бүлгийн шатлал</h2>
-        <span class="badge badge--muted">{{ groups.0.name }}</span>
+    <section class="section">
+      {% include "components/section_head.html" with title="Бүлгийн шатлал" %}
+      <div class="card">
+        <ol class="track">
+          {% for step in band_track %}
+            <li class="track__step track__step--{{ step.state }}">
+              <span class="track__name">{{ step.label }}</span>
+              <span class="track__dot" aria-hidden="true"></span>
+              <span class="track__dates">{{ step.years }}</span>
+              <span class="sr-only">
+                {% if step.state == 'done' %}өнгөрсөн
+                {% elif step.state == 'current' %}одоогийн бүлэг
+                {% else %}хойшид{% endif %}
+              </span>
+            </li>
+          {% endfor %}
+        </ol>
       </div>
-      <ol class="track">
-        {% for step in band_track %}
-          <li class="track__step track__step--{{ step.state }}">
-            <span class="track__name">{{ step.label }}</span>
-            <span class="track__dot" aria-hidden="true"></span>
-            <span class="track__dates">{{ step.years }}</span>
-            <span class="sr-only">
-              {% if step.state == 'done' %}өнгөрсөн
-              {% elif step.state == 'current' %}одоогийн бүлэг
-              {% else %}хойшид{% endif %}
-            </span>
-          </li>
-        {% endfor %}
-      </ol>
-    </div>
+    </section>
   {% endif %}
 
-  <div class="grid grid--2">
-    {% comment %} §12.1 — "тухайн улирлын үнэлгээний явц" {% endcomment %}
-    <div class="card">
-      <div class="card__head">
-        <h2>Улирлын үнэлгээний явц</h2>
-        {% if term %}<span class="badge badge--muted">{{ term.name }}</span>{% endif %}
-      </div>
-
-      {% if term %}
-        <div class="meter">
-          <div class="meter__top">
-            <span class="meter__name">{{ assessment_progress.done }} / {{ assessment_progress.expected }} үнэлгээ</span>
-            <span class="meter__value">{{ assessment_progress.percent }}%</span>
-          </div>
-          <div class="meter__track">
-            <div class="meter__fill" style="width:{{ assessment_progress.percent }}%"></div>
-          </div>
-        </div>
-
-        {% if missing_assessments %}
-          <h3 style="font-size:.9rem; margin:18px 0 8px">Үнэлгээ дутуу хүүхдүүд</h3>
-          <div class="feed">
-            {% for child in missing_assessments %}
-              <a class="feed__item" href="{% url 'assessment:child' child.pk %}">
-                {% if child.photo %}
-                  <img class="avatar avatar--sm"
-                       src="{% url 'media:serve' child.photo.public_id 'full' %}"
-                       alt="{{ child.full_name }}">
-                {% else %}
-                  <span class="avatar avatar--sm" aria-hidden="true">{{ child.first_name|first }}</span>
-                {% endif %}
-                <div class="feed__body">
-                  <div class="feed__title">{{ child.full_name }}</div>
-                  <div class="feed__meta">Үнэлгээ хийгдээгүй</div>
-                </div>
-              </a>
-            {% endfor %}
-          </div>
-        {% else %}
-          <p class="brand__sub" style="margin-top:14px">Бүх хүүхэд үнэлэгдсэн.</p>
-        {% endif %}
-      {% else %}
-        <p class="empty">
-          Хичээлийн жилд улирал тохируулаагүй байна.
-          Администратор улирлыг үүсгэсний дараа үнэлгээ хийнэ.
-        </p>
-      {% endif %}
-    </div>
-
-    {% comment %} §12.1, §12.3 — "хөгжлийн чиглэл тус бүрийн дундаж". The
-       mockup draws this as a donut; a bar per domain says the same thing,
-       reads at a glance on a phone, and needs no chart library. {% endcomment %}
-    <div class="card">
-      <div class="card__head">
-        <h2>Хөгжлийн чиглэлийн дундаж</h2>
-      </div>
-      {% if domain_averages %}
-        <div class="meter-list">
-          {% for row in domain_averages %}
-            <div class="meter">
-              <div class="meter__top">
-                <span class="meter__name">{{ row.name }}</span>
-                <span class="meter__value">{{ row.average }}</span>
-              </div>
-              <div class="meter__track">
-                <div class="meter__fill"
-                     style="width:{{ row.percent }}%; background:{{ row.color }}"></div>
-              </div>
-            </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <p class="empty">Энэ улиралд үнэлгээ бүртгэгдээгүй байна.</p>
-      {% endif %}
-    </div>
-  </div>
-
-  <div class="grid grid--2">
-    {% comment %} §12.1 — "сүүлийн ажиглалтууд" {% endcomment %}
-    <div class="card">
-      <div class="card__head">
-        <h2>Сүүлийн ажиглалт</h2>
-        <a href="{% url 'children:list' %}">Бүгдийг харах</a>
-      </div>
-      <div class="feed">
-        {% for observation in recent_observations %}
-          <a class="feed__item"
-             href="{% url 'observations:detail' observation.child.pk observation.pk %}">
-            <span class="avatar avatar--sm" aria-hidden="true">
-              {{ observation.child.first_name|first }}
-            </span>
-            <div class="feed__body">
-              <div class="feed__title">{{ observation.summary }}</div>
-              <div class="feed__meta">
-                {{ observation.child.full_name }} ·
-                {{ observation.observed_on|date:"Y.m.d" }} ·
-                {{ observation.get_source_display }}
-              </div>
-            </div>
-          </a>
-        {% empty %}
-          <p class="empty">
-            <svg class="ic" aria-hidden="true"><use href="#i-observation"></use></svg>
-            Ажиглалт бүртгэгдээгүй байна.
-          </p>
-        {% endfor %}
-      </div>
-    </div>
-
-    {% comment %} §12.1 — "сүүлийн үеийн эцэг эхийн оруулсан мэдээлэл" {% endcomment %}
-    <div class="card">
-      <div class="card__head">
-        <h2>
-          Эцэг эхийн ажиглалт
-          {% if pending_reviews %}
-            <span class="badge badge--warn">{{ pending_reviews }} хянах</span>
-          {% endif %}
-        </h2>
-        <a href="{% url 'observations:review_queue' %}">Хянах</a>
-      </div>
-      <div class="feed">
-        {% for observation in recent_parent_notes %}
-          <a class="feed__item"
-             href="{% url 'observations:detail' observation.child.pk observation.pk %}">
-            <span class="avatar avatar--sm" aria-hidden="true">
-              {{ observation.child.first_name|first }}
-            </span>
-            <div class="feed__body">
-              <div class="feed__title">{{ observation.summary }}</div>
-              <div class="feed__meta">
-                {{ observation.child.full_name }} ·
-                {{ observation.get_review_status_display }}
-              </div>
-            </div>
-          </a>
-        {% empty %}
-          <p class="empty">
-            <svg class="ic" aria-hidden="true"><use href="#i-review"></use></svg>
-            Эцэг эхийн ажиглалт байхгүй байна.
-          </p>
-        {% endfor %}
-      </div>
-    </div>
-  </div>
-
   {% comment %} §12.1 — "шинэ мэдэгдэл" {% endcomment %}
-  <div class="card">
-    <div class="card__head">
-      <h2>Сүүлийн мэдэгдэл</h2>
-      <a href="{% url 'comms:list' %}">Бүгдийг харах</a>
+  <section class="section">
+    {% url 'comms:list' as comms_url %}
+    {% include "components/section_head.html" with title="Сүүлийн мэдэгдэл" link=comms_url %}
+    <div class="card">
+      <div class="feed">
+        {% for announcement in new_announcements %}
+          {% url 'comms:detail' announcement.pk as announcement_url %}
+          {% include "components/feed_item.html" with icon="bell" title=announcement.title meta=announcement.published_at|date:"Y.m.d"|default:"ноорог" href=announcement_url %}
+        {% empty %}
+          {% include "components/empty.html" with icon="bell" message="Мэдэгдэл байхгүй байна." %}
+        {% endfor %}
+      </div>
     </div>
-    <div class="feed">
-      {% for announcement in new_announcements %}
-        <a class="feed__item" href="{% url 'comms:detail' announcement.pk %}">
-          <span class="tile__icon" style="width:34px; height:34px; border-radius:10px">
-            <svg class="ic ic--sm" aria-hidden="true"><use href="#i-bell"></use></svg>
-          </span>
-          <div class="feed__body">
-            <div class="feed__title">
-              {{ announcement.title }}
-              {% if announcement.is_important %}
-                <span class="badge badge--warn">Чухал</span>
-              {% endif %}
-            </div>
-            <div class="feed__meta">
-              {{ announcement.published_at|date:"Y.m.d"|default:"ноорог" }}
-            </div>
-          </div>
-        </a>
-      {% empty %}
-        <p class="empty">
-          <svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg>
-          Мэдэгдэл байхгүй байна.
-        </p>
-      {% endfor %}
-    </div>
-  </div>
+  </section>
 {% endblock %}

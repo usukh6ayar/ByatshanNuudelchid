@@ -1,0 +1,19 @@
+{% comment %} One row in a list: a picture or icon, a title, a line of meta.
+
+   Context: `title`, `meta`, and either `person` (drawn as an avatar) or
+   `icon` (a sprite id without `#i-`). Optional `href` makes the whole row
+   the target, which is what gives it a 44px-tall hit area on a phone
+   rather than a text-sized one. {% endcomment %}
+{% if href %}<a class="feed__item" href="{{ href }}">{% else %}<div class="feed__item">{% endif %}
+  {% if person %}
+    {% include "components/avatar.html" with person=person size="sm" %}
+  {% else %}
+    <span class="tile__icon tile__icon--sm">
+      <svg class="ic ic--sm" aria-hidden="true"><use href="#i-{{ icon }}"></use></svg>
+    </span>
+  {% endif %}
+  <div class="feed__body">
+    <div class="feed__title">{{ title }}</div>
+    {% if meta %}<div class="feed__meta">{{ meta }}</div>{% endif %}
+  </div>
+{% if href %}</a>{% else %}</div>{% endif %}

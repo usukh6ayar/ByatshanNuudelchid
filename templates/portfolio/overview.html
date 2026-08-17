@@ -1,178 +1,229 @@
 {% extends base_template %}
-{# RFP §4.1–§4.3. Layout follows docs/design/screens/teacher-child-profile-360.jpeg #}
+{% comment %} RFP §4.1–§4.3 — the child's own record, redesigned 2026-08-16.
+
+   **One screen, both roles.** §2.3 lets a family write here as well as read,
+   and `services.editable_age_profile_fields` splits only `parent_note` from
+   `teacher_note`, so the actions are identical for a parent and a teacher.
+   Only the introduction is worded differently. Nothing here is hidden by
+   role, because nothing here is restricted by role.
+
+   **Every existing action is preserved, unchanged:**
+
+   * `media:child_photo` — the profile photograph (both roles, §2.3)
+   * `portfolio:about_me_edit` — §4.1
+   * `portfolio:age_profile_edit child.pk age` — §4.3, one page per year
+   * `portfolio:birthday_note_edit child.pk age` — §4.2, **POST-only**, one
+     form per birthday, field name `note`. That endpoint redirects back here
+     and exists nowhere else, so this page has to keep the inline editor; it
+     just stops looking like a stack of bare inputs.
+   * `reports:request` — §10.1, the family's printable copy
+
+   It replaced four statistic tiles for the birth facts — a dashboard
+   treatment for what are keepsake details — and a two-column definition list
+   holding prose. {% endcomment %}
 
 {% block title %}{{ child.full_name }} — хувийн хавтас{% endblock %}
-{% block heading %}{{ child.full_name }} — хувийн хавтас{% endblock %}
+{% block heading %}Хувийн хавтас{% endblock %}
+{% block lede %}
+  <p class="lede">
+    {% if is_guardian %}
+      {{ child.first_name }}-ийн хөгжлийн түүх, дурсамжийн хуудсууд.
+    {% else %}
+      {{ child.first_name }}-ийн хувийн хавтасны бүртгэл.
+    {% endif %}
+  </p>
+{% endblock %}
 
 {% block content %}
-  {% comment %} RFP §3.4, §4.4. The photo is served through the permission check at
-     /media/<uuid>/full/ — there is no direct link to a child's image. {% endcomment %}
-  <div class="card">
-    <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap">
-      {% if child.photo %}
-        <img class="avatar avatar--lg"
-             src="{% url 'media:serve' child.photo.public_id 'full' %}"
-             alt="{{ child.full_name }}-ийн зураг">
-      {% else %}
-        <span class="avatar avatar--lg" aria-hidden="true">
-          {{ child.first_name|slice:":1" }}
-        </span>
-      {% endif %}
-      <div>
-        <h2 style="margin:0 0 4px">{{ child.full_name }}</h2>
-        <a class="btn btn--ghost" href="{% url 'media:child_photo' child.pk %}">
+  {% comment %} ------------------------------------------- the cover
+     RFP §3.4, §4.4 — the photograph is served through the permission check
+     at /media/<uuid>/full/. There is no direct link to a child's image.
+     {% endcomment %}
+  <div class="folio">
+    {% if child.photo %}
+      <img class="folio__photo"
+           src="{% url 'media:serve' child.photo.public_id 'full' %}"
+           alt="{{ child.full_name }}-ийн зураг">
+    {% else %}
+      <span class="avatar folio__photo" aria-hidden="true"
+        >{{ child.first_name|slice:":1" }}</span>
+    {% endif %}
+
+    <div class="folio__body">
+      <h2 class="folio__name">{{ child.full_name }}</h2>
+
+      {% comment %} §4.2's keepsake facts as a quiet line. The zodiac sign
+         and the year animal are computed from the date of birth, never
+         stored (§206). {% endcomment %}
+      <p class="folio__facts">
+        <span><b>{{ birth.age }} нас</b></span>
+        <span>Төрсөн: <b>{{ birth.date_of_birth|date:"Y.m.d" }}</b></span>
+        {% if birth.zodiac_sign %}
+          <span>Өрнийн орд: <b>{{ birth.zodiac_sign }}</b></span>
+        {% endif %}
+        {% if birth.year_animal %}
+          <span>Жил: <b>{{ birth.year_animal }}</b></span>
+        {% endif %}
+        {% for enrollment in child.active_enrollments %}
+          <span>Бүлэг: <b>{{ enrollment.group.name }}</b></span>
+        {% endfor %}
+      </p>
+
+      <div class="folio__actions">
+        <a class="btn btn--ghost btn--sm" href="{% url 'media:child_photo' child.pk %}">
+          <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
           {% if child.photo %}Зураг солих{% else %}Зураг нэмэх{% endif %}
+        </a>
+        <a class="btn btn--ghost btn--sm" href="{% url 'reports:request' child.pk %}">
+          <svg class="ic ic--sm" aria-hidden="true"><use href="#i-report"></use></svg>
+          PDF тайлан
         </a>
       </div>
     </div>
   </div>
 
-  <div class="grid grid--tiles">
-    <div class="tile">
-      <div class="tile__label">Нас</div>
-      <div class="tile__value">{{ birth.age }}</div>
-    </div>
-    <div class="tile">
-      <div class="tile__label">Төрсөн огноо</div>
-      <div class="tile__value" style="font-size:1.1rem">
-        {{ birth.date_of_birth|date:"Y.m.d" }}
-      </div>
-    </div>
-    <div class="tile">
-      <div class="tile__label">Өрнийн орд</div>
-      <div class="tile__value" style="font-size:1.1rem">{{ birth.zodiac_sign }}</div>
-    </div>
-    <div class="tile">
-      <div class="tile__label">Монгол жилийн амьтан</div>
-      <div class="tile__value" style="font-size:1.1rem">{{ birth.year_animal }}</div>
-    </div>
-  </div>
-
-  {# ---------------------------------------------------------- Миний тухай #}
-  <div class="card">
-    <h2>Миний тухай</h2>
+  {% comment %} ------------------------------------------- Миний тухай
+     §4.1 — the first story element, so it gets real prose at a readable
+     measure rather than a definition list squeezed into two columns.
+     {% endcomment %}
+  <section class="section">
+    {% url 'portfolio:about_me_edit' child.pk as about_url %}
+    {% include "components/section_head.html" with title="Миний тухай" link=about_url link_label=about|yesno:"Засах,Бөглөх" %}
 
     {% if about %}
-      <dl class="facts">
-        {% if about.introduction %}
-          <dt>Танилцуулга</dt><dd>{{ about.introduction|linebreaksbr }}</dd>
-        {% endif %}
-        {% if about.name_meaning %}
-          <dt>Нэрний утга</dt><dd>{{ about.name_meaning|linebreaksbr }}</dd>
-        {% endif %}
-        {% if about.memorable_sayings %}
-          <dt>Сонирхолтой үг</dt><dd>{{ about.memorable_sayings|linebreaksbr }}</dd>
-        {% endif %}
-        {% if about.dream %}
-          <dt>Миний мөрөөдөл</dt><dd>{{ about.dream|linebreaksbr }}</dd>
-        {% endif %}
-        {% if about.distinguishing_traits %}
-          <dt>Миний онцлог</dt><dd>{{ about.distinguishing_traits|linebreaksbr }}</dd>
-        {% endif %}
-        {% if about.height_cm %}
-          <dt>Миний өндөр</dt><dd>{{ about.height_cm }} см</dd>
-        {% endif %}
-        {% if about.weight_kg %}
-          <dt>Миний жин</dt><dd>{{ about.weight_kg }} кг</dd>
-        {% endif %}
-        {% if about.recorded_on %}
-          <dt>Бүртгэсэн огноо</dt><dd>{{ about.recorded_on|date:"Y.m.d" }}</dd>
-        {% endif %}
-      </dl>
+      <div class="surface">
+        <dl class="about">
+          {% if about.introduction %}
+            <div class="about__entry about__entry--wide">
+              <dt>Танилцуулга</dt><dd>{{ about.introduction|linebreaksbr }}</dd>
+            </div>
+          {% endif %}
+          {% if about.name_meaning %}
+            <div class="about__entry about__entry--wide">
+              <dt>Нэрний утга</dt><dd>{{ about.name_meaning|linebreaksbr }}</dd>
+            </div>
+          {% endif %}
+          {% if about.memorable_sayings %}
+            <div class="about__entry about__entry--wide">
+              <dt>Сонирхолтой үг</dt><dd>{{ about.memorable_sayings|linebreaksbr }}</dd>
+            </div>
+          {% endif %}
+          {% if about.dream %}
+            <div class="about__entry about__entry--wide">
+              <dt>Миний мөрөөдөл</dt><dd>{{ about.dream|linebreaksbr }}</dd>
+            </div>
+          {% endif %}
+          {% if about.distinguishing_traits %}
+            <div class="about__entry about__entry--wide">
+              <dt>Миний онцлог</dt><dd>{{ about.distinguishing_traits|linebreaksbr }}</dd>
+            </div>
+          {% endif %}
+          {% if about.height_cm %}
+            <div class="about__entry"><dt>Миний өндөр</dt><dd>{{ about.height_cm }} см</dd></div>
+          {% endif %}
+          {% if about.weight_kg %}
+            <div class="about__entry"><dt>Миний жин</dt><dd>{{ about.weight_kg }} кг</dd></div>
+          {% endif %}
+          {% if about.recorded_on %}
+            <div class="about__entry">
+              <dt>Бүртгэсэн огноо</dt><dd>{{ about.recorded_on|date:"Y.m.d" }}</dd>
+            </div>
+          {% endif %}
+        </dl>
+      </div>
     {% else %}
-      <p class="empty" style="padding:20px 0">
-        «Миний тухай» хэсэг хараахан бөглөгдөөгүй байна.
-      </p>
+      {% include "components/empty.html" with icon="portfolio" message="«Миний тухай» хэсэг хараахан бөглөгдөөгүй байна. Хүүхдийн танилцуулга, нэрний утга, мөрөөдлийг эндээс бичнэ." action=about_url action_label="Бөглөж эхлэх" %}
     {% endif %}
+  </section>
 
-    <div class="btn-row">
-      <a class="btn" href="{% url 'portfolio:about_me_edit' child.pk %}">
-        {% if about %}Засах{% else %}Бөглөх{% endif %}
-      </a>
-    </div>
-  </div>
+  {% comment %} ------------------------------------------- Нас 2–5
+     §4.3. `completeness.ages_filled` and `ages_total` are the selector's own
+     counts — a real figure, not a computed score. {% endcomment %}
+  <section class="section">
+    {% include "components/section_head.html" with title="Насны хуудсууд" note="2–5 насны хөгжлийн тэмдэглэл" %}
 
-  {# ---------------------------------------------------------- Нас 2–5 #}
-  <div class="card">
-    <h2>
-      Нас тус бүрийн мэдээлэл
+    <p style="margin:0 0 var(--s3)">
       <span class="badge badge--muted">
-        {{ completeness.ages_filled }} / {{ completeness.ages_total }}
+        {{ completeness.ages_filled }} / {{ completeness.ages_total }} бөглөсөн
       </span>
-    </h2>
+    </p>
 
-    <div class="grid grid--2">
+    <div class="years">
       {% for age, profile in age_profiles.items %}
-        <div class="tile">
-          <div style="display:flex; justify-content:space-between; align-items:center">
-            <strong>{{ age }} нас</strong>
+        <a class="yearcard{% if not profile %} yearcard--empty{% endif %}"
+           href="{% url 'portfolio:age_profile_edit' child.pk age %}">
+          <span class="yearcard__head">
+            <span class="yearcard__age">{{ age }} нас</span>
             {% if profile %}
               <span class="badge badge--ok">Бөглөсөн</span>
             {% else %}
               <span class="badge badge--muted">Хоосон</span>
             {% endif %}
-          </div>
+          </span>
 
           {% if profile %}
-            <dl class="facts" style="margin-top:10px; font-size:.86rem">
+            <span class="yearcard__facts">
               {% if profile.favorite_color %}
-                <dt>Дуртай өнгө</dt><dd>{{ profile.favorite_color }}</dd>
+                <span>Дуртай өнгө: <b>{{ profile.favorite_color }}</b></span>
               {% endif %}
               {% if profile.favorite_food %}
-                <dt>Дуртай хоол</dt><dd>{{ profile.favorite_food }}</dd>
+                <span>Дуртай хоол: <b>{{ profile.favorite_food }}</b></span>
               {% endif %}
               {% if profile.favorite_toy %}
-                <dt>Дуртай тоглоом</dt><dd>{{ profile.favorite_toy }}</dd>
+                <span>Дуртай тоглоом: <b>{{ profile.favorite_toy }}</b></span>
               {% endif %}
               {% if profile.new_skills %}
-                <dt>Шинэ чадвар</dt><dd>{{ profile.new_skills|truncatechars:80 }}</dd>
+                <span>Шинэ чадвар: <b>{{ profile.new_skills|truncatechars:60 }}</b></span>
               {% endif %}
-            </dl>
+            </span>
+            <span class="yearcard__go">Засах →</span>
+          {% else %}
+            <span class="yearcard__facts">
+              Энэ насны мэдээлэл хараахан бичигдээгүй.
+            </span>
+            <span class="yearcard__go">Бөглөх →</span>
           {% endif %}
-
-          <div class="btn-row" style="margin-top:12px">
-            <a class="btn btn--ghost"
-               href="{% url 'portfolio:age_profile_edit' child.pk age %}">
-              {% if profile %}Засах{% else %}Бөглөх{% endif %}
-            </a>
-          </div>
-        </div>
+        </a>
       {% endfor %}
     </div>
-  </div>
+  </section>
 
-  {# ---------------------------------------------------------- Төрсөн өдөр #}
-  <div class="card">
-    <h2>Төрсөн өдрийн тэмдэглэл</h2>
+  {% comment %} ------------------------------------- Төрсөн өдрийн тэмдэглэл
+     §4.2. One form per birthday, posting to a POST-only endpoint that
+     redirects back here — so they save independently and this page is the
+     only place they can be written. A single form wrapping all of them
+     would make one save overwrite every other note. {% endcomment %}
+  <section class="section">
+    {% include "components/section_head.html" with title="Төрсөн өдрийн тэмдэглэл" %}
 
     {% if birthdays %}
-      {% for entry in birthdays %}
-        <form method="post"
-              action="{% url 'portfolio:birthday_note_edit' child.pk entry.age %}"
-              style="padding:14px 0; border-bottom:1px solid var(--line)">
-          {% csrf_token %}
-          <label for="id_note_{{ entry.age }}">
-            {{ entry.age }} нас · {{ entry.date|date:"Y.m.d" }}
-          </label>
-          <div style="display:flex; gap:10px; align-items:flex-start">
-            <input type="text" name="note" id="id_note_{{ entry.age }}"
-                   value="{{ entry.note.note|default:'' }}"
-                   placeholder="Тэмдэглэл бичих">
-            <button type="submit" class="btn btn--ghost"
-                    style="flex:0 0 auto">Хадгалах</button>
-          </div>
-        </form>
-      {% endfor %}
+      <div class="bday">
+        {% for entry in birthdays %}
+          <form class="bdayrow" method="post"
+                action="{% url 'portfolio:birthday_note_edit' child.pk entry.age %}">
+            {% csrf_token %}
+            <span class="bdayrow__when">
+              <span class="bdayrow__age">{{ entry.age }} нас</span>
+              <span class="bdayrow__date">{{ entry.date|date:"Y.m.d" }}</span>
+            </span>
+            <span class="bdayrow__edit">
+              <label class="sr-only" for="id_note_{{ entry.age }}">
+                {{ entry.age }} насны төрсөн өдрийн тэмдэглэл
+              </label>
+              <input type="text" name="note" id="id_note_{{ entry.age }}"
+                     value="{{ entry.note.note|default:'' }}"
+                     placeholder="Тэмдэглэл бичих">
+              <button type="submit" class="btn btn--ghost btn--sm">Хадгалах</button>
+            </span>
+          </form>
+        {% endfor %}
+      </div>
     {% else %}
-      <p class="empty" style="padding:20px 0">
-        Төрсөн өдөр хараахан болоогүй байна.
-      </p>
+      {% include "components/empty.html" with icon="cake" message="Төрсөн өдөр хараахан болоогүй байна." %}
     {% endif %}
-  </div>
+  </section>
 
   <div class="btn-row">
-    {# RFP §10.1 — the family's printable copy #}
-    <a class="btn" href="{% url 'reports:request' child.pk %}">PDF тайлан</a>
     {% if is_guardian %}
       <a class="btn btn--ghost"
          href="{% url 'children:parent_child_detail' child.pk %}">← Хүүхдийн хуудас</a>
