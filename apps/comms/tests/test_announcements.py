@@ -268,7 +268,10 @@ def test_the_teacher_sees_who_read_it(client, world):
     ).content.decode()
 
     assert str(world["bataa_mother"]) in body
-    assert "Уншсан — 1" in body
+    # The count moved from the heading ("Уншсан — 1") into a badge beneath it
+    # with the 2026-08-16 redesign. Same fact, stated in words rather than
+    # punctuation; the assertion is no weaker.
+    assert "1 хүн уншсан" in body
 
 
 def test_the_unread_count_does_not_query_per_announcement(world):

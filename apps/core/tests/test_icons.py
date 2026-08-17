@@ -46,11 +46,47 @@ def defined_ids() -> set[str]:
 
 
 def references() -> list[tuple[str, str]]:
-    """Every `<use href="#…">` in every template, with the file it is in."""
+    """Every icon reference in every template, with the file it is in.
+
+    Two forms, because the components added with the 2026-08-16 redesign
+    introduced one level of indirection:
+
+    * **Literal** — `<use href="#i-children">`, written in the template.
+    * **Parameterised** — a component in `components/` writes
+      `<use href="#i-{{ icon }}">` and its callers pass
+      `{% include "components/stat.html" with icon="children" %}`.
+
+    The second form cannot be resolved by looking at the component alone, so
+    the caller's argument is what gets checked. Without this the reference
+    would simply disappear from the audit, and a typo in `icon="childrne"`
+    would render nothing at all — exactly the silent failure this file
+    exists to catch, just moved one file further away.
+    """
     found = []
     for path in sorted(TEMPLATE_ROOT.rglob("*.html")):
+        rel = str(path.relative_to(TEMPLATE_ROOT))
+        text = markup(path)
+
+        for icon in re.findall(r'<use\s+href="#([^"]+)"', text):
+            if "{{" in icon:
+                continue          # resolved through its callers, below
+            found.append((rel, icon))
+
+        # `{% include … with … icon="report" … %}` → `i-report`
+        for tag in re.findall(r"\{%\s*include\s+.*?%\}", text, flags=re.DOTALL):
+            for name in re.findall(r'\bicon="([^"]*)"', tag):
+                found.append((rel, f"i-{name}"))
+
+    return found
+
+
+def variable_reference_files() -> set[str]:
+    """Templates that build an icon id from a variable."""
+    found = set()
+    for path in sorted(TEMPLATE_ROOT.rglob("*.html")):
         for icon in re.findall(r'<use\s+href="#([^"]+)"', markup(path)):
-            found.append((str(path.relative_to(TEMPLATE_ROOT)), icon))
+            if "{{" in icon:
+                found.add(str(path.relative_to(TEMPLATE_ROOT)))
     return found
 
 
@@ -70,6 +106,27 @@ def test_every_reference_resolves():
     assert not missing, (
         f"icons referenced but not defined in _icons.html: {missing}. "
         f"Defined: {sorted(known)}"
+    )
+
+
+def test_only_components_build_an_icon_id_from_a_variable():
+    """The indirection stays where the audit can follow it.
+
+    `references()` resolves `<use href="#i-{{ icon }}">` by reading the
+    `icon="…"` argument its callers pass. That only works while the pattern
+    is confined to `components/`, whose callers are all `{% include %}`
+    tags. A page template building an id out of view context — say from a
+    model field — would drop out of the check entirely and lose its icon
+    silently, which is the failure this file exists to prevent.
+    """
+    stray = {
+        path for path in variable_reference_files()
+        if not path.startswith("components/")
+    }
+
+    assert not stray, (
+        f"icon ids built from a variable outside components/: {sorted(stray)}. "
+        f"Pass the name into a component instead, or write the id literally."
     )
 
 

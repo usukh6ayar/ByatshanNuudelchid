@@ -2,14 +2,34 @@
 {% comment %} Teacher layout — RFP §13 wants fast data entry, so the nav is flat
    and the content column is wide.
 
-   Built from `docs/design/screens/teacher-dashboard.jpeg`: white sidebar, an
-   icon beside every entry, the signed-in person in a pill at top right.
+   **Six navigation items, approved 2026-08-17**, every one pointing at a
+   route that already exists:
 
-   The mockup's sidebar lists twelve entries — Ирц, Эрүүл мэнд, Судалгаа,
-   Хоол, Санхүү — which belong to Phases 2 and 3. Only the sections that
-   exist are listed here: a menu entry that goes nowhere teaches users the
-   system is broken, and it is one line to add when the screen behind it
-   ships. {% endcomment %}
+     Хяналтын самбар  → dashboard:teacher
+     Хүүхдүүд         → children:list
+     Ажиглалт хянах   → observations:review_queue   (the §5.4 parent queue —
+                        the label says so, because it is not "all
+                        observations")
+     Үнэлгээ          → assessment:group_grid, via `nav_group`
+     Мэдэгдэл         → comms:list
+     Профайл          → accounts:profile
+
+   Portfolio and Reports are deliberately absent: both are child-scoped and
+   there is no teacher-level route for either. Inventing an index screen to
+   fill a menu slot was explicitly ruled out; they stay where a teacher
+   actually reaches them, from a child.
+
+   **Үнэлгээ needs a group**, and a teacher may hold several. `nav_group` is
+   supplied by `apps.core.context_processors.teacher_nav` — the first of
+   their assignable groups, used only to build this link. The screen it lands
+   on carries its own group selector, so nothing is silently chosen: the
+   teacher sees which group they are on and can switch. A teacher with no
+   group at all gets no link rather than a dead one.
+
+   The mockups draw twelve sidebar entries covering all three phases. Only
+   the sections that exist are listed: a menu entry that goes nowhere teaches
+   users the system is broken, and it is one line to add when the screen
+   behind it ships. {% endcomment %}
 <html lang="mn">
 <head>
   <meta charset="utf-8">
@@ -20,7 +40,7 @@
 </head>
 <body>
 {% include "_icons.html" %}
-<div class="shell">
+<div class="shell shell--teacher">
   <aside class="sidebar">
     <div class="brand">
       <span class="brand__mark">
@@ -46,8 +66,15 @@
       <a href="{% url 'observations:review_queue' %}"
          {% if nav == 'review' %}aria-current="page"{% endif %}>
         <svg class="ic" aria-hidden="true"><use href="#i-review"></use></svg>
-        Хянах ажиглалт
+        Ажиглалт хянах
       </a>
+      {% if nav_group %}
+        <a href="{% url 'assessment:group_grid' nav_group.pk %}"
+           {% if nav == 'assessment' %}aria-current="page"{% endif %}>
+          <svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg>
+          Үнэлгээ
+        </a>
+      {% endif %}
       <a href="{% url 'comms:list' %}"
          {% if nav == 'announcements' %}aria-current="page"{% endif %}>
         <svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg>
@@ -56,15 +83,29 @@
       <a href="{% url 'accounts:profile' %}"
          {% if nav == 'profile' %}aria-current="page"{% endif %}>
         <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
-        Миний бүртгэл
-      </a>
-      <a href="{% url 'accounts:logout' %}">
-        <svg class="ic" aria-hidden="true"><use href="#i-logout"></use></svg>
-        Гарах
+        Профайл
       </a>
     </nav>
 
     {% include "_theme.html" %}
+
+    {% comment %} Who is signed in, and the way out. At the foot of the
+       sidebar on a desktop; on a phone the sidebar becomes a scrolling strip
+       and this rides along in it, which is why the topbar's own identity
+       pill is hidden under 900px — it was the same fact twice, and it
+       crowded the page title. {% endcomment %}
+    <div class="whoami">
+      <span class="avatar avatar--sm" aria-hidden="true">
+        {{ request.user.first_name|first|default:"·" }}
+      </span>
+      <span class="whoami__body">
+        <span class="whoami__name">{{ request.user }}</span>
+        <span class="brand__sub">Багш</span>
+      </span>
+      <a class="whoami__out" href="{% url 'accounts:logout' %}" aria-label="Гарах">
+        <svg class="ic ic--sm" aria-hidden="true"><use href="#i-logout"></use></svg>
+      </a>
+    </div>
 
     {% block sidebar_foot %}{% endblock %}
   </aside>

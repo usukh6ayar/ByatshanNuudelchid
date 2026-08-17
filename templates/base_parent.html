@@ -13,7 +13,15 @@
    The mockup's sidebar also lists Ирц & Эрүүл мэнд, Хоол & Цэс, Мессеж,
    Судалгаа and Төлбөр. Those are Phase 2 and 3 and are not drawn here; a
    parent following a menu entry to a page that does not exist learns not to
-   trust the rest of it. {% endcomment %}
+   trust the rest of it.
+
+   **Under 900px this becomes a different layout, not a narrower one**
+   (redesign 2026-08-16, docs/UI_AUDIT.md problem 1). The sidebar is hidden
+   outright and replaced by a compact sticky header plus the fixed bottom
+   bar in `components/bottom_nav.html`, which is how the client's own mobile
+   sheets draw the parent app. Both are in the markup on every width; the
+   CSS decides which is shown, so there is one set of links to maintain.
+   {% endcomment %}
 <html lang="mn">
 <head>
   <meta charset="utf-8">
@@ -24,7 +32,7 @@
 </head>
 <body>
 {% include "_icons.html" %}
-<div class="shell">
+<div class="shell shell--parent">
   <aside class="sidebar">
     <div class="brand">
       <span class="brand__mark">
@@ -66,6 +74,26 @@
     {% include "_theme.html" %}
   </aside>
 
+  {% comment %} The phone header. Carries the brand and the way out, so the
+     bottom bar does not have to hold a logout beside the tabs. {% endcomment %}
+  <header class="mhead">
+    <span class="brand__mark" style="width:34px; height:34px; border-radius:10px">
+      <img src="{% static 'img/mark-96.png' %}" alt="" width="30" height="22">
+    </span>
+    <span>
+      <span class="mhead__name">
+        {% if child %}{{ child.kindergarten.name }}{% else %}Хүүхдийн хавтас{% endif %}
+      </span><br>
+      <span class="mhead__sub">Эцэг эхийн хэсэг</span>
+    </span>
+    <span class="mhead__end">
+      <a href="{% url 'accounts:logout' %}" aria-label="Гарах"
+         style="display:grid; place-items:center; width:44px; height:44px; color:var(--muted)">
+        <svg class="ic" aria-hidden="true"><use href="#i-logout"></use></svg>
+      </a>
+    </span>
+  </header>
+
   <main class="main">
     <div class="topbar">
       <div>
@@ -91,6 +119,8 @@
 
     {% block content %}{% endblock %}
   </main>
+
+  {% include "components/bottom_nav.html" %}
 </div>
 </body>
 </html>

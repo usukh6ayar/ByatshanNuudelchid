@@ -73,12 +73,33 @@ children at two kindergartens.
 | Backend | Django 5.2 (Python 3.13) | ✅ in place |
 | Database | PostgreSQL 17 | ✅ in place |
 | Queue | Celery + Redis | ✅ in use — report rendering, dashboard refresh, retention |
-| Frontend | Django templates + HTMX + Alpine | ✅ templates in place |
+| Frontend | Django templates + CSS + minimal inline JS | ✅ in place — **no HTMX, no Alpine, no CDN** (see below) |
 | PDF | WeasyPrint | ✅ proven (Cyrillic spike) |
 | Object storage | S3-compatible (MinIO in dev) | ✅ upload, signed URLs, `make storage` |
 | Runtime | Docker + docker-compose | ✅ in place |
 | Row history | django-simple-history | ✅ on `Child`, `AboutMe`, `ChildAgeProfile` |
 | Lint / test | ruff, pytest | ✅ 575 tests passing, ruff clean |
+
+> **Correction, 2026-08-16.** This row read "Django templates + HTMX + Alpine"
+> from Day 1 to today. Neither library was ever added. A grep of `templates/`,
+> `static/` and `apps/` for `htmx` and `alpine` returns nothing, and there is
+> not a single `<script src=…>` tag in the entire template tree.
+>
+> What is actually there:
+>
+> - `static/css/app.css` — 669 lines, the only stylesheet
+> - two short inline `<script>` blocks, both in the theme partials, which read
+>   `localStorage` to apply the remembered theme before first paint
+> - no build step, no package manager in the serving path, no external CDN
+>
+> The claim was aspirational when it was written and nobody went back to it.
+> It is corrected here rather than resolved by adding the libraries, because
+> every §17 page-load target is already met without them.
+>
+> This matters for the presentation-layer work in `docs/STACK_DECISION.md`:
+> the redesign starts from plain server-rendered HTML and one stylesheet, so
+> there is no framework to work around — and no CDN dependency to break under
+> a content-security policy.
 
 ## 5. Architecture overview
 
@@ -158,7 +179,7 @@ end to end.
 | 12 | Search & filtering — name, group, school year, active/archived | ✅ done | §11's full list, incl. school year, date interval, domain and level — `test_observations.py`, `test_views_authorization.py` |
 | 13 | Basic PDF export — child info, photo, portfolio, observations, assessments | ✅ done | `apps/reports/`, `test_reports.py`; §549 queue, §10.3 A4 + Cyrillic verified by parsing the output; §10.2 term report added 2026-08-12 |
 | 14 | Backend — REST API, PostgreSQL, migrations, auth, ownership, upload, logging, env | ⚠️ partial | Everything except the REST API. **See decision D2** |
-| 15 | Deployment — production, HTTPS, prod database, backup, health check | ⚠️ partial | `/healthz`, `prod.py` passing `check --deploy`, `docker-compose.prod.yml`, `Caddyfile`, `scripts/deploy.sh` with its refusals exercised, backup/restore rehearsed. Target chosen (D3): Hetzner Singapore + Cloudflare R2. **Everything except a server** |
+| 15 | Deployment — production, HTTPS, prod database, backup, health check | ⚠️ partial | `/healthz`, `prod.py` passing `check --deploy`, `docker-compose.prod.yml`, `Caddyfile`, `scripts/deploy.sh` with its refusals exercised, backup/restore rehearsed. Target chosen (D3): Hetzner Singapore + Cloudflare R2. R2 bucket `kinder-media` provisioned 2026-08-17 in the client's Cloudflare account, APAC, public access off. **Everything except a server** |
 | 16 | Basic security — hashing, RBAC, ownership, no cross-child access, secure files, HTTPS, validation, injection/XSS, cookies | ✅ done | 40+ authorization tests; HTTPS and file access land with 15 and 4 |
 | 17 | Responsive web — desktop, tablet, mobile browser | ⚠️ partial | Mobile-first CSS written; not tested on real devices |
 
@@ -1005,6 +1026,29 @@ adding DRF on top of the existing services is roughly two days.
 Roughly €12–15/month for the server plus R2 at $0.015/GB stored and no egress
 charge.
 
+**Reaffirmed 2026-08-17 after pricing a Mongolian data centre.** Datacom's
+VPS was compared directly: their V1 (2 vCPU / 4 GB / 80 GB) is ₮132,000/month
+against roughly ₮50,000 for a CPX21, and keeping the photographs in-country
+means running MinIO on the same box, which puts the honest starting tier at
+V2 (₮198,000) once Postgres, backups, Docker images and 30 days of PDFs are
+sharing that disk — about 3.8× Hetzner.
+
+Latency was re-measured from Ulaanbaatar on the day and did **not** justify
+the difference: 95 ms average to Hetzner Singapore versus 12 ms to a domestic
+host. Three round trips on a cold page load is a quarter of a second, inside
+8% of the three-second budget §17 allows, and less than the app's own N+1 or
+image-size costs.
+
+**The §12 question is therefore still open, deliberately.** Whether Mongolian
+law permits children's data to sit outside the country was raised, priced and
+consciously deferred — it is not an oversight. Datacom + R2 was rejected as
+the one combination that pays the premium and still stores the photographs
+abroad. If the legal answer turns out to be "no", the move is Datacom + MinIO
+and the only unexercised work is giving MinIO a public hostname that Django
+and the browser resolve identically (see the note in `config/settings/dev.py`).
+No application code changes either way — storage goes through Django's
+abstraction. **Get a lawyer's answer before the first real family is entered.**
+
 **Latency decided it, and it was measured rather than assumed.** From a
 connection in Ulaanbaatar, mean round-trip over three pings:
 
@@ -1026,7 +1070,8 @@ is an account in the client's name; handover is a set of credentials. A
 managed platform keeps its own internals, which makes that clause harder to
 satisfy honestly.
 
-**The domain is registered at iTools** (2026-08-11), the host stays Hetzner.
+**The domain is `nomadkids.mn`, registered at iTools** (2026-08-14, renews
+2027-08-14, ₮150,000/year), the host stays Hetzner.
 The registrant must be the client, not the developer — the same §781 clause
 covers "домэйн" explicitly. DNS is served by iTools' nameservers with a plain
 A record to the Hetzner IP; Cloudflare is in this stack for R2 only and its

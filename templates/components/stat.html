@@ -1,0 +1,20 @@
+{% comment %} One statistic — the tinted tiles across the top of both
+   dashboards.
+
+   Context: `label`, `value`, `icon` (a sprite id without the `#i-` prefix),
+   `tone` (blue/green/amber/sky/pink/teal), optional `meta`, optional `href`.
+
+   The tone is what makes a row of six findable: the mockups colour each tile
+   differently so a teacher reaches the one they want by hue before they
+   finish reading the labels. It is never the only signal — the label always
+   says the same thing in words. {% endcomment %}
+{% if href %}<a class="tile tile--{{ tone }}" href="{{ href }}">{% else %}<div class="tile tile--{{ tone }}">{% endif %}
+  <span class="tile__icon">
+    <svg class="ic" aria-hidden="true"><use href="#i-{{ icon }}"></use></svg>
+  </span>
+  <div>
+    <div class="tile__label">{{ label }}</div>
+    <div class="tile__value">{{ value }}</div>
+    {% if meta %}<div class="tile__meta">{{ meta }}</div>{% endif %}
+  </div>
+{% if href %}</a>{% else %}</div>{% endif %}

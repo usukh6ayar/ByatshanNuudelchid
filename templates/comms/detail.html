@@ -1,80 +1,119 @@
 {% extends base_template %}
-{% comment %} RFP §8.1. For a teacher this screen answers "who has read it"; opening it
-   as a parent is itself the acknowledgement. {% endcomment %}
+{% comment %} RFP §8.1 — one notice, redesigned 2026-08-16.
+
+   For a family this is the thing they came to read, so the body gets a
+   measured column and everything else gets out of its way. For a teacher it
+   also answers "who has read it", and carries the publish and edit actions
+   they already had.
+
+   **Reading marks it read, and that happens in the view** —
+   `services.mark_read` runs for non-staff before this template is reached
+   (§8.1's "автоматаар"). Nothing here changes read state, and nothing here
+   should: a template that marked a notice read would do it on every render,
+   including a staff preview.
+
+   Attachments go through `media:serve`, the same signed path as every other
+   file (CLAUDE.md §1.4, spec section 7.1). There is no direct storage
+   link. {% endcomment %}
 
 {% block title %}{{ announcement.title }}{% endblock %}
-{% block heading %}{{ announcement.title }}{% endblock %}
+{% block heading %}Мэдэгдэл{% endblock %}
 
 {% block content %}
-  <div class="card">
-    <p class="brand__sub" style="margin-top:0">
-      {% if announcement.published_at %}
-        {{ announcement.published_at|date:"Y.m.d H:i" }}
-      {% else %}
-        Нийтлээгүй ноорог
-      {% endif %}
-      {% if announcement.author %} · {{ announcement.author }}{% endif %}
-      {% if announcement.is_important %}
-        <span class="badge badge--warn">Чухал</span>
-      {% endif %}
-    </p>
+  <div class="btn-row" style="margin:0 0 var(--s4)">
+    <a class="btn btn--ghost btn--sm" href="{% url 'comms:list' %}">← Мэдэгдэл</a>
+  </div>
 
-    <p>{{ announcement.body|linebreaksbr }}</p>
+  <article class="notice-read">
+    <header class="notice-read__head">
+      <h2 class="notice-read__title">{{ announcement.title }}</h2>
+
+      <p class="notice-read__meta">
+        {% if announcement.is_important %}
+          <span class="badge badge--warn">Чухал</span>
+        {% endif %}
+        {% if is_staff %}
+          <span class="badge {% if announcement.status == 'published' %}badge--ok{% else %}badge--muted{% endif %}">
+            {{ announcement.get_status_display }}
+          </span>
+        {% endif %}
+        <span>
+          {% if announcement.published_at %}
+            {{ announcement.published_at|date:"Y.m.d H:i" }}
+          {% else %}
+            Нийтлээгүй ноорог
+          {% endif %}
+        </span>
+        {% if announcement.author %}<span>{{ announcement.author }}</span>{% endif %}
+      </p>
+    </header>
+
+    <div class="notice-read__body">{{ announcement.body|linebreaks }}</div>
 
     {% if announcement.starts_on or announcement.ends_on %}
-      <dl class="facts" style="margin-top:16px">
+      {% comment %} §8.1's display window — when the notice is current, not
+         when it was written. {% endcomment %}
+      <p class="notice-read__meta" style="margin-top:var(--s4)">
         {% if announcement.starts_on %}
-          <dt>Эхлэх</dt><dd>{{ announcement.starts_on|date:"Y.m.d" }}</dd>
+          <span>Эхлэх: <b>{{ announcement.starts_on|date:"Y.m.d" }}</b></span>
         {% endif %}
         {% if announcement.ends_on %}
-          <dt>Дуусах</dt><dd>{{ announcement.ends_on|date:"Y.m.d" }}</dd>
+          <span>Дуусах: <b>{{ announcement.ends_on|date:"Y.m.d" }}</b></span>
         {% endif %}
-      </dl>
+      </p>
     {% endif %}
 
     {% if announcement.attachments.all %}
-      <div class="grid grid--tiles" style="margin-top:16px">
+      <div class="notice-files">
         {% for attachment in announcement.attachments.all %}
           <img src="{% url 'media:serve' attachment.media_file.public_id 'full' %}"
-               alt="{{ announcement.title }} — хавсралт"
-               style="width:100%; border-radius:12px">
+               alt="{{ announcement.title }} — хавсралт {{ forloop.counter }}"
+               loading="lazy">
         {% endfor %}
       </div>
     {% endif %}
-  </div>
+  </article>
 
+  {% comment %} §8.1 — "уншсан хэрэглэгчдийн тоог харах", "хэн уншсаныг
+     харах". Staff only; `readers` is `None` for anyone else. {% endcomment %}
   {% if is_staff %}
-    {# §8.1 — "уншсан хэрэглэгчдийн тоог харах", "хэн уншсаныг харах" #}
-    <div class="card">
-      <h2>Уншсан — {{ readers|length }}</h2>
-      {% if readers %}
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Хэрэглэгч</th><th>Уншсан огноо</th></tr>
-            </thead>
-            <tbody>
-              {% for entry in readers %}
-                <tr>
-                  <td class="name">{{ entry.user }}</td>
-                  <td>{{ entry.read_at|date:"Y.m.d H:i" }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      {% else %}
-        <p class="empty">Хэн ч уншаагүй байна.</p>
-      {% endif %}
-    </div>
+    <section class="section">
+      {% include "components/section_head.html" with title="Уншсан" %}
+      <div class="panel">
+        <p class="section__note" style="margin:0 0 var(--s3)">
+          <span class="badge {% if readers %}badge--ok{% else %}badge--muted{% endif %}">
+            {{ readers|length }} хүн уншсан
+          </span>
+        </p>
+
+        {% if readers %}
+          <div class="readers">
+            {% for entry in readers %}
+              <div class="readerrow">
+                <span>{{ entry.user }}</span>
+                <span class="readerrow__when">{{ entry.read_at|date:"Y.m.d H:i" }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="section__note" style="margin:0">
+            {% if announcement.status == 'published' %}
+              Хэн ч хараахан уншаагүй байна.
+            {% else %}
+              Ноорог мэдэгдлийг эцэг эх харахгүй.
+            {% endif %}
+          </p>
+        {% endif %}
+      </div>
+    </section>
   {% endif %}
 
-  <div class="btn-row">
-    <a class="btn btn--ghost" href="{% url 'comms:list' %}">← Жагсаалт руу</a>
-
-    {% if can_edit %}
-      <a class="btn" href="{% url 'comms:edit' announcement.pk %}">Засах</a>
-
+  {% comment %} The existing actions, unchanged: edit, publish a draft, and
+     archive. `can_edit` is the view's own answer from
+     `services.can_publish_in`; the destinations check again for
+     themselves. {% endcomment %}
+  {% if can_edit %}
+    <div class="btn-row">
       {% if announcement.status == 'draft' %}
         <form method="post" action="{% url 'comms:publish' announcement.pk %}"
               style="display:inline">
@@ -82,10 +121,8 @@
           <button type="submit" class="btn">Нийтлэх</button>
         </form>
       {% endif %}
-
-      <a class="btn btn--ghost" href="{% url 'comms:delete' announcement.pk %}">
-        Архивлах
-      </a>
-    {% endif %}
-  </div>
+      <a class="btn btn--ghost" href="{% url 'comms:edit' announcement.pk %}">Засах</a>
+      <a class="btn btn--ghost" href="{% url 'comms:delete' announcement.pk %}">Архивлах</a>
+    </div>
+  {% endif %}
 {% endblock %}

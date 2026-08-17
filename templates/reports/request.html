@@ -1,79 +1,134 @@
 {% extends base_template %}
-{# RFP §10.1 — "нэгдсэн тайланд дараах мэдээллийг сонгон оруулах". #}
+{% comment %} RFP §10.1 — ask for a PDF. Redesigned 2026-08-17.
+
+   It was a report-type select, a term select and seven bare checkboxes, with
+   nothing saying what any of them contained or what would come out. Almost
+   nobody wants a partial portfolio, so the sections are now presented as
+   **what you will get**, with the checkboxes kept for the person who does
+   want to narrow it — the backend contract is unchanged: `sections` is a
+   multi-valued POST field, and an empty list means all of them
+   (`services.DEFAULT_SECTIONS`).
+
+   The two report types stay exactly as the view reads them: `report_type` is
+   `child_portfolio` or `term_report`, and `term` is only consulted for the
+   second. The term select renders only when the child's enrollment gives the
+   view some terms to offer. {% endcomment %}
 
 {% block title %}PDF тайлан{% endblock %}
-{% block heading %}PDF тайлан — {{ child.full_name }}{% endblock %}
+{% block heading %}PDF тайлан{% endblock %}
+{% block lede %}
+  <p class="lede">Хүүхдийн хавтсыг PDF болгон татаж, хэвлэж болно.</p>
+{% endblock %}
 
 {% block content %}
-  <div class="card" style="max-width:720px">
-    {% if error %}<p class="msg msg--error" role="alert">{{ error }}</p>{% endif %}
-
-    <p class="brand__sub" style="margin-top:0">
-      Тайланд оруулах хэсгээ сонгоно уу. Бэлдэх хугацаанд системийг
-      үргэлжлүүлэн ашиглаж болно.
-    </p>
-
-    <form method="post" novalidate>
-      {% csrf_token %}
-
-      <label for="id_report_type">Тайлангийн төрөл</label>
-      <select name="report_type" id="id_report_type">
-        <option value="child_portfolio">Хүүхдийн хувийн хавтас</option>
-        {% if terms %}<option value="term_report">Улирлын тайлан</option>{% endif %}
-      </select>
-
-      {% if terms %}
-        <label for="id_term">Улирал — улирлын тайлан сонгосон бол</label>
-        <select name="term" id="id_term">
-          {% for term in terms %}
-            <option value="{{ term.pk }}">{{ term.name }}</option>
-          {% endfor %}
-        </select>
-      {% endif %}
-
-      {% for code, label in sections %}
-        <div style="display:flex; gap:10px; align-items:center; margin-top:10px">
-          <input type="checkbox" name="sections" value="{{ code }}"
-                 id="id_section_{{ code }}" style="width:auto" checked>
-          <label for="id_section_{{ code }}" style="margin:0">{{ label }}</label>
-        </div>
-      {% endfor %}
-
-      <div class="btn-row">
-        <button type="submit" class="btn">PDF бэлдэх</button>
-        <a class="btn btn--ghost" href="{% url 'portfolio:overview' child.pk %}">
-          Болих
-        </a>
-      </div>
-    </form>
+  <div class="subject">
+    {% include "components/avatar.html" with person=child %}
+    <span class="subject__body">
+      <span class="subject__name">{{ child.full_name }}</span>
+      <span class="subject__meta">
+        <span class="badge badge--brand">{{ child.age }} нас</span>
+        {% for enrollment in child.active_enrollments %}
+          <span class="badge badge--muted">{{ enrollment.group.name }}</span>
+        {% endfor %}
+      </span>
+    </span>
   </div>
 
-  {% if recent %}
-    <div class="card">
-      <h2>Сүүлд бэлдсэн</h2>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>Огноо</th><th>Төлөв</th><th>Хуудас</th><th></th></tr>
-          </thead>
-          <tbody>
-            {% for job in recent %}
-              <tr>
-                <td>{{ job.requested_at|date:"Y.m.d H:i" }}</td>
-                <td>
-                  <span class="badge {% if job.status == 'done' %}badge--ok{% elif job.status == 'failed' %}badge--warn{% else %}badge--muted{% endif %}">
-                    {{ job.get_status_display }}
-                  </span>
-                </td>
-                <td>{{ job.page_count|default:"—" }}</td>
-                <td>
-                  <a href="{% url 'reports:status' child.pk job.pk %}">Үзэх</a>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+  {% if error %}
+    <p class="msg msg--error" role="alert" style="margin-top:var(--s4)">{{ error }}</p>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <section class="formsec">
+      <div class="formsec__head">
+        <span class="formsec__num" aria-hidden="true">1</span>
+        <h2>Тайлангийн төрөл</h2>
       </div>
+
+      <div class="fieldgrid">
+        <div class="field">
+          <label for="id_report_type">Төрөл</label>
+          <select name="report_type" id="id_report_type">
+            <option value="child_portfolio">Хүүхдийн хувийн хавтас</option>
+            {% if terms %}<option value="term_report">Улирлын тайлан</option>{% endif %}
+          </select>
+        </div>
+
+        {% if terms %}
+          <div class="field">
+            <label for="id_term">Улирал</label>
+            <select name="term" id="id_term">
+              {% for term in terms %}
+                <option value="{{ term.pk }}">{{ term.name }}</option>
+              {% endfor %}
+            </select>
+            <p class="field__help">Зөвхөн улирлын тайланд хэрэглэгдэнэ.</p>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+
+    {% comment %} §10.1's section list. Ticked by default, exactly as before —
+       what changed is that it now reads as a contents page. A section with
+       nothing in it is dropped at render time by `builder._sections_with
+       _content` (decision D5), so ticking one that is empty costs nothing.
+       {% endcomment %}
+    <section class="formsec">
+      <div class="formsec__head">
+        <span class="formsec__num" aria-hidden="true">2</span>
+        <h2>Багтах хэсгүүд</h2>
+      </div>
+      <p class="formsec__note">
+        Мэдээлэл байхгүй хэсэг тайланд орохгүй.
+      </p>
+
+      <div class="reportcard">
+        <div class="sectionlist">
+          {% for code, label in sections %}
+            <label class="sectionrow">
+              <input type="checkbox" name="sections" value="{{ code }}"
+                     id="id_section_{{ code }}" checked>
+              <span>{{ label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <div class="formactions">
+      <button type="submit" class="btn">
+        <svg class="ic ic--sm" aria-hidden="true"><use href="#i-report"></use></svg>
+        PDF үүсгэх
+      </button>
+      <a class="btn btn--ghost" href="{% url 'portfolio:overview' child.pk %}">
+        Болих
+      </a>
     </div>
+  </form>
+
+  {% comment %} §549 — a report is queued, so the person may come back to one
+     they asked for earlier. `recent` is already scoped to this requester by
+     the view. {% endcomment %}
+  {% if recent %}
+    <section class="section">
+      {% include "components/section_head.html" with title="Сүүлд бэлдсэн" %}
+      <div class="joblist">
+        {% for job in recent %}
+          <a class="jobrow" href="{% url 'reports:status' child.pk job.pk %}">
+            <span class="jobrow__when">{{ job.requested_at|date:"Y.m.d H:i" }}</span>
+            <span class="badge {% if job.status == 'done' %}badge--ok{% elif job.status == 'failed' %}badge--warn{% else %}badge--muted{% endif %}">
+              {{ job.get_status_display }}
+            </span>
+            <span class="jobrow__meta">
+              {{ job.get_type_display }}
+              {% if job.page_count %} · {{ job.page_count }} хуудас{% endif %}
+            </span>
+            <span class="jobrow__go">Нээх →</span>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
   {% endif %}
 {% endblock %}

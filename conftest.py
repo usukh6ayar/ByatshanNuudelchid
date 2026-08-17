@@ -218,3 +218,58 @@ def world(make_kindergarten, make_group, make_teacher, make_child, make_guardian
 def naran_admin_user(world, make_admin):
     """A director of the Naran kindergarten. Used as ``actor`` in services."""
     return make_admin(world["naran"], username="naran_director")
+
+
+@pytest.fixture
+def revoke_guardianship(db):
+    """Soft-delete the link between a guardian and a child — RFP §3.5.
+
+    Guardianship is how a family reaches a child, so removing it is the
+    revocation path: a court order, a change of custody, or a link created
+    by mistake. It is archived rather than deleted (CLAUDE.md §3.3), and it
+    goes through ``apps.core.services.soft_delete`` rather than setting
+    ``deleted_at`` by hand, so the fixture exercises the same route an
+    administrator would and writes the same audit row.
+
+    Added 2026-08-16 with the fix for the soft-deleted-guardianship leak:
+    no fixture produced this state, so the authorization tests — including
+    the list/detail equivalence invariant — had never seen it.
+    """
+    from apps.children.models import Guardianship
+    from apps.core.services import soft_delete
+
+    def _revoke(child, guardian, *, actor=None):
+        link = Guardianship.objects.get(child=child, guardian_user=guardian)
+        return soft_delete(actor=actor, obj=link)
+
+    return _revoke
+
+
+@pytest.fixture
+def revoke_group_teacher(db):
+    """Soft-delete a teacher's assignment to a group — RFP §2.2.
+
+    The staff counterpart of :func:`revoke_guardianship`: a teacher leaves,
+    changes group, or was assigned to the wrong one. Archived rather than
+    deleted (CLAUDE.md §3.3), through ``apps.core.services.soft_delete`` so
+    the audit row is written exactly as it would be in production.
+
+    Distinct from deactivating the ``Membership``: that removes the person
+    from the kindergarten entirely, while this withdraws one assignment and
+    leaves the rest. Both are revocations and the authorization layer has to
+    honour each — ``teacher_link_condition`` checks both.
+
+    Added 2026-08-16 with the fix for the soft-deleted-GroupTeacher leak; no
+    fixture produced this state, so the list/detail equivalence invariant
+    had never been asked about it.
+    """
+    from apps.core.services import soft_delete
+    from apps.tenants.models import GroupTeacher
+
+    def _revoke(teacher, group, *, actor=None):
+        link = GroupTeacher.objects.get(
+            teacher_membership__user=teacher, group=group
+        )
+        return soft_delete(actor=actor, obj=link)
+
+    return _revoke

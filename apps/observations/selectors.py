@@ -19,6 +19,7 @@ __all__ = [
     "observation_detail",
     "recent_for_teacher",
     "pending_parent_observations",
+    "recent_media_for_child",
 ]
 
 PAGE_SIZE = 20
@@ -89,9 +90,13 @@ def child_observations(user, child, *, type=None, source=None,
     assessment level. Applied on top of ``_readable``, never instead of it,
     so no combination of them can widen what the user sees.
     """
+    # `_media_links` joins here so the list can show which observations carry
+    # a photograph. Without it that indicator is a query per row — the N+1
+    # CLAUDE.md §3.5 forbids, twenty of them on a full page. It changes how
+    # many queries fetch the rows, never which rows are fetched.
     queryset = _readable(user, child).select_related(
         "type", "created_by", "enrollment__group"
-    ).prefetch_related(_domain_links())
+    ).prefetch_related(_domain_links(), _media_links())
 
     if type is not None:
         queryset = queryset.filter(type=type)
@@ -158,4 +163,30 @@ def pending_parent_observations(user):
         )
         .select_related("child", "type", "created_by")
         .order_by("-observed_on")
+    )
+
+
+def recent_media_for_child(user, child, *, limit=8):
+    """The child's most recent photographs — RFP §4.4, §5.1.
+
+    Reached **through the observations this user may read**, never from
+    ``MediaFile`` filtered by child. That is not a stylistic preference: the
+    §5.1 "эцэг эхэд харагдах эсэх" flag lives on the observation, not on the
+    file, so a query starting from ``MediaFile`` would hand a guardian every
+    photograph attached to observations a teacher deliberately marked
+    private, and every parent-submitted one still waiting for review.
+    ``_readable`` is the gate, and this goes through it like everything else
+    in this module.
+
+    Returns ``ObservationMedia`` rows rather than files, because the caller
+    needs the observation to link back to and the caption to label with.
+    """
+    from apps.media.models import ObservationMedia
+
+    return (
+        ObservationMedia.objects.filter(
+            observation__in=_readable(user, child)
+        )
+        .select_related("media_file", "observation")
+        .order_by("-observation__observed_on", "order", "-id")[:limit]
     )

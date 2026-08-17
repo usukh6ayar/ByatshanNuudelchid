@@ -8,6 +8,8 @@ would roll the §3.1 attempt counter back together with the failed request,
 and the lockout would never engage (CLAUDE.md §6.2).
 """
 
+import logging
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login as auth_login
@@ -20,13 +22,14 @@ from django.contrib.auth.password_validation import (
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.shortcuts import redirect, render
-from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 
 from apps.core.layouts import layout_for
 
 from . import services
+
+logger = logging.getLogger(__name__)
 
 # The approved design shows Багш / Эцэг эх / Админ tabs on the login screen.
 #
@@ -107,18 +110,20 @@ def password_reset_request(request):
     The response is identical whether or not the address exists.
     """
     if request.method == "POST":
-        raw = services.request_password_reset(
-            request=request, identifier=request.POST.get("email", "")
-        )
-
-        if raw is not None:
-            link = request.build_absolute_uri(
-                reverse("accounts:password_reset_confirm", args=[raw])
+        # The service issues the token *and* sends it (CLAUDE.md §2.1). The
+        # link is never printed: it printed to stdout until 2026-08-17, which
+        # put a working credential in the production log.
+        #
+        # The response is the same page whether or not the address exists,
+        # and whether or not the mail server accepted it — RFP §15's spirit
+        # is that this surface must not confirm an account exists. A send
+        # failure is logged for an administrator instead.
+        try:
+            services.request_password_reset(
+                request=request, identifier=request.POST.get("email", "")
             )
-            # Email delivery lands with the notification work in phase 9.
-            # Until then dev uses the console backend and production staff
-            # reset passwords through the admin (RFP §2.1).
-            print(f"[password reset] {link}")  # noqa: T201
+        except Exception:
+            logger.exception("password reset request could not be delivered")
 
         return render(request, "accounts/password_reset_sent.html")
 
@@ -266,6 +271,9 @@ def profile(request):
     context: dict = {
         "is_teacher": is_teacher,
         "base_template": layout_for(user),
+        # Which sidebar item the shell highlights. Every other screen sets
+        # this; the profile never did, so no item was marked active on it.
+        "nav": "profile",
         "form": {
             "last_name": user.last_name,
             "first_name": user.first_name,

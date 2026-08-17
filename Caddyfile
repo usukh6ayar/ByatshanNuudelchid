@@ -40,3 +40,14 @@
 		}
 	}
 }
+
+# A parent who types "www." in front of the name would otherwise get a TLS
+# error rather than the site — the block above answers for the bare name
+# only. Caddy serves this redirect itself, so `www` does NOT belong in
+# DJANGO_ALLOWED_HOSTS; Django never sees the request.
+#
+# This needs its own A record at the registrar, alongside the one for `@`.
+# Without it the certificate request for www fails and Caddy retries.
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}

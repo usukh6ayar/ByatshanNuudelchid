@@ -573,6 +573,12 @@ class Command(BaseCommand):
                         child_did=did, child_said=said,
                         teacher_comment="Идэвхтэй оролцов.",
                         next_steps="Дараагийн долоо хоногт бүлгийн өмнө ярих дасгал.",
+                        # Stated rather than left to the default, which is now
+                        # closed (2026-08-16). These stand for observations a
+                        # teacher has chosen to publish; without them the demo
+                        # family's screens would be empty and the parent-facing
+                        # half of the product would look broken.
+                        visible_to_parents=True,
                         domains=[(domains[(index + repeat) % len(domains)],
                                   levels[(index + repeat) % len(levels)])],
                     )

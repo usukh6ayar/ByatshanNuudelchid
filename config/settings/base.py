@@ -43,6 +43,9 @@ LOCAL_APPS = [
     "apps.comms",
     "apps.reports",
     "apps.dashboard",
+    # нэмэлт.md §1 — attendance, the single source of truth the meal and
+    # funding calculations both read (§17).
+    "apps.attendance",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -147,6 +150,29 @@ MEDIA_SIGNED_URL_TTL = env.int("MEDIA_SIGNED_URL_TTL", default=300)
 MEDIA_REDIRECT_SIGNED_URL = env.bool("MEDIA_REDIRECT_SIGNED_URL", default=True)
 MAX_UPLOAD_SIZE_MB = env.int("MAX_UPLOAD_SIZE_MB", default=25)
 REPORT_RETENTION_DAYS = env.int("REPORT_RETENTION_DAYS", default=30)
+
+# ---------------------------------------------------------------- Email
+# RFP §3.1 — "нууц үг сэргээх". Every value comes from the environment
+# (§14, §690); nothing here carries a credential.
+#
+# The backend itself is chosen per environment: development overrides it to
+# the console in `dev.py`, production leaves this SMTP default in place. A
+# deployment that forgets to set EMAIL_HOST therefore fails loudly on the
+# first send rather than silently discarding a reset link.
+
+EMAIL_BACKEND = env(
+    "DJANGO_EMAIL_BACKEND",
+    default="django.core.mail.backends.smtp.EmailBackend",
+)
+EMAIL_HOST = env("EMAIL_HOST", default="")
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
+EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=10)
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL",
+                         default="Бяцхан нүүдэлчид <noreply@localhost>")
 
 # ---------------------------------------------------------------- Celery
 # RFP §549 — slow work never happens inside a request

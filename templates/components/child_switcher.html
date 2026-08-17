@@ -1,0 +1,23 @@
+{% comment %} RFP §2.3 — a guardian with several children chooses between
+   them.
+
+   Context: `children`, `child` (the selected one).
+
+   Plain links carrying `?child=<pk>`, so it works with JavaScript off and
+   survives a reload — the view reads the query string and 404s on an id
+   that is not this guardian's. Hidden entirely for the common case of one
+   child, because a switcher with one option is furniture. {% endcomment %}
+{% if children|length > 1 %}
+  <nav class="switcher" aria-label="Хүүхдээ сонгох">
+    {% for item in children %}
+      <a href="?child={{ item.pk }}"
+         {% if item.pk == child.pk %}aria-current="true"{% endif %}>
+        {% include "components/avatar.html" with person=item size="sm" %}
+        <span>
+          {{ item.first_name }}<br>
+          <span class="sub">{{ item.kindergarten.name }}</span>
+        </span>
+      </a>
+    {% endfor %}
+  </nav>
+{% endif %}

@@ -15,12 +15,22 @@ from django.core.paginator import Paginator
 from django.http import Http404
 from django.shortcuts import redirect, render
 
+from apps.assessment import selectors as assessment_selectors
 from apps.children import selectors, services
 from apps.children.models import Child, Guardianship
 from apps.core.models import AuditAction
 from apps.core.permissions import assert_can_record_for_child, can_record_for_child
 from apps.core.services import audit
+from apps.observations import selectors as observation_selectors
+from apps.portfolio import selectors as portfolio_selectors
 from apps.tenants.selectors import assignable_groups, school_years_for
+
+# How much of each list the detail page shows before handing over to the
+# screen that owns it. This page is the hub, not the archive: each section
+# links to the full record rather than reproducing it.
+RECENT_OBSERVATIONS = 5
+RECENT_MOMENTS = 6
+RECENT_ASSESSMENTS = 9
 
 
 def _get_child_or_404(request, child_id) -> Child:
@@ -63,6 +73,8 @@ def child_list(request):
     page = Paginator(children, selectors.PAGE_SIZE).get_page(request.GET.get("page"))
 
     return render(request, "children/teacher/list.html", {
+        # Which sidebar item is highlighted — the shell reads this.
+        "nav": "children",
         "page": page,
         "groups": groups,
         "school_years": school_years,
@@ -91,6 +103,7 @@ def child_detail(request, child_id):
           kindergarten=child.kindergarten)
 
     return render(request, "children/teacher/detail.html", {
+        "nav": "children",
         "child": child,
         "enrollment": services.current_enrollment(child),
         "history": selectors.enrollment_history(child),
@@ -100,6 +113,32 @@ def child_detail(request, child_id):
         # template that hides a link is a courtesy; a view that checks is
         # the rule (CLAUDE.md §1.1).
         "can_record": can_record_for_child(request.user, child),
+
+        # The working context added with the 2026-08-16 redesign. Every one
+        # of these is a read through a selector that already existed and is
+        # already used by the parent screens; no new query, rule or endpoint.
+        #
+        # The three that can expose a record take the **user**, not just the
+        # child, so the §5.1 and §6.4 visibility rules are applied by the
+        # layer that owns them. For a teacher that returns everything about
+        # this child — including the observations they marked private — which
+        # is the point of the screen. The portfolio reads take only the
+        # child, which is safe because `_get_child_or_404` has already
+        # resolved them through `visible_children`.
+        "observations": observation_selectors.child_observations(
+            request.user, child
+        )[:RECENT_OBSERVATIONS],
+        "observation_count": observation_selectors.child_observations(
+            request.user, child
+        ).count(),
+        "moments": observation_selectors.recent_media_for_child(
+            request.user, child, limit=RECENT_MOMENTS
+        ),
+        "assessments": assessment_selectors.child_assessments(
+            request.user, child
+        )[:RECENT_ASSESSMENTS],
+        "about": portfolio_selectors.about_me(child),
+        "age_profiles": portfolio_selectors.age_profiles(child),
     })
 
 

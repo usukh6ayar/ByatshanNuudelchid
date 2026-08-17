@@ -1,0 +1,18 @@
+{% comment %} One labelled progress bar.
+
+   Context: `name`, `value` (what is printed on the right), `percent` (how
+   far the bar fills), optional `color`.
+
+   `percent` and `value` are separate on purpose: the domain averages print
+   a level like "3.4" while the bar fills to 85%, and conflating them would
+   draw a bar 3.4% wide. {% endcomment %}
+<div class="meter">
+  <div class="meter__top">
+    <span class="meter__name">{{ name }}</span>
+    <span class="meter__value">{{ value }}</span>
+  </div>
+  <div class="meter__track">
+    <div class="meter__fill"
+         style="width:{{ percent }}%{% if color %}; background:{{ color }}{% endif %}"></div>
+  </div>
+</div>

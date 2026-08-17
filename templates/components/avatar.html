@@ -1,0 +1,18 @@
+{% comment %} A person's picture, or their initial when there is none.
+
+   Context: `person` (anything with `photo`, `first_name`, `full_name`) and
+   optional `size` — "sm", "" or "lg".
+
+   Every child on every screen is drawn through this, so the fallback is in
+   one place. The initial is not decoration: a row of identical grey circles
+   is unscannable, and `alt` on a real photograph carries the name for a
+   screen reader while the initial box is marked `aria-hidden` because the
+   name is always beside it. {% endcomment %}
+{% if person.photo %}
+  <img class="avatar{% if size %} avatar--{{ size }}{% endif %}"
+       src="{% url 'media:serve' person.photo.public_id 'full' %}"
+       alt="{{ person.full_name }}" loading="lazy">
+{% else %}
+  <span class="avatar{% if size %} avatar--{{ size }}{% endif %}" aria-hidden="true"
+    >{{ person.first_name|slice:":1" }}</span>
+{% endif %}
