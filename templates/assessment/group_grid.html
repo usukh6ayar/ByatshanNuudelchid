@@ -109,9 +109,12 @@
        enrollment); "focus_child" is a plain GET param the template reads
        itself, so switching it re-renders the same grid with a different
        default child below — no view change. All three note-type tiles open
-       the real `observations:create` form; CLAUDE.md §7.1 — there is no
-       separate "Ярилцлага" record type yet, so it is not a fabricated
-       route. {% endcomment %}
+       the child's real observation list (`observations:list`) — same page
+       as its own type tabs — rather than jumping straight to a blank
+       create form; the tab there is what actually filters by type. §12 —
+       there is no separate "Ярилцлага" record type yet, so its tab lands
+       on the unfiltered list rather than a route that does not
+       exist. {% endcomment %}
     {% with focus_id=request.GET.focus_child|default:rows.0.child.pk|stringformat:"s" %}
       <section class="section" style="margin-top:var(--s5)">
         {% include "components/section_head.html" with title="Хүүхэд сонгох" %}
@@ -133,7 +136,7 @@
       <section class="section">
         {% include "components/section_head.html" with title="Тэмдэглэлийн төрөл" %}
         <div class="note-types">
-          <a class="note-type note-type--green" href="{% url 'observations:create' focus_id %}">
+          <a class="note-type note-type--green" href="{% url 'observations:list' focus_id %}">
             <span class="note-type__icon" aria-hidden="true">
               <svg class="ic ic--sm" aria-hidden="true"><use href="#i-observation"></use></svg>
             </span>
@@ -142,7 +145,7 @@
               <span class="note-type__sub">Хүүхдийн хөгжлийн тэмдэглэл</span>
             </span>
           </a>
-          <a class="note-type note-type--blue" href="{% url 'observations:create' focus_id %}">
+          <a class="note-type note-type--blue" href="{% url 'observations:list' focus_id %}">
             <span class="note-type__icon" aria-hidden="true">
               <svg class="ic ic--sm" aria-hidden="true"><use href="#i-chat"></use></svg>
             </span>
@@ -151,7 +154,7 @@
               <span class="note-type__sub">Асуулт, хариултын тэмдэглэл</span>
             </span>
           </a>
-          <a class="note-type note-type--amber" href="{% url 'observations:create' focus_id %}">
+          <a class="note-type note-type--amber" href="{% url 'observations:list' focus_id %}">
             <span class="note-type__icon" aria-hidden="true">
               <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
             </span>
