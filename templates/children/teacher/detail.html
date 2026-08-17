@@ -63,6 +63,41 @@
     {% endif %}
   </div>
 
+  {% if can_record %}
+    {% comment %} Тэмдэглэлийн төрөл — client's mockup. All three open the
+       same real observation form (observations:create) — there is no
+       separate "Ярилцлага" record type in the database yet, so this does
+       not invent a route for it. If one gets added later (Django Admin,
+       ObservationType — CLAUDE.md §2.3), only this href needs a ?type= to
+       preselect it. {% endcomment %}
+    <div class="card">
+      <h2 style="margin-bottom:14px">Тэмдэглэлийн төрөл</h2>
+      <div class="note-types">
+        <a class="note-type note-type--green" href="{% url 'observations:create' child.pk %}">
+          <span class="note-type__icon" aria-hidden="true">+</span>
+          <span>
+            <span class="note-type__title">Ажиглалт</span>
+            <span class="note-type__sub">Хүүхдийн хөгжлийн тэмдэглэл</span>
+          </span>
+        </a>
+        <a class="note-type note-type--blue" href="{% url 'observations:create' child.pk %}">
+          <span class="note-type__icon" aria-hidden="true">+</span>
+          <span>
+            <span class="note-type__title">Ярилцлага</span>
+            <span class="note-type__sub">Асуулт, хариултын тэмдэглэл</span>
+          </span>
+        </a>
+        <a class="note-type note-type--amber" href="{% url 'observations:create' child.pk %}">
+          <span class="note-type__icon" aria-hidden="true">+</span>
+          <span>
+            <span class="note-type__title">Бүтээл</span>
+            <span class="note-type__sub">Бүтээл, зураг, ахицын тэмдэглэл</span>
+          </span>
+        </a>
+      </div>
+    </div>
+  {% endif %}
+
   <div class="card">
     <div class="card__head">
       <h2>Эцэг эх, асран хамгаалагч</h2>

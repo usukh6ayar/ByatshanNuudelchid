@@ -414,6 +414,177 @@ textarea { min-height: 90px; resize: vertical; }
 .quick a:nth-child(6n+6) { background: var(--c-sky-soft);   border-color: transparent; }
 .quick a:nth-child(6n+6) .ic { color: var(--c-sky); }
 
+/* A tile for a feature the client's mockup draws but the backend does not
+   have yet (Phase 2/3, or off the roadmap entirely). Not a link — dashed
+   border and muted colour say "not yet" instead of pretending the feature
+   is one tap away. */
+.quick__soon {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 17px 8px; border-radius: 18px; text-align: center;
+  background: var(--bg); border: 1px dashed var(--line);
+  color: var(--faint); font-size: .82rem; font-weight: 600; line-height: 1.25;
+  min-height: 44px;
+}
+.quick__soon .ic { width: 24px; height: 24px; color: var(--faint); }
+.quick__soon .quick__soon-tag {
+  font-weight: 500; font-size: .72rem; color: var(--faint);
+}
+
+/* Search-first filter bar — teacher-children-list-v2 mockup: a single
+   search field, with the rest of the existing filters (group, year, status,
+   sex, age, sort) tucked behind a "Дэлгэрэнгүй хайлт" toggle. Native
+   <details>, so opening it needs no JavaScript and the fields inside submit
+   with the same GET form as before. */
+.search-bar { display: flex; gap: 10px; align-items: center; }
+.search-bar .ic { width: 20px; height: 20px; color: var(--faint); flex-shrink: 0; }
+.search-bar input[type=search] { flex: 1; }
+
+details.filters-more { margin-top: 12px; }
+details.filters-more summary {
+  cursor: pointer; font-weight: 600; font-size: .86rem; color: var(--brand);
+  list-style: none; user-select: none;
+}
+details.filters-more summary::-webkit-details-marker { display: none; }
+details.filters-more[open] summary { margin-bottom: 12px; }
+
+/* A row for one child — avatar/name link plus a per-row action menu. Two
+   interactive elements side by side rather than one wrapping <a>: a
+   <details> menu cannot nest inside a link. */
+.child-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 12px 14px;
+}
+.child-row + .child-row { margin-top: 10px; }
+.child-row .person { flex: 1; min-width: 0; text-decoration: none; color: inherit; }
+
+/* Per-row "⋮" action menu, also <details> — RFP mockup: Тайлан / Засах /
+   PDF / Устгах. Устгах has no route yet (CLAUDE.md §7.1, archiving a child
+   is not wired up for teachers), so it renders muted and inert rather than
+   linking to a 404. */
+.menu { position: relative; flex-shrink: 0; }
+.menu > summary {
+  list-style: none; cursor: pointer; width: 36px; height: 36px;
+  border-radius: 10px; display: grid; place-items: center;
+  border: 1px solid var(--line); background: var(--card); color: var(--muted);
+}
+.menu > summary::-webkit-details-marker { display: none; }
+.menu > summary .ic { width: 18px; height: 18px; }
+.menu__list {
+  position: absolute; right: 0; top: 42px; z-index: 20; min-width: 168px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  box-shadow: var(--shadow); padding: 6px;
+}
+.menu__list a, .menu__list .menu__soon {
+  display: flex; align-items: center; gap: 9px; padding: 9px 10px;
+  border-radius: 8px; text-decoration: none; color: var(--ink); font-size: .88rem;
+}
+.menu__list a:hover { background: var(--bg); }
+.menu__list a .ic, .menu__list .menu__soon .ic { width: 17px; height: 17px; }
+.menu__list .menu__soon { color: var(--faint); cursor: default; }
+
+/* CSS-only pill tabs — radio + label, no JavaScript. Panels are matched by
+   id so they can sit anywhere after their input in the DOM; only one radio
+   in the group can be :checked at a time, so only one panel shows. */
+.tabs__nav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.tabs__nav input { position: absolute; opacity: 0; pointer-events: none; }
+.tabs__nav label {
+  display: inline-flex; align-items: center; padding: 10px 18px;
+  border-radius: 999px; border: 1px solid var(--line); background: var(--card);
+  color: var(--muted); font-weight: 600; font-size: .86rem; cursor: pointer;
+  margin: 0; user-select: none;
+}
+.tabs__nav input:checked + label {
+  background: var(--ink); color: #fff; border-color: var(--ink);
+}
+.tabs__nav input:focus-visible + label { outline: 2px solid var(--brand); outline-offset: 1px; }
+.tabs__panel { display: none; }
+#tab-month:checked ~ .tabs__panel[data-panel="month"],
+#tab-term:checked ~ .tabs__panel[data-panel="term"],
+#tab-year:checked ~ .tabs__panel[data-panel="year"],
+#tab-recent:checked ~ .tabs__panel[data-panel="recent"] { display: block; }
+
+/* One period's progress — matches the client's mockup card: a coloured dot,
+   a meta line, and a bar. Reuses .meter's track/fill rather than a second
+   progress-bar component. */
+.period-card {
+  border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 16px 18px; background: var(--card);
+}
+.period-card + .period-card { margin-top: 12px; }
+.period-card__head {
+  display: flex; align-items: center; gap: 9px; font-weight: 700;
+  margin-bottom: 4px;
+}
+.period-card__dot {
+  width: 9px; height: 9px; border-radius: 50%; background: var(--c-pink);
+  flex-shrink: 0;
+}
+.period-card__meta { color: var(--muted); font-size: .85rem; margin: 0 0 12px; }
+.period-card .meter__track { background: var(--c-pink-soft); }
+.period-card .meter__fill { background: var(--c-pink); }
+
+/* "Тэмдэглэлийн төрөл" — three entry points into recording a note for one
+   child, tinted per the client's mockup (green/blue/amber). All three open
+   the same real observation form; there is no separate "Ярилцлага" record
+   type in the database yet, so it is not pretended into a distinct route. */
+.note-types { display: grid; gap: 12px;
+              grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.note-type {
+  display: flex; gap: 12px; align-items: flex-start; padding: 16px;
+  border-radius: var(--radius); border: 1px solid var(--line);
+  text-decoration: none; color: var(--ink);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.note-type:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.note-type__icon {
+  width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+  display: grid; place-items: center; color: #fff; font-size: 1.2rem;
+  font-weight: 700; line-height: 1;
+}
+.note-type__title { display: block; font-weight: 700; }
+.note-type__sub { display: block; color: var(--muted); font-size: .8rem; margin-top: 2px; }
+
+.note-type--green { background: var(--ok-soft); border-color: transparent; }
+.note-type--green .note-type__icon { background: var(--ok); }
+.note-type--blue { background: var(--c-blue-soft); border-color: transparent; }
+.note-type--blue .note-type__icon { background: var(--c-blue); }
+.note-type--amber { background: var(--c-amber-soft); border-color: transparent; }
+.note-type--amber .note-type__icon { background: var(--c-amber); }
+
+/* The observation form's four numbered sections — client's mockup. Same
+   fields as before (observed_on, type, activity_name, situation, child_did,
+   child_said, teacher_comment, next_steps, domains+levels,
+   visible_to_parents, include_in_report), regrouped under headings instead
+   of one long flat list. */
+.form-step { border: 1px solid var(--line); border-radius: var(--radius);
+             padding: 18px; margin-top: 16px; }
+.form-step:first-of-type { margin-top: 0; }
+.form-step--accent { background: var(--brand-soft); border-color: transparent; }
+.form-step__head { display: flex; align-items: center; gap: 10px;
+                    font-weight: 700; margin-bottom: 4px; }
+.form-step__num {
+  width: 26px; height: 26px; border-radius: 50%; background: var(--card);
+  border: 1px solid var(--line); display: grid; place-items: center;
+  font-size: .82rem; font-weight: 700; color: var(--muted); flex-shrink: 0;
+}
+
+/* Quick-insert phrases — clicking one appends the phrase to the textarea
+   beside it. Pure client-side text convenience; nothing here is a field of
+   its own or is stored separately from the textarea it feeds. */
+.chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 0; }
+.chip {
+  border: 1px solid var(--line); background: var(--card); color: var(--muted);
+  border-radius: 999px; padding: 6px 12px; font-size: .8rem; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+}
+.chip:hover { background: var(--bg); color: var(--ink); }
+
+/* Evidence photo upload — RFP §5.1's last rows, explicitly not built yet
+   (apps/observations/models.py: "arrive with upload on Day 7"). Disabled
+   controls rather than omitted, so a teacher sees the row is coming. */
+.evidence-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+
 dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px;
            margin: 0; font-size: .92rem; }
 dl.facts dt { color: var(--muted); }

@@ -46,6 +46,67 @@
     </div>
   </div>
 
+  {% comment %} "Түргэн холбоос" — same pattern as the parent home
+     (children/parent/home.html): every tile goes somewhere that exists.
+     Судалгаа, Хоол, Санхүү, Баримт бичиг and a parent group chat are on the
+     client's mockup but are Phase 2/3 or not on the roadmap at all, so they
+     are not drawn here — a tile with nowhere to go teaches a teacher the
+     system is broken. {% endcomment %}
+  <div class="card">
+    <div class="card__head">
+      <h2>Түргэн холбоос</h2>
+    </div>
+    <div class="quick">
+      <a href="{% url 'children:list' %}">
+        <svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg>
+        Хүүхдийн нэрс
+      </a>
+      {% if groups %}
+        <a href="{% url 'assessment:group_grid' groups.0.pk %}">
+          <svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg>
+          Явцын үнэлгээ
+        </a>
+      {% endif %}
+      <a href="{% url 'children:list' %}">
+        <svg class="ic" aria-hidden="true"><use href="#i-report"></use></svg>
+        Тайлан
+      </a>
+      <a href="{% url 'comms:list' %}">
+        <svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg>
+        Мэдээ
+      </a>
+
+      {% comment %} Not links — Phase 2/3 or off the roadmap, backend not
+         built yet. A dashed, muted tile instead of a route that does not
+         exist, so nothing here can 500 the dashboard. {% endcomment %}
+      <span class="quick__soon" aria-disabled="true">
+        <svg class="ic" aria-hidden="true"><use href="#i-soon"></use></svg>
+        Баримт бичиг
+        <span class="quick__soon-tag">Тун удахгүй</span>
+      </span>
+      <span class="quick__soon" aria-disabled="true">
+        <svg class="ic" aria-hidden="true"><use href="#i-soon"></use></svg>
+        Хоол
+        <span class="quick__soon-tag">Тун удахгүй</span>
+      </span>
+      <span class="quick__soon" aria-disabled="true">
+        <svg class="ic" aria-hidden="true"><use href="#i-soon"></use></svg>
+        Санхүү
+        <span class="quick__soon-tag">Тун удахгүй</span>
+      </span>
+      <span class="quick__soon" aria-disabled="true">
+        <svg class="ic" aria-hidden="true"><use href="#i-soon"></use></svg>
+        Судалгаа
+        <span class="quick__soon-tag">Тун удахгүй</span>
+      </span>
+      <span class="quick__soon" aria-disabled="true">
+        <svg class="ic" aria-hidden="true"><use href="#i-soon"></use></svg>
+        Эцэг эхийн групп чат
+        <span class="quick__soon-tag">Тун удахгүй</span>
+      </span>
+    </div>
+  </div>
+
   {% if birthdays_today %}
     <div class="card">
       <div class="card__head">

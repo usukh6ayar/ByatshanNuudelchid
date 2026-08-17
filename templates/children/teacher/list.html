@@ -11,172 +11,180 @@
 {% block content %}
   {% comment %} The mockup puts the primary action beside the page title
      rather than above the table, so it stays in the same place on every
-     screen that has one. {% endcomment %}
+     screen that has one. Excel import is Phase 2 (ROADMAP) — the button is
+     shown, disabled, rather than left off, so a teacher looking for it
+     knows it is coming and not missing. {% endcomment %}
   <div class="page-actions" style="margin:-8px 0 16px">
     <a class="btn" href="{% url 'children:create' %}">
       <svg class="ic ic--sm" aria-hidden="true"><use href="#i-children"></use></svg>
-      Шинэ хүүхэд нэмэх
+      Хүүхэд нэмэх
     </a>
+    <button type="button" class="btn btn--ghost" disabled title="Тун удахгүй">
+      Excel-ээр оруулах
+    </button>
+    <a class="btn btn--ghost" href="{% url 'dashboard:teacher' %}">Буцах</a>
   </div>
 
   <div class="card">
+    {% comment %} Search-first, as drawn — the rest of the existing filters
+       (group, year, status, sex, age, sort) still work exactly as before,
+       just tucked behind "Дэлгэрэнгүй хайлт" instead of always open.
+       <details> keeps this a plain GET form with no JavaScript. {% endcomment %}
     <form method="get" class="filters">
-      <div>
-        <label for="id_q">Хайх</label>
+      <div class="search-bar" style="flex:1 1 100%">
+        <svg class="ic" aria-hidden="true"><use href="#i-search"></use></svg>
+        <label for="id_q" class="sr-only">Хайх</label>
         <input type="search" name="q" id="id_q" value="{{ filters.q }}"
-               placeholder="Нэр эсвэл код">
+               placeholder="Хүүхдийн нэрээр хайх...">
+        <button type="submit" class="btn btn--sm">Хайх</button>
       </div>
 
-      <div>
-        <label for="id_group">Бүлэг</label>
-        <select name="group" id="id_group">
-          <option value="">Бүгд</option>
-          {% for group in groups %}
-            <option value="{{ group.pk }}"
-              {% if selected_group.pk == group.pk %}selected{% endif %}>
-              {{ group.name }} ({{ group.school_year.name }})
-            </option>
-          {% endfor %}
-        </select>
-      </div>
+      <details class="filters-more" style="flex:1 1 100%"
+        {% if selected_group or filters.school_year or filters.status or filters.sex or filters.age or filters.sort and filters.sort != "name" %}open{% endif %}>
+        <summary>Дэлгэрэнгүй хайлт</summary>
+        <div class="filters">
+          <div>
+            <label for="id_group">Бүлэг</label>
+            <select name="group" id="id_group">
+              <option value="">Бүгд</option>
+              {% for group in groups %}
+                <option value="{{ group.pk }}"
+                  {% if selected_group.pk == group.pk %}selected{% endif %}>
+                  {{ group.name }} ({{ group.school_year.name }})
+                </option>
+              {% endfor %}
+            </select>
+          </div>
 
-      {# RFP §11 — "хичээлийн жилээр шүүх" #}
-      <div>
-        <label for="id_school_year">Хичээлийн жил</label>
-        <select name="school_year" id="id_school_year">
-          <option value="">Бүгд</option>
-          {% for year in school_years %}
-            <option value="{{ year.pk }}"
-              {% if filters.school_year == year.pk|stringformat:"s" %}selected{% endif %}>
-              {{ year.name }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
+          {# RFP §11 — "хичээлийн жилээр шүүх" #}
+          <div>
+            <label for="id_school_year">Хичээлийн жил</label>
+            <select name="school_year" id="id_school_year">
+              <option value="">Бүгд</option>
+              {% for year in school_years %}
+                <option value="{{ year.pk }}"
+                  {% if filters.school_year == year.pk|stringformat:"s" %}selected{% endif %}>
+                  {{ year.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
 
-      <div>
-        <label for="id_status">Төлөв</label>
-        <select name="status" id="id_status">
-          <option value="">Бүгд</option>
-          {% for value, label in statuses %}
-            <option value="{{ value }}"
-              {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-      </div>
+          <div>
+            <label for="id_status">Төлөв</label>
+            <select name="status" id="id_status">
+              <option value="">Бүгд</option>
+              {% for value, label in statuses %}
+                <option value="{{ value }}"
+                  {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
 
-      <div>
-        <label for="id_sex">Хүйс</label>
-        <select name="sex" id="id_sex">
-          <option value="">Бүгд</option>
-          {% for value, label in sexes %}
-            <option value="{{ value }}"
-              {% if filters.sex == value %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-      </div>
+          <div>
+            <label for="id_sex">Хүйс</label>
+            <select name="sex" id="id_sex">
+              <option value="">Бүгд</option>
+              {% for value, label in sexes %}
+                <option value="{{ value }}"
+                  {% if filters.sex == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
 
-      <div>
-        <label for="id_age">Нас</label>
-        <select name="age" id="id_age">
-          <option value="">Бүгд</option>
-          {% for value in "2345" %}
-            <option value="{{ value }}"
-              {% if filters.age == value %}selected{% endif %}>{{ value }} нас</option>
-          {% endfor %}
-        </select>
-      </div>
+          <div>
+            <label for="id_age">Нас</label>
+            <select name="age" id="id_age">
+              <option value="">Бүгд</option>
+              {% for value in "2345" %}
+                <option value="{{ value }}"
+                  {% if filters.age == value %}selected{% endif %}>{{ value }} нас</option>
+              {% endfor %}
+            </select>
+          </div>
 
-      <div>
-        <label for="id_sort">Эрэмбэ</label>
-        <select name="sort" id="id_sort">
-          <option value="name" {% if filters.sort == "name" %}selected{% endif %}>Нэрээр</option>
-          <option value="age" {% if filters.sort == "age" %}selected{% endif %}>Насаар (бага→их)</option>
-          <option value="-age" {% if filters.sort == "-age" %}selected{% endif %}>Насаар (их→бага)</option>
-          <option value="-enrolled" {% if filters.sort == "-enrolled" %}selected{% endif %}>Элссэн огноогоор</option>
-          <option value="-updated" {% if filters.sort == "-updated" %}selected{% endif %}>Сүүлд шинэчлэгдсэн</option>
-        </select>
-      </div>
+          <div>
+            <label for="id_sort">Эрэмбэ</label>
+            <select name="sort" id="id_sort">
+              <option value="name" {% if filters.sort == "name" %}selected{% endif %}>Нэрээр</option>
+              <option value="age" {% if filters.sort == "age" %}selected{% endif %}>Насаар (бага→их)</option>
+              <option value="-age" {% if filters.sort == "-age" %}selected{% endif %}>Насаар (их→бага)</option>
+              <option value="-enrolled" {% if filters.sort == "-enrolled" %}selected{% endif %}>Элссэн огноогоор</option>
+              <option value="-updated" {% if filters.sort == "-updated" %}selected{% endif %}>Сүүлд шинэчлэгдсэн</option>
+            </select>
+          </div>
 
-      <div style="flex:0 0 auto">
-        <button type="submit" class="btn">Шүүх</button>
-      </div>
+          <div style="flex:0 0 auto">
+            <button type="submit" class="btn">Шүүх</button>
+          </div>
+        </div>
+      </details>
     </form>
   </div>
 
   <div class="card">
     {% if page.object_list %}
-      <div class="table-wrap">
-        <table>
-          <caption class="sr-only">Хүүхдийн жагсаалт</caption>
-          <thead>
-            <tr>
-              <th scope="col">Овог, нэр</th>
-              <th scope="col">Код</th>
-              <th scope="col">Хүйс</th>
-              <th scope="col">Төрсөн огноо</th>
-              <th scope="col">Нас</th>
-              <th scope="col">Бүлэг</th>
-              <th scope="col">Эцэг эх</th>
-              <th scope="col">Төлөв</th>
-              <th scope="col"><span class="sr-only">Үйлдэл</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for child in page.object_list %}
-              <tr>
-                {% comment %} Name and picture in one cell, as drawn. The
-                   photo goes through /media/<uuid>/ like every other file,
-                   so the permission check runs before the bytes do
-                   (CLAUDE.md §1.4). {% endcomment %}
-                <td>
-                  <a class="person" href="{% url 'children:detail' child.pk %}"
-                     style="text-decoration:none; color:inherit">
-                    {% if child.photo %}
-                      <img class="avatar avatar--sm"
-                           src="{% url 'media:serve' child.photo.public_id 'full' %}"
-                           alt="{{ child.full_name }}">
-                    {% else %}
-                      <span class="avatar avatar--sm" aria-hidden="true">
-                        {{ child.first_name|first }}
-                      </span>
-                    {% endif %}
-                    <span class="person__name">{{ child.full_name }}</span>
-                  </a>
-                </td>
-                <td>{{ child.national_id }}</td>
-                <td>{{ child.get_sex_display }}</td>
-                <td>{{ child.date_of_birth|date:"Y.m.d" }}</td>
-                <td>{{ child.age }} нас</td>
-                <td>
+      {% comment %} One row per child, as drawn: photo, name, group, and a
+         "⋮" menu (Тайлан / Засах / PDF / Устгах). Status, code and guardian
+         are still on the child's own page — nothing here is deleted, only
+         moved off the row. The photo goes through /media/<uuid>/ like every
+         other file, so the permission check runs before the bytes do
+         (CLAUDE.md §1.4). {% endcomment %}
+      <div class="child-rows">
+        {% for child in page.object_list %}
+          <div class="child-row">
+            <a class="person" href="{% url 'children:detail' child.pk %}">
+              {% if child.photo %}
+                <img class="avatar avatar--sm"
+                     src="{% url 'media:serve' child.photo.public_id 'full' %}"
+                     alt="{{ child.full_name }}">
+              {% else %}
+                <span class="avatar avatar--sm" aria-hidden="true">
+                  {{ child.first_name|first }}
+                </span>
+              {% endif %}
+              <span>
+                <span class="person__name">{{ child.full_name }}</span><br>
+                <span class="person__sub">
                   {% for enrollment in child.active_enrollments %}
                     {{ enrollment.group.name }}
                   {% empty %}
-                    <span class="badge badge--muted">Бүлэггүй</span>
+                    Бүлэггүй
                   {% endfor %}
-                </td>
-                <td>
-                  {% for link in child.guardianships.all %}
-                    {{ link.guardian_user }} ({{ link.get_relation_display }}){% if not forloop.last %}<br>{% endif %}
-                  {% empty %}
-                    <span class="badge badge--warn">Холбогдоогүй</span>
-                  {% endfor %}
-                </td>
-                <td>
-                  <span class="badge {% if child.status == 'active' %}badge--ok{% else %}badge--muted{% endif %}">
-                    {{ child.get_status_display }}
-                  </span>
-                </td>
-                <td style="white-space:nowrap">
-                  <a class="btn btn--ghost btn--sm"
-                     href="{% url 'children:detail' child.pk %}">Үзэх</a>
-                  <a class="btn btn--ghost btn--sm"
-                     href="{% url 'children:edit' child.pk %}">Засах</a>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+                  · {{ child.age }} нас
+                  {% if child.status != 'active' %}· {{ child.get_status_display }}{% endif %}
+                </span>
+              </span>
+            </a>
+
+            <details class="menu">
+              <summary aria-label="Үйлдэл">
+                <svg class="ic" aria-hidden="true"><use href="#i-more"></use></svg>
+              </summary>
+              <div class="menu__list">
+                <a href="{% url 'portfolio:overview' child.pk %}">
+                  <svg class="ic" aria-hidden="true"><use href="#i-report"></use></svg>
+                  Тайлан
+                </a>
+                <a href="{% url 'children:edit' child.pk %}">
+                  <svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg>
+                  Засах
+                </a>
+                <a href="{% url 'reports:request' child.pk %}">
+                  <svg class="ic" aria-hidden="true"><use href="#i-report"></use></svg>
+                  PDF
+                </a>
+                {% comment %} No route yet — archiving a child is not wired
+                   up for teachers (CLAUDE.md §7.1). Muted, not a link, so
+                   it cannot 404/500 the page. {% endcomment %}
+                <span class="menu__soon">
+                  <svg class="ic" aria-hidden="true"><use href="#i-soon"></use></svg>
+                  Устгах — тун удахгүй
+                </span>
+              </div>
+            </details>
+          </div>
+        {% endfor %}
       </div>
 
       <div class="pagination">

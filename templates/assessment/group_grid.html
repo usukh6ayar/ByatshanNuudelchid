@@ -7,7 +7,241 @@
 {% block heading %}Түргэн үнэлгээ — {{ group.name }}{% endblock %}
 
 {% block content %}
+  {% comment %} Хүүхэд сонгох + Тэмдэглэлийн төрөл — client's mockup. The
+     roster is the group's real active enrollments (`group.enrollments`,
+     already a real relation — no new view). "focus_child" is a plain GET
+     param the template reads itself; nothing here needed a change to
+     views.py. {% endcomment %}
+  {% with default_child=group.enrollments.first.child.pk|stringformat:"s" %}
+    {% with focus_id=request.GET.focus_child|default:default_child %}
+      <div class="card">
+        <h2 style="margin-bottom:14px">Хүүхэд сонгох</h2>
+        <form method="get">
+          <input type="hidden" name="domain" value="{{ domain.pk }}">
+          <input type="hidden" name="term" value="{{ term.pk }}">
+          <label for="id_focus_child" class="sr-only">Хүүхэд</label>
+          <select name="focus_child" id="id_focus_child" onchange="this.form.submit()">
+            {% for enrollment in group.enrollments.all %}
+              <option value="{{ enrollment.child.pk }}"
+                {% if enrollment.child.pk|stringformat:"s" == focus_id %}selected{% endif %}>
+                {{ enrollment.child.full_name }}
+              </option>
+            {% empty %}
+              <option value="">Бүлэгт хүүхэд бүртгэлгүй</option>
+            {% endfor %}
+          </select>
+        </form>
+        <p class="brand__sub" style="margin-top:8px">
+          Олон хүүхэдтэй үед dropdown дээр дарж нэрээр нь хурдан сонгоно.
+        </p>
+      </div>
+
+      {% if focus_id %}
+        <div class="card">
+          <h2 style="margin-bottom:14px">Тэмдэглэлийн төрөл</h2>
+          <div class="note-types">
+            <a class="note-type note-type--green" href="{% url 'observations:create' focus_id %}">
+              <span class="note-type__icon" aria-hidden="true">+</span>
+              <span>
+                <span class="note-type__title">Ажиглалт</span>
+                <span class="note-type__sub">Хүүхдийн хөгжлийн тэмдэглэл</span>
+              </span>
+            </a>
+            <a class="note-type note-type--blue" href="{% url 'observations:create' focus_id %}">
+              <span class="note-type__icon" aria-hidden="true">+</span>
+              <span>
+                <span class="note-type__title">Ярилцлага</span>
+                <span class="note-type__sub">Асуулт, хариултын тэмдэглэл</span>
+              </span>
+            </a>
+            <a class="note-type note-type--amber" href="{% url 'observations:create' focus_id %}">
+              <span class="note-type__icon" aria-hidden="true">+</span>
+              <span>
+                <span class="note-type__title">Бүтээл</span>
+                <span class="note-type__sub">Бүтээл, зураг, ахицын тэмдэглэл</span>
+              </span>
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    {% endwith %}
+  {% endwith %}
+
+  {% comment %} Төлөвлөлтийн тойм — the same four-band idea as the teacher
+     dashboard's "Бүлгийн шатлал" (dashboard/teacher.html), but that card's
+     numbers come from a selector this view does not call. Rather than
+     re-deriving "which year each band starts" in the template — that logic
+     belongs in Python, not presentation — this is a labelled placeholder
+     until the view passes the real band_track in. {% endcomment %}
   <div class="card">
+    <div class="card__head">
+      <h2>Төлөвлөлтийн тойм</h2>
+      <span class="badge badge--muted">Жишээ</span>
+    </div>
+    <ol class="track">
+      <li class="track__step track__step--current">
+        <span class="track__name">Бага бүлэг</span>
+        <span class="track__dot" aria-hidden="true"></span>
+        <span class="track__dates">2025-2026</span>
+      </li>
+      <li class="track__step">
+        <span class="track__name">Дунд бүлэг</span>
+        <span class="track__dot" aria-hidden="true"></span>
+        <span class="track__dates">2026-2027</span>
+      </li>
+      <li class="track__step">
+        <span class="track__name">Ахлах бүлэг</span>
+        <span class="track__dot" aria-hidden="true"></span>
+        <span class="track__dates">2027-2028</span>
+      </li>
+      <li class="track__step">
+        <span class="track__name">Бэлтгэл бүлэг</span>
+        <span class="track__dot" aria-hidden="true"></span>
+        <span class="track__dates">2028-2029</span>
+      </li>
+    </ol>
+  </div>
+
+  {% comment %} "Сард нэг хүүхдэд: 2 тэмдэглэл" — no monthly-quota setting
+     exists in the data model (CLAUDE.md §2.3 — this would be a table, not a
+     hardcode, once real). Placeholder; the school year beside it is real. {% endcomment %}
+  <div class="grid grid--2">
+    <div class="card" style="display:flex; align-items:center">
+      <span class="badge badge--brand">{{ group.school_year.name }}</span>
+    </div>
+    <div class="card" style="display:flex; align-items:center; justify-content:space-between; gap:12px">
+      <span class="brand__sub">Сард нэг хүүхдэд</span>
+      <span class="badge badge--muted">2 тэмдэглэл (жишээ)</span>
+    </div>
+  </div>
+
+  {% comment %} Санал болгох хүүхдийн жагсаалт — real: the group's own
+     roster, same relation as the child-selector above. {% endcomment %}
+  <div class="card">
+    <div class="card__head">
+      <h2>Санал болгох хүүхдийн жагсаалт</h2>
+      <span class="badge badge--muted">{{ group.enrollments.all|length }} хүүхэд</span>
+    </div>
+    <div class="feed">
+      {% for enrollment in group.enrollments.all %}
+        <a class="feed__item" href="?domain={{ domain.pk }}&amp;term={{ term.pk }}&amp;focus_child={{ enrollment.child.pk }}">
+          <span class="avatar avatar--sm" aria-hidden="true">
+            {{ enrollment.child.first_name|first }}
+          </span>
+          <div class="feed__body">
+            <div class="feed__title">{{ enrollment.child.full_name }}</div>
+          </div>
+        </a>
+      {% empty %}
+        <p class="empty">Бүлэгт хүүхэд бүртгэлгүй байна.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% comment %} Явцын үнэлгээ — client's mockup: sar/uliral/jil tabs over
+     progress cards. There is no monthly-goal concept in the data model yet
+     (assessment is per Term, not per month — CLAUDE.md §2.1/§2.3), so this
+     panel is placeholder numbers, clearly labelled, not a query. Built so a
+     later backend addition only has to replace this block's contents with
+     a real context variable — the tabs, cards and CSS underneath it do not
+     change. The real, working grid (§6.3) is untouched below. {% endcomment %}
+  <div class="card">
+    <div class="card__head">
+      <h2>Явцын үнэлгээ</h2>
+      <a href="#turgen-unelgee">Түргэн үнэлгээ рүү очих ↓</a>
+    </div>
+
+    <p class="badge badge--muted" style="margin-bottom:16px">
+      Жишээ өгөгдөл — сар/жилийн явцын тооцоолол удахгүй холбогдоно
+    </p>
+
+    <div class="tabs__nav">
+      <input type="radio" name="progress-period" id="tab-month" checked>
+      <label for="tab-month">Сараар</label>
+      <input type="radio" name="progress-period" id="tab-term">
+      <label for="tab-term">Улирлаар</label>
+      <input type="radio" name="progress-period" id="tab-year">
+      <label for="tab-year">Жилээр</label>
+      <input type="radio" name="progress-period" id="tab-recent">
+      <label for="tab-recent">Сүүлд хийсэн</label>
+
+      <div class="tabs__panel" data-panel="month">
+        {% comment %} Hard-coded, not a loop — there is no monthly data to
+           iterate yet. Four cards only, matching the mockup; a real version
+           would loop the school year's months instead. {% endcomment %}
+        <div class="period-card">
+          <div class="period-card__head">
+            <span class="period-card__dot" aria-hidden="true"></span>
+            9-р сар
+          </div>
+          <p class="period-card__meta">0/1 хүүхэд · 1 үлдсэн · зорилт 2</p>
+          <div class="meter__track"><div class="meter__fill" style="width:0%"></div></div>
+        </div>
+        <div class="period-card">
+          <div class="period-card__head">
+            <span class="period-card__dot" aria-hidden="true"></span>
+            10-р сар
+          </div>
+          <p class="period-card__meta">0/1 хүүхэд · 1 үлдсэн · зорилт 2</p>
+          <div class="meter__track"><div class="meter__fill" style="width:0%"></div></div>
+        </div>
+        <div class="period-card">
+          <div class="period-card__head">
+            <span class="period-card__dot" aria-hidden="true"></span>
+            11-р сар
+          </div>
+          <p class="period-card__meta">0/1 хүүхэд · 1 үлдсэн · зорилт 2</p>
+          <div class="meter__track"><div class="meter__fill" style="width:0%"></div></div>
+        </div>
+        <div class="period-card">
+          <div class="period-card__head">
+            <span class="period-card__dot" aria-hidden="true"></span>
+            12-р сар
+          </div>
+          <p class="period-card__meta">0/1 хүүхэд · 1 үлдсэн · зорилт 2</p>
+          <div class="meter__track"><div class="meter__fill" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <div class="tabs__panel" data-panel="term">
+        {% for item in terms %}
+          <div class="period-card">
+            <div class="period-card__head">
+              <span class="period-card__dot" aria-hidden="true"></span>
+              {{ item.name }}
+            </div>
+            <p class="period-card__meta">0/{{ group.child_count|default:"—" }} хүүхэд үнэлэгдсэн (жишээ)</p>
+            <div class="meter__track"><div class="meter__fill" style="width:0%"></div></div>
+          </div>
+        {% empty %}
+          <p class="empty">Улирал тохируулаагүй байна.</p>
+        {% endfor %}
+      </div>
+
+      <div class="tabs__panel" data-panel="year">
+        <div class="period-card">
+          <div class="period-card__head">
+            <span class="period-card__dot" aria-hidden="true"></span>
+            {{ group.school_year.name|default:"Хичээлийн жил" }}
+          </div>
+          <p class="period-card__meta">0/4 улирал дууссан (жишээ)</p>
+          <div class="meter__track"><div class="meter__fill" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <div class="tabs__panel" data-panel="recent">
+        <div class="period-card">
+          <div class="period-card__head">
+            <span class="period-card__dot" aria-hidden="true"></span>
+            Хамгийн сүүлд хийсэн үнэлгээ
+          </div>
+          <p class="period-card__meta">Одоогоор мэдээлэл алга (жишээ)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="turgen-unelgee">
     <form method="get" class="filters">
       <div>
         <label for="id_domain">Хөгжлийн чиглэл</label>
