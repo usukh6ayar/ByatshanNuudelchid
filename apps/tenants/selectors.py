@@ -1,6 +1,7 @@
 """Read queries for organizational data."""
 
 from apps.accounts.models import Role
+from apps.core.permissions import teacher_link_condition
 
 from .models import Group, SchoolYear
 
@@ -25,10 +26,11 @@ def assignable_groups(user):
             memberships.filter(role=Role.ADMIN, kindergarten__isnull=False)
             .values_list("kindergarten_id", flat=True)
         )
-        qs = Group.objects.filter(
-            teacher_assignments__teacher_membership__user=user,
-            teacher_assignments__teacher_membership__is_active=True,
-        )
+        # The canonical assignment predicate, rooted at Group rather than at
+        # Child. Spelled out here it omitted `deleted_at`, so a teacher whose
+        # assignment had been withdrawn could still open the §6.3 grid and
+        # the §5.2 group observation screen — both of which this gates.
+        qs = Group.objects.filter(teacher_link_condition(user, through=""))
         if admin_ids:
             qs = qs | Group.objects.filter(kindergarten_id__in=admin_ids)
 

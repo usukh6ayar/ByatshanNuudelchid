@@ -9,7 +9,7 @@ import datetime as dt
 
 from django.db.models import Prefetch, Q
 
-from apps.core.permissions import visible_children
+from apps.core.permissions import guardian_link_condition, visible_children
 
 from .models import Child, Enrollment, Guardianship
 
@@ -112,12 +112,17 @@ def guardian_children(user):
     """The children shown on the parent home screen — RFP §2.3.
 
     Ordered so the switcher is stable between visits.
+
+    The predicate comes from ``apps.core.permissions`` rather than being
+    spelled out here (CLAUDE.md §1.1). This function cannot simply filter
+    ``visible_children``: a teacher whose own child attends the same
+    kindergarten is *visible* their whole class, and the parent home must
+    show only the children they guard. So it needs the guardian clause on
+    its own — which is exactly how it came to omit the soft-delete check
+    that ``is_guardian_of`` had.
     """
     return (
-        Child.objects.filter(
-            guardianships__guardian_user=user,
-            guardianships__can_view=True,
-        )
+        Child.objects.filter(guardian_link_condition(user))
         .select_related("kindergarten", "photo")
         .prefetch_related(_active_enrollments())
         .distinct()
