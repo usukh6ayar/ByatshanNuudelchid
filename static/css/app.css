@@ -545,6 +545,20 @@ textarea { min-height: 90px; resize: vertical; }
 .quick a:nth-child(6n+6) { background: var(--c-sky-soft);   border-color: transparent; }
 .quick a:nth-child(6n+6) .ic { color: var(--c-sky); }
 
+/* A tile for a feature the client's mockup draws but the backend does not
+   have yet (Phase 2/3, or off the roadmap entirely). Not a link — dashed
+   border and muted colour say "not yet" instead of pretending the feature
+   is one tap away. */
+.quick__soon {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 17px 8px; border-radius: 18px; text-align: center;
+  background: var(--bg); border: 1px dashed var(--line);
+  color: var(--faint); font-size: .82rem; font-weight: 600; line-height: 1.25;
+  min-height: 44px;
+}
+.quick__soon .ic { width: 24px; height: 24px; color: var(--faint); }
+.quick__soon-tag { font-weight: 500; font-size: .72rem; color: var(--faint); }
+
 dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px;
            margin: 0; font-size: .92rem; }
 dl.facts dt { color: var(--muted); }

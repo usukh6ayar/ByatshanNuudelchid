@@ -52,6 +52,64 @@
     </div>
   </section>
 
+  {% comment %} ------------------------------------------ quick links
+     "Түргэн холбоос" — client's mockup. Every real tile goes to a route
+     that already exists; the five that do not (Баримт бичиг, Хоол, Санхүү,
+     Судалгаа, Эцэг эхийн групп чат) are Phase 2/3 or off the roadmap
+     entirely (ROADMAP §7.1, CLAUDE.md §7.1), so they render as dashed,
+     inert tiles rather than a link with nowhere to go. {% endcomment %}
+  <section class="section">
+    {% include "components/section_head.html" with title="Түргэн холбоос" %}
+    <div class="quick">
+      <a href="{% url 'children:list' %}">
+        <svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg>
+        Хүүхдийн нэрс
+      </a>
+      {% with first_group=groups.0 %}
+        {% if first_group %}
+          <a href="{% url 'assessment:group_grid' first_group.pk %}">
+            <svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg>
+            Явцын үнэлгээ
+          </a>
+        {% endif %}
+      {% endwith %}
+      <a href="{% url 'children:list' %}">
+        <svg class="ic" aria-hidden="true"><use href="#i-report"></use></svg>
+        Тайлан
+      </a>
+      <a href="{% url 'comms:list' %}">
+        <svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg>
+        Мэдээ
+      </a>
+
+      <span class="quick__soon" aria-disabled="true">
+        <svg class="ic" aria-hidden="true"><use href="#i-folder"></use></svg>
+        Баримт бичиг
+        <span class="quick__soon-tag">Тун удахгүй</span>
+      </span>
+      <span class="quick__soon" aria-disabled="true">
+        <svg class="ic" aria-hidden="true"><use href="#i-meal"></use></svg>
+        Хоол
+        <span class="quick__soon-tag">Тун удахгүй</span>
+      </span>
+      <span class="quick__soon" aria-disabled="true">
+        <svg class="ic" aria-hidden="true"><use href="#i-money"></use></svg>
+        Санхүү
+        <span class="quick__soon-tag">Тун удахгүй</span>
+      </span>
+      <span class="quick__soon" aria-disabled="true">
+        <svg class="ic" aria-hidden="true"><use href="#i-survey"></use></svg>
+        Судалгаа
+        <span class="quick__soon-tag">Тун удахгүй</span>
+      </span>
+      <span class="quick__soon" aria-disabled="true">
+        <svg class="ic" aria-hidden="true"><use href="#i-chat"></use></svg>
+        Эцэг эхийн групп чат
+        <span class="quick__soon-tag">Тун удахгүй</span>
+      </span>
+    </div>
+  </section>
+
   {% comment %} ------------------------------------------------ figures
      Four, not six. Each is a real count from a real query, and each is a
      link to the screen that acts on it — a number a teacher cannot act on
