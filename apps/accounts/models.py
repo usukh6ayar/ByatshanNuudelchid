@@ -24,6 +24,12 @@ class Role(models.TextChoices):
     ADMIN = "admin", "Цэцэрлэгийн администратор"
     TEACHER = "teacher", "Багш"
     GUARDIAN = "guardian", "Эцэг эх, асран хамгаалагч"
+    # Added 2026-08-17 for нэмэлт.md §13. Deliberately *not* granted access to
+    # children — an accountant reads invoices and funding, never observations,
+    # assessments or health notes. That separation is enforced in
+    # `apps/core/permissions.py`, which keeps this role out of
+    # `can_access_child` entirely and gives it its own predicate instead.
+    ACCOUNTANT = "accountant", "Нягтлан"
 
 
 class UserManager(BaseUserManager):
