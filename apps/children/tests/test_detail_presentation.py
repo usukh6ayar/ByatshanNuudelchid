@@ -166,3 +166,57 @@ def test_the_edit_action_is_hidden_from_a_guardian(client, world):
     body = client.get(detail_url(world["bataa"])).content.decode()
 
     assert reverse("children:edit", args=[world["bataa"].pk]) not in body
+
+
+# ------------------------------------------ record a note, 2026-08-18
+# The single "Ажиглалт нэмэх" button became one card per §5.2 type, from the
+# client's mockup. The cards come from `ObservationType`, so what is worth
+# pinning is that they follow the table rather than a list in the template —
+# and that the one a guardian's own submission is filed under is not offered
+# to a teacher as something to write.
+
+
+def test_the_page_offers_a_card_for_each_teacher_observation_type(client, world):
+    login(client, world["dulmaa"])
+
+    body = client.get(detail_url(world["bataa"])).content.decode()
+
+    for code in ("daily", "artwork", "activity"):
+        name = ObservationType.objects.get(kindergarten=None, code=code).name
+        assert name in body, f"no entry point for observation type: {code}"
+
+
+def test_the_parent_submission_type_is_not_offered_to_a_teacher(client, world):
+    """§5.2 — a teacher's own note is never "an observation the parent
+    entered". Offering it as an entry point would misfile the record."""
+    login(client, world["dulmaa"])
+
+    body = client.get(detail_url(world["bataa"])).content.decode()
+    parent_type = ObservationType.objects.get(kindergarten=None, code="parent")
+
+    assert f"?type={parent_type.pk}" not in body
+
+
+def test_a_kindergartens_own_type_gets_a_card_without_a_template_change(
+    client, world,
+):
+    """CLAUDE.md §2.3 — the types are a table an administrator edits."""
+    login(client, world["dulmaa"])
+    own = ObservationType.objects.create(
+        kindergarten=world["naran"], code="interview", name="Ярилцлага",
+    )
+
+    body = client.get(detail_url(world["bataa"])).content.decode()
+
+    assert "Ярилцлага" in body
+    assert f"?type={own.pk}" in body
+
+
+def test_a_guardian_is_offered_no_note_cards(client, world):
+    """§5.4 gives families their own screen; `observations:create` answers
+    404 for them, so a card here would be a link into a refusal."""
+    login(client, world["bataa_mother"])
+
+    body = client.get(detail_url(world["bataa"])).content.decode()
+
+    assert "Тэмдэглэл бүртгэх" not in body

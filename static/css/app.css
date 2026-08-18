@@ -1256,6 +1256,29 @@ a.tile:hover { border-color: var(--brand); }
   margin: 0 0 var(--s3); color: var(--muted); font-size: var(--t-meta);
 }
 
+/* Quick-insert phrases — the client's mockup, added 2026-08-18. A row of
+   buttons under a textarea; clicking one appends its own label to the field.
+   Not fields of their own and not stored anywhere: they are a shortcut for
+   the words a teacher types into `child_did` and `next_steps` every day.
+
+   Buttons, not links, so a browser without JavaScript shows controls that do
+   nothing rather than navigation that goes nowhere — and the textarea keeps
+   working either way. Named `.chip` rather than reusing `.levelchip`, which
+   is a radio control on the assessment grid and carries a checked state this
+   has no equivalent of. */
+.chiprow { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s2); }
+.chip {
+  /* min-height under the 44px floor deliberately: these are an optional
+     accelerator sitting under a field that is fully usable without them, and
+     a 44px row of six would outweigh the textarea it serves. */
+  min-height: 32px; padding: var(--s1) var(--s3);
+  border: 1px solid var(--line); border-radius: 999px;
+  background: var(--card); color: var(--muted);
+  font-family: inherit; font-size: var(--t-label); font-weight: 600;
+  cursor: pointer;
+}
+.chip:hover { background: var(--brand-soft); color: var(--brand); border-color: var(--brand); }
+
 /* -------------------------------------------------------------- fields */
 
 .field { margin-top: var(--s3); }
@@ -1631,9 +1654,14 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
 
 /* Search stays visible at every width: it is how this screen is used. The
    other six filters live behind the disclosure below it. */
-.searchbar { display: flex; gap: var(--s2); margin-top: var(--s4); }
+.searchbar { display: flex; gap: var(--s2); margin-top: var(--s4); align-items: center; }
 .searchbar input[type=search] { flex: 1; min-width: 0; }
 .searchbar .btn { flex: 0 0 auto; min-height: 44px; }
+/* Decoration, not a control: the field already has a visible placeholder and
+   an sr-only label. Hidden under 480px, where the 20px it costs is 20px the
+   placeholder does not have. */
+.searchbar__ic { flex: 0 0 auto; width: 20px; height: 20px; color: var(--faint); }
+@media (max-width: 479px) { .searchbar__ic { display: none; } }
 
 .kidlist { display: flex; flex-direction: column; gap: var(--s2); }
 
@@ -1684,19 +1712,43 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
 
 .kidrow__flags { display: flex; gap: var(--s2); flex-wrap: wrap; }
 
-.kidrow__edit {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-height: 44px; min-width: 44px; padding: 0 var(--s3);
+/* Per-row action menu — the client's mockup, added 2026-08-18. It replaces
+   the "Засах" pill that used to sit here, so the row gained two destinations
+   (the portfolio and the PDF) without gaining a second control.
+
+   A native <details>: it opens with no JavaScript, closes on Esc, and is
+   focusable and announced as a disclosure without any ARIA. The panel is
+   absolutely positioned, so opening it does not push the rows below it. */
+.rowmenu { position: relative; justify-self: start; }
+.rowmenu > summary {
+  list-style: none; cursor: pointer;
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
   border-radius: var(--radius-sm); border: 1px solid var(--line);
   background: var(--card); color: var(--muted);
-  text-decoration: none; font-size: var(--t-label); font-weight: 600;
-  justify-self: start;
 }
-.kidrow__edit:hover { color: var(--brand); border-color: var(--brand); }
+.rowmenu > summary::-webkit-details-marker { display: none; }
+.rowmenu > summary:hover,
+.rowmenu[open] > summary { color: var(--brand); border-color: var(--brand); }
+
+.rowmenu__list {
+  position: absolute; right: 0; top: calc(44px + var(--s1)); z-index: 20;
+  min-width: 190px; padding: var(--s1);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius-sm); box-shadow: var(--shadow);
+}
+.rowmenu__list a {
+  display: flex; align-items: center; gap: var(--s2);
+  min-height: 44px; padding: 0 var(--s2);
+  border-radius: var(--radius-ctl);
+  text-decoration: none; color: var(--ink); font-size: var(--t-meta);
+}
+.rowmenu__list a:hover { background: var(--bg); color: var(--brand); }
+.rowmenu__list .ic { color: var(--faint); flex: 0 0 auto; }
+.rowmenu__list a:hover .ic { color: var(--brand); }
 
 @media (min-width: 900px) {
-  .kidrow { grid-template-columns: 1fr 72px 150px auto 84px; }
-  .kidrow__edit { justify-self: stretch; }
+  .kidrow { grid-template-columns: 1fr 72px 150px auto 48px; }
 }
 
 /* The row's main link wrapped a 40px avatar and inherited its height — four
@@ -1724,10 +1776,12 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
   .kidrow__main { flex: 1 0 100%; }
   .kidrow__cell { color: var(--muted); }
   .kidrow__flags { flex: 1 0 100%; }
-  /* The edit button goes: the row already opens the child, "Засах" is on
-     that page one tap further in, and a per-row secondary button is the
-     "nested tiny action" the brief rules out — it also doubled the card. */
-  .kidrow__edit { display: none; }
+  /* The menu stays on a phone where the old "Засах" pill did not. That pill
+     was a full-width secondary button that doubled the card's height — the
+     "nested tiny action" the brief rules out. A 44px icon sits inside the
+     row's existing line and costs no height at all, and it is now the only
+     way to reach the portfolio and the PDF without opening the child. */
+  .rowmenu__list { right: 0; left: auto; }
 }
 /* The separator belongs to the phone layout only: on a desktop the two are
    distinct columns under their own headings. */
@@ -1787,6 +1841,50 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
 
 .workbar { display: flex; gap: var(--s2); flex-wrap: wrap; margin-top: var(--s4); }
 .workbar .btn { min-height: 44px; }
+
+/* One card per §5.2 observation type — the client's mockup, added
+   2026-08-18. It replaced the single solid "Ажиглалт нэмэх" button that led
+   the workbar above, so this is still one action, shown as the choice it
+   actually is rather than as a button that lands on a select.
+
+   auto-fit rather than a fixed count: the row is driven by
+   `ObservationType`, and a kindergarten may define its own (CLAUDE.md §2.3),
+   so the number of cards is not known here. */
+.notetypes {
+  display: grid; gap: var(--s3);
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+.notetype {
+  display: flex; align-items: center; gap: var(--s3);
+  min-height: 44px; padding: var(--s4);
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--card); text-decoration: none; color: var(--ink);
+}
+.notetype:hover { border-color: var(--brand); background: var(--brand-soft); }
+.notetype__icon {
+  flex: 0 0 auto; width: 34px; height: 34px; border-radius: var(--radius-ctl);
+  display: grid; place-items: center;
+  background: var(--brand-soft); color: var(--brand);
+}
+.notetype:hover .notetype__icon { background: var(--card); }
+.notetype__body { min-width: 0; }
+.notetype__title {
+  display: block; font-weight: 600; font-size: var(--t-meta);
+  line-height: var(--lh-head); overflow-wrap: break-word;
+}
+
+/* The tints cycle rather than being named in the template: the cards come
+   from a database table, so no template can know which colour is the third
+   one. Same four accents the dashboard tiles use. */
+.notetypes .notetype:nth-child(4n+2) .notetype__icon {
+  background: var(--c-blue-soft); color: var(--c-blue);
+}
+.notetypes .notetype:nth-child(4n+3) .notetype__icon {
+  background: var(--c-amber-soft); color: var(--c-amber);
+}
+.notetypes .notetype:nth-child(4n+4) .notetype__icon {
+  background: var(--c-sky-soft); color: var(--c-sky);
+}
 
 /* --------------------------------------------------------- side panels
    Quieter than a card: a hairline and a heading, so the reference column
