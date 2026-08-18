@@ -359,6 +359,20 @@ a { color: var(--brand); }
 }
 .chip:hover { background: var(--bg); color: var(--ink); }
 
+/* The "Шинэ ... нэмэх" row as a <details> — client's mockup: the bar opens
+   in place into the real create form (posting straight to
+   observations:create) rather than navigating to a separate page.
+   `open=1` in the URL (the client's own ?tab=&open=1&from= scheme) starts
+   it expanded, for a link that means "land here ready to write". */
+.addnote { border-radius: var(--radius); }
+.addnote > summary {
+  list-style: none; cursor: pointer;
+}
+.addnote > summary::-webkit-details-marker { display: none; }
+.addnote__chevron { margin-left: auto; transition: transform .15s ease; flex-shrink: 0; }
+.addnote[open] .addnote__chevron { transform: rotate(180deg); }
+.addnote__body { padding: var(--s4) var(--s1) 0; }
+
 .badge {
   display: inline-block; padding: 3px 9px; border-radius: 999px;
   font-size: .78rem; font-weight: 600;

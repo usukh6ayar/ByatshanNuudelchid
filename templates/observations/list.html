@@ -87,39 +87,140 @@
     </a>
   </div>
 
-  {% comment %} The "add" row now sits under the tabs and matches whichever
-     one is active — client's mockup shows "Шинэ бүтээл нэмэх" once the
-     Бүтээл tab is selected. Still one real link, `observations:create`;
-     `?type=` is passed through so the form opens with that type
-     pre-selected via the same param the create view already reads
-     (`_pick(types, request.GET.get("type"))`). {% endcomment %}
-  <div class="btn-row" style="margin-top:var(--s4)">
-    {% if can_record %}
-      {% if filters.type == buteel_pk %}
-        <a class="btn note-type note-type--amber" style="padding:var(--s3) var(--s4)"
-           href="{% url 'observations:create' child.pk %}?type={{ buteel_pk }}">
-          <span class="note-type__icon" aria-hidden="true">
-            <svg class="ic ic--sm" aria-hidden="true"><use href="#i-plus"></use></svg>
-          </span>
-          <span>
-            <span class="note-type__title">Шинэ бүтээл нэмэх</span>
-            <span class="note-type__sub">Бүтээл, зураг болон ахицын тэмдэглэл</span>
-          </span>
-        </a>
-      {% else %}
-        <a class="btn" href="{% url 'observations:create' child.pk %}">
+  {% comment %} The "add" row is now a <details> that opens in place —
+     client's own reference site uses ?tab=&open=1&from= for exactly this
+     (land on the list with the create form already expanded). It posts
+     straight to the real observations:create, using the `types`,
+     `domains` and `levels` this view's own context already carries — no
+     view.py change, `_posted()` reads request.POST the same way whichever
+     page sent it. `domain_rows`' per-domain checked/level state does not
+     apply here (a new observation starts blank), so the checkboxes and
+     selects are simply unchecked/unset, same as a fresh create page.
+     {% endcomment %}
+  {% if can_record %}
+    <details class="addnote" {% if request.GET.open %}open{% endif %}>
+      <summary class="note-type {% if filters.type == buteel_pk %}note-type--amber{% else %}note-type--green{% endif %}">
+        <span class="note-type__icon" aria-hidden="true">
           <svg class="ic ic--sm" aria-hidden="true"><use href="#i-plus"></use></svg>
-          Ажиглалт нэмэх
-        </a>
-      {% endif %}
-    {% elif is_guardian %}
-      {# §5.4 — the family's own contribution #}
+        </span>
+        <span>
+          <span class="note-type__title">
+            {% if filters.type == buteel_pk %}Шинэ бүтээл нэмэх{% else %}Шинэ ажиглалт нэмэх{% endif %}
+          </span>
+          <span class="note-type__sub">Хүүхдийн хөгжлийн шинэ тэмдэглэл</span>
+        </span>
+        <svg class="ic addnote__chevron" aria-hidden="true"><use href="#i-review"></use></svg>
+      </summary>
+
+      <div class="addnote__body">
+        <form method="post" action="{% url 'observations:create' child.pk %}">
+          {% csrf_token %}
+
+          <div class="fieldgrid">
+            <div class="field">
+              <label for="id_addnote_date">Ажиглалтын огноо</label>
+              <input type="date" name="observed_on" id="id_addnote_date" required>
+            </div>
+            <div class="field">
+              <label for="id_addnote_type">Ажиглалтын төрөл</label>
+              <select name="type" id="id_addnote_type" required>
+                {% for item in types %}
+                  <option value="{{ item.pk }}"
+                    {% if filters.type == item.pk|stringformat:"s" %}selected{% endif %}>
+                    {{ item.name }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="id_addnote_activity">
+              Үйл ажиллагааны нэр <span class="field__opt">— заавал биш</span>
+            </label>
+            <input type="text" name="activity_name" id="id_addnote_activity">
+          </div>
+
+          <div class="field">
+            <label for="id_addnote_did">Хүүхдийн хийсэн үйлдэл</label>
+            <textarea name="child_did" id="id_addnote_did"></textarea>
+            <div class="chip-row">
+              <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Бие дааж">Бие дааж</button>
+              <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Бусадтай хамтран">Бусадтай хамтран</button>
+              <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Багшийн дэмжлэгтэй">Багшийн дэмжлэгтэй</button>
+              <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Өмнөхөөс ахицтай">Өмнөхөөс ахицтай</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="id_addnote_comment">Багшийн тайлбар</label>
+            <textarea name="teacher_comment" id="id_addnote_comment"></textarea>
+          </div>
+
+          <div class="field">
+            <label id="addnote_domains_label">Хөгжлийн чиглэл ба үнэлгээ <span class="field__opt">— заавал биш</span></label>
+            <div class="domainlist" role="group" aria-labelledby="addnote_domains_label">
+              {% for item in domains %}
+                <div class="domainrow">
+                  <input type="checkbox" name="domains" value="{{ item.pk }}" id="id_addnote_domain_{{ item.pk }}">
+                  <label for="id_addnote_domain_{{ item.pk }}">{{ item.name }}</label>
+                  <select name="level_{{ item.pk }}" aria-label="{{ item.name }} — ажиглагдсан түвшин">
+                    <option value="">Түвшин —</option>
+                    {% for level in levels %}
+                      <option value="{{ level.pk }}">{{ level.value }}. {{ level.label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="id_addnote_next">
+              Дараагийн дэмжлэг, төлөвлөгөө <span class="field__opt">— заавал биш</span>
+            </label>
+            <textarea name="next_steps" id="id_addnote_next"></textarea>
+            <div class="chip-row">
+              <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Бие даан хийлгэнэ">Бие даан хийлгэнэ</button>
+              <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Давтан бататгана">Давтан бататгана</button>
+              <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Хамтран ажиллуулна">Хамтран ажиллуулна</button>
+              <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Чиглүүлж дэмжинэ">Чиглүүлж дэмжинэ</button>
+            </div>
+          </div>
+
+          <label class="choice">
+            <input type="checkbox" name="visible_to_parents" id="id_addnote_visible">
+            <span class="choice__body">
+              <span class="choice__title">Эцэг эхэд харагдуулах</span>
+              <span class="choice__note">Идэвхжүүлэхэд эцэг эхийн хуудсанд харагдана. Анхны төлөв — харагдахгүй.</span>
+            </span>
+          </label>
+
+          <label class="choice">
+            <input type="checkbox" name="include_in_report" id="id_addnote_report" checked>
+            <span class="choice__body">
+              <span class="choice__title">Нэгдсэн тайланд оруулах</span>
+            </span>
+          </label>
+
+          <div class="btn-row" style="margin-top:var(--s4)">
+            <button type="submit" class="btn">
+              <svg class="ic ic--sm" aria-hidden="true"><use href="#i-check"></use></svg>
+              Хадгалах
+            </button>
+          </div>
+        </form>
+      </div>
+    </details>
+  {% elif is_guardian %}
+    {# §5.4 — the family's own contribution #}
+    <div class="btn-row" style="margin-top:var(--s4)">
       <a class="btn" href="{% url 'observations:parent_create' child.pk %}">
         <svg class="ic ic--sm" aria-hidden="true"><use href="#i-plus"></use></svg>
         Миний ажиглалт нэмэх
       </a>
-    {% endif %}
-  </div>
+    </div>
+  {% endif %}
 
   {% comment %} Two more real entry points — client's mockup. "Нэгдсэн
      дүгнэлт бичих" goes to the child's term-by-term matrix

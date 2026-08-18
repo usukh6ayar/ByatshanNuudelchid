@@ -136,7 +136,7 @@
       <section class="section">
         {% include "components/section_head.html" with title="Тэмдэглэлийн төрөл" %}
         <div class="note-types">
-          <a class="note-type note-type--green" href="{% url 'observations:list' focus_id %}">
+          <a class="note-type note-type--green" href="{% url 'observations:list' focus_id %}?open=1">
             <span class="note-type__icon" aria-hidden="true">
               <svg class="ic ic--sm" aria-hidden="true"><use href="#i-observation"></use></svg>
             </span>
@@ -145,7 +145,7 @@
               <span class="note-type__sub">Хүүхдийн хөгжлийн тэмдэглэл</span>
             </span>
           </a>
-          <a class="note-type note-type--blue" href="{% url 'observations:list' focus_id %}">
+          <a class="note-type note-type--blue" href="{% url 'observations:list' focus_id %}?open=1">
             <span class="note-type__icon" aria-hidden="true">
               <svg class="ic ic--sm" aria-hidden="true"><use href="#i-chat"></use></svg>
             </span>
@@ -154,7 +154,7 @@
               <span class="note-type__sub">Асуулт, хариултын тэмдэглэл</span>
             </span>
           </a>
-          <a class="note-type note-type--amber" href="{% url 'observations:list' focus_id %}">
+          <a class="note-type note-type--amber" href="{% url 'observations:list' focus_id %}?open=1">
             <span class="note-type__icon" aria-hidden="true">
               <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
             </span>
