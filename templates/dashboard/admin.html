@@ -12,6 +12,48 @@
 {% block heading %}Удирдлагын самбар{% endblock %}
 
 {% block content %}
+  <section class="admin-board" aria-labelledby="admin-board-title">
+    <div class="admin-board__title"><h2 id="admin-board-title">Байгууллагын хяналтын самбар</h2><span>Өнөөдрийн тойм</span></div>
+    <div class="admin-board__summary">
+      <article><span>👨‍👩‍👧</span><div><small>Ангийн бүрэлдэхүүн</small><strong>{{ figures.children }}</strong><b>Нийт хүүхэд</b></div></article>
+      <article><span>🗓️</span><div><small>Өнөөдрийн ирц</small><strong>— / {{ figures.children }}</strong><b>Ирц бүртгэсний дараа гарна</b><i><em></em></i></div></article>
+      <article><span>🏫</span><div><small>Бүлгүүдийн тоо</small><strong>{{ figures.groups }}</strong><b>Идэвхтэй бүлэг</b></div></article>
+      <article><span>👩‍🏫</span><div><small>Багш нар</small><strong>{{ figures.teachers }}</strong><b>Идэвхтэй багш</b></div></article>
+    </div>
+    <div class="admin-board__grid">
+      <article class="admin-board__panel admin-board__panel--wide"><h3>Бүлгүүдийн судалгааны харьцуулалт</h3><div class="admin-placeholder-bars"><div><i></i><i></i><i></i><small>Бага бүлэг</small></div><div><i></i><i></i><i></i><small>Дунд бүлэг</small></div><div><i></i><i></i><i></i><small>Ахлах бүлэг</small></div></div><p>Судалгааны оролцоо болон бүлгийн дундажийг backend өгөгдлөөр зурна.</p></article>
+      <article class="admin-board__panel"><h3>Бүлгүүдийн явцын үнэлгээ</h3><div class="admin-radar-placeholder"><span>Хэл яриа</span><span>Математик</span><span>Нийгэмшил</span><span>Бие бялдар</span><b>—</b></div><p>Хөгжлийн чиглэлийн бодит дундаж гарна.</p></article>
+      <article class="admin-board__panel"><h3>Багш нарын гүйцэтгэл</h3><div class="admin-lines"><span></span><span></span><span></span></div><p>Ажиглалт, үнэлгээ, судалгааны гүйцэтгэл.</p></article>
+      <article class="admin-board__panel"><h3>Санхүүгийн тойм</h3><div class="admin-finance-empty"><b>— ₮</b><span>Орлого, зардал, санхүүжилтийн дүн backend-д холбогдоход гарна.</span></div></article>
+    </div>
+  </section>
+
+  <section class="kitchen-ready" id="kitchen-ready" aria-labelledby="kitchen-ready-title">
+    <div class="kitchen-ready__head"><div><span>ARTA ХООЛ ҮЙЛДВЭРЛЭЛ</span><h2 id="kitchen-ready-title">Гал тогоо, технологи карт</h2><p>Хоол үйлдвэрлэл, шим тэжээл, агуулахын мэдээллийг нэг дор бэлдэх frontend самбар.</p></div></div>
+    <div class="kitchen-ready__tabs" role="tablist">
+      <button type="button" role="tab" aria-selected="true" data-kitchen-tab="recipe">Технологи карт</button>
+      <button type="button" role="tab" aria-selected="false" data-kitchen-tab="menu">Өдрийн цэс</button>
+      <button type="button" role="tab" aria-selected="false" data-kitchen-tab="stock">Агуулах</button>
+      <button type="button" role="tab" aria-selected="false" data-kitchen-tab="hygiene">Эрүүл ахуй</button>
+    </div>
+    <div class="kitchen-ready__panel" data-kitchen-panel="recipe">
+      <div class="kitchen-ready__form"><label>Хоолны нэр<input placeholder="Жишээ: Ногоотой шөл"></label><label>Нэг порцын хэмжээ<input placeholder="гр / мл"></label><label class="wide">Орц, найрлага<textarea placeholder="Орц бүрийн нэр, хэмжээ, нэгж"></textarea></label><label class="wide">Бэлтгэх технологи<textarea placeholder="Хийх дараалал, хугацаа, температур"></textarea></label></div>
+      <div class="kitchen-ready__metrics"><span>Илчлэг <b>— ккал</b></span><span>Уураг <b>— г</b></span><span>Өөх тос <b>— г</b></span><span>Нүүрс ус <b>— г</b></span></div>
+      <p class="kitchen-ready__allergy">Харшил үүсгэгч: Өндөг · Сүү · Самар · Цавуулаг — backend холбоход жорын орцтой автоматаар тулгана.</p>
+    </div>
+    <div class="kitchen-ready__panel" data-kitchen-panel="menu" hidden><div class="kitchen-ready__form"><label>Огноо<input type="date" data-kitchen-date></label><label>Хоолны төрөл<select><option>Өглөөний цай</option><option>Үдийн хоол</option><option>Үдээс хойших цай</option><option>Нэмэлт хоол</option></select></label><label class="wide">Эцэг эхэд харагдах тайлбар<textarea placeholder="Өнөөдрийн цэсийн тайлбар"></textarea></label></div><p class="kitchen-ready__note">Бэлэн хоолны зураг, технологи карт болон ирцийн тоо энд API-аар холбогдоно.</p></div>
+    <div class="kitchen-ready__panel" data-kitchen-panel="stock" hidden><div class="finance-ready__grid"><article><strong>Орлого</strong><small>Түүхий эд хүлээн авалт</small></article><article><strong>Зарлага</strong><small>Ирцээс тооцсон зарцуулалт</small></article><article><strong>Үлдэгдэл</strong><small>Агуулахын үлдэгдэл</small></article><article><strong>Зөрүү</strong><small>Тулгалт, тайлбар</small></article></div><p class="kitchen-ready__note">Бодит орлого, зарлага, үлдэгдэл нь баталгаажсан гүйлгээгээр backend-д тооцогдоно.</p></div>
+    <div class="kitchen-ready__panel" data-kitchen-panel="hygiene" hidden><div class="kitchen-ready__form"><label>Шалгалтын огноо<input type="date"></label><label>Хариуцсан ажилтан<input placeholder="Нэр"></label><label class="wide">Эрүүл ахуйн тэмдэглэл<textarea placeholder="Температур, цэвэрлэгээ, анхаарах зүйл"></textarea></label></div><p class="kitchen-ready__note">Баримт, зураг, audit түүхийг backend-д хадгална.</p></div>
+  </section>
+  <section class="finance-ready" id="finance-ready" aria-labelledby="finance-ready-title">
+    <div><span>САНХҮҮГИЙН МОДУЛЬ</span><h2 id="finance-ready-title">Ирц, хоол, санхүү</h2><p>Backend холбогдоход энд бодит тооцоо, invoice, төлбөр болон audit log харагдана.</p></div>
+    <div class="finance-ready__grid">
+      <article><strong>Ирцийн нэгтгэл</strong><small>Ирсэн өдөр, таслалт, чөлөө</small></article>
+      <article><strong>Хоолны зардал</strong><small>Хооллосон өдөр, тариф</small></article>
+      <article><strong>Санхүүжилт</strong><small>Тооцсон, баталгаажсан, хүлээн авсан</small></article>
+      <article><strong>Invoice, төлбөр</strong><small>Нэхэмжлэл, үлдэгдэл, тулгалт</small></article>
+    </div>
+  </section>
   {% comment %} Tinted, one colour per statistic, as admin-dashboard.jpeg
      draws them and as the teacher's dashboard already did. A director scans
      six numbers by shape rather than by reading every label. {% endcomment %}
@@ -113,4 +155,19 @@
   <p class="brand__sub">
     Тоон үзүүлэлт {{ figures.computed_at|date:"Y.m.d H:i" }}-ийн байдлаар.
   </p>
+  <script>
+    (function () {
+      var root = document.getElementById('kitchen-ready');
+      if (!root) return;
+      root.querySelectorAll('[data-kitchen-tab]').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          var name = tab.getAttribute('data-kitchen-tab');
+          root.querySelectorAll('[data-kitchen-tab]').forEach(function (item) { item.setAttribute('aria-selected', item === tab ? 'true' : 'false'); });
+          root.querySelectorAll('[data-kitchen-panel]').forEach(function (panel) { panel.hidden = panel.getAttribute('data-kitchen-panel') !== name; });
+        });
+      });
+      var date = root.querySelector('[data-kitchen-date]');
+      if (date) date.value = new Date().toISOString().slice(0, 10);
+    }());
+  </script>
 {% endblock %}

@@ -4,6 +4,11 @@
 {% block lede %}<p class="lede">{% if is_staff %}Эцэг эхчүүдэд мэдээлэл, зар хуваалцах хэсэг.{% else %}Цэцэрлэгээс ирсэн мэдээлэл.{% endif %}</p>{% endblock %}
 
 {% block content %}
+  <section class="chat-workspace" data-chat-workspace hidden data-api="/api/v1/messages/" aria-labelledby="chat-title">
+    <div class="chat-workspace__head"><div><span>ХАРИЛЦАА ХОЛБОО</span><h2 id="chat-title">Чат</h2><p>Зураг, бичлэг, дуу хоолойн зурвас солилцох бэлэн интерфейс.</p></div><a class="btn btn--ghost btn--sm" href="{% url 'comms:list' %}">Ангийн самбар</a></div>
+    <div class="chat-workspace__tabs" role="tablist"><button class="is-active" type="button" data-chat-tab="parents">Эцэг эхийн чат</button>{% if is_staff %}<button type="button" data-chat-tab="teachers">Багш нарын чат</button>{% endif %}</div>
+    <div class="chat-workspace__body"><aside><strong data-chat-list-title>Эцэг эхийн чат</strong><button class="is-active" type="button">Бүх эцэг эх<small>Бүлгийн чат</small></button><button type="button">Хүүхэд сонгох<small>Хувийн чат</small></button></aside><div class="chat-workspace__thread"><div class="chat-workspace__empty"><b>💬</b><strong>Одоогоор зурвас алга</strong><span>Backend холбогдоход энэ харилцан ярианы түүх энд гарна.</span></div><form data-chat-send><label class="chat-attach" title="Зураг эсвэл бичлэг хавсаргах">📎<input type="file" name="attachment" accept="image/*,video/*" hidden></label><button type="button" class="chat-voice" data-chat-voice title="Дуу хоолойн зурвас бичих">🎙</button><input name="message" placeholder="Зурвас бичих…" aria-label="Зурвас"><button class="btn" type="submit">Илгээх</button></form><p data-chat-status aria-live="polite">Зураг, бичлэг, voice болон текстийг API холбоход илгээнэ.</p></div></div>
+  </section>
   <section class="classboard">
     {% if is_staff %}
       <div class="classboard__mobile-head">
@@ -57,11 +62,22 @@
       </a>
     {% endif %}
 
+    {% if is_staff %}
+      <div class="classboard__groups" data-board-groups aria-label="Бүлгээр харах">
+        <strong>Бүлгийн самбар</strong>
+        <div>
+          <button type="button" class="is-active" data-board-group="">Бүх бүлэг</button>
+          {% for announcement in page %}{% for target in announcement.targets.all %}{% if target.group %}<button type="button" data-board-group="{{ target.group.pk }}" hidden>{{ target.group.name }}</button>{% endif %}{% endfor %}{% endfor %}
+        </div>
+        <p>Бүлэг сонгоход тухайн бүлэгт чиглэсэн багшийн постууд харагдана.</p>
+      </div>
+    {% endif %}
+
     {% if page.paginator.count %}
       <div class="classboard__meta"><span>Нийт {{ page.paginator.count }} мэдээлэл</span>{% if unread %}<span class="badge badge--brand">{{ unread }} шинэ</span>{% endif %}</div>
       <div class="classboard__feed">
         {% for announcement in page %}
-          <a class="classboard-post{% if not is_staff and not announcement.is_read %} classboard-post--new{% endif %}" href="{% url 'comms:detail' announcement.pk %}" data-board-post data-board-important="{% if announcement.is_important %}true{% else %}false{% endif %}" data-board-year="{% if announcement.published_at %}{{ announcement.published_at|date:'Y' }}{% endif %}" data-board-text="{{ announcement.title }} {{ announcement.body }}">
+          <a class="classboard-post{% if not is_staff and not announcement.is_read %} classboard-post--new{% endif %}" href="{% url 'comms:detail' announcement.pk %}" data-board-post data-board-groups="{% for target in announcement.targets.all %}{% if target.group %}{{ target.group.pk }} {% endif %}{% endfor %}" data-board-important="{% if announcement.is_important %}true{% else %}false{% endif %}" data-board-year="{% if announcement.published_at %}{{ announcement.published_at|date:'Y' }}{% endif %}" data-board-text="{{ announcement.title }} {{ announcement.body }}">
             <span class="classboard-post__mark"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-bell"></use></svg></span>
             <span><strong>{{ announcement.title }}{% if announcement.is_important %}<em class="classboard-post__important">Чухал</em>{% endif %}</strong><small>{% if announcement.published_at %}{{ announcement.published_at|date:"Y.m.d" }}{% else %}Нийтлээгүй{% endif %}{% if announcement.author %} · {{ announcement.author }}{% endif %}</small><p>{{ announcement.body|truncatewords:22 }}</p></span>
           </a>
@@ -86,13 +102,33 @@
   {% endif %}
   <script>
     (function () {
+      var chatWorkspace = document.querySelector('[data-chat-workspace]');
+      if (chatWorkspace && new URLSearchParams(window.location.search).get('chat') === '1') {
+        chatWorkspace.hidden = false;
+        document.querySelector('.classboard').hidden = true;
+        document.querySelectorAll('.classboard ~ .teacher-bottom-nav').forEach(function (item) { item.hidden = true; });
+      }
+      if (chatWorkspace) {
+        chatWorkspace.querySelectorAll('[data-chat-tab]').forEach(function (button) { button.addEventListener('click', function () { chatWorkspace.querySelectorAll('[data-chat-tab]').forEach(function (item) { item.classList.remove('is-active'); }); button.classList.add('is-active'); chatWorkspace.querySelector('[data-chat-list-title]').textContent = button.textContent; }); });
+        chatWorkspace.querySelector('[data-chat-voice]').addEventListener('click', function () { this.classList.toggle('is-recording'); this.textContent = this.classList.contains('is-recording') ? '■' : '🎙'; });
+        chatWorkspace.querySelector('[data-chat-send]').addEventListener('submit', function (event) { event.preventDefault(); var status = chatWorkspace.querySelector('[data-chat-status]'); status.textContent = 'Илгээхэд бэлэн. Backend холбогдсоны дараа зурвас, файл, voice хадгалагдана.'; });
+      }
       var search = document.getElementById('id_board_search');
       var filterToggle = document.querySelector('[data-board-filter]');
       var filters = document.getElementById('classboard-filters');
       var category = document.querySelector('[data-board-category]');
       var year = document.querySelector('[data-board-year]');
       var selectedKind = 'all';
+      var selectedGroup = '';
       var posts = document.querySelectorAll('[data-board-post]');
+      var groupButtons = document.querySelectorAll('[data-board-group]');
+      var seenGroups = {};
+      groupButtons.forEach(function (button) {
+        var group = button.getAttribute('data-board-group');
+        if (!group) return;
+        if (seenGroups[group]) button.remove();
+        else { seenGroups[group] = true; button.hidden = false; }
+      });
       if (year) {
         var seenYears = {};
         Array.prototype.slice.call(year.options).forEach(function (option) {
@@ -110,7 +146,8 @@
           var categoryMatch = !selectedCategory || postText.indexOf(selectedCategory + ':') === 0;
           var yearMatch = !selectedYear || post.getAttribute('data-board-year') === selectedYear;
           var kindMatch = selectedKind === 'all' || post.getAttribute('data-board-important') === 'true';
-          post.hidden = !(textMatch && categoryMatch && yearMatch && kindMatch);
+          var groupMatch = !selectedGroup || (post.getAttribute('data-board-groups') || '').split(' ').indexOf(selectedGroup) !== -1;
+          post.hidden = !(textMatch && categoryMatch && yearMatch && kindMatch && groupMatch);
         });
       }
       if (search) {
@@ -135,6 +172,13 @@
           });
         });
       }
+      groupButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+          selectedGroup = button.getAttribute('data-board-group') || '';
+          document.querySelectorAll('[data-board-group]').forEach(function (item) { item.classList.remove('is-active'); });
+          button.classList.add('is-active'); filterPosts();
+        });
+      });
     }());
   </script>
 {% endblock %}

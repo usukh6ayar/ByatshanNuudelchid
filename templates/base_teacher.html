@@ -36,6 +36,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Багшийн хэсэг{% endblock %} · Хүүхдийн хөгжлийн хавтас</title>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'css/teacher-organization.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chat.css' %}">
   {% include "_theme_head.html" %}
 </head>
 <body>
@@ -58,33 +60,32 @@
         <svg class="ic" aria-hidden="true"><use href="#i-dashboard"></use></svg>
         Хяналтын самбар
       </a>
-      <a href="{% url 'children:list' %}"
-         {% if nav == 'children' %}aria-current="page"{% endif %}>
-        <svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg>
-        Хүүхдүүд
-      </a>
-      <a href="{% url 'observations:review_queue' %}"
-         {% if nav == 'review' %}aria-current="page"{% endif %}>
-        <svg class="ic" aria-hidden="true"><use href="#i-review"></use></svg>
-        Ажиглалт хянах
-      </a>
-      {% if nav_group %}
-        <a href="{% url 'assessment:group_grid' nav_group.pk %}"
-           {% if nav == 'assessment' %}aria-current="page"{% endif %}>
-          <svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg>
-          Үнэлгээ
-        </a>
-      {% endif %}
-      <a href="{% url 'comms:list' %}"
-         {% if nav == 'announcements' %}aria-current="page"{% endif %}>
-        <svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg>
-        Мэдэгдэл
-      </a>
-      <a href="{% url 'accounts:profile' %}"
-         {% if nav == 'profile' %}aria-current="page"{% endif %}>
-        <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
-        Профайл
-      </a>
+      <details class="nav-group"{% if nav == 'children' or nav == 'assessment' %} open{% endif %}>
+        <summary>Хүүхдийн хөгжил ба үнэлгээ</summary>
+        <a href="{% url 'children:list' %}"{% if nav == 'children' %} aria-current="page"{% endif %}>Хүүхдүүд</a>
+        {% if nav_group %}<a href="{% url 'assessment:group_grid' nav_group.pk %}"{% if nav == 'assessment' %} aria-current="page"{% endif %}>Явцын үнэлгээ</a>{% endif %}
+        <a href="{% url 'children:list' %}?report=1#teacher-report-dashboard">Тайлан</a>
+      </details>
+      <details class="nav-group">
+        <summary>Өдөр тутмын бүртгэл</summary>
+        <a href="{% url 'dashboard:teacher' %}?daily=attendance#daily-register">Ирц</a>
+        <a href="{% url 'dashboard:teacher' %}?daily=meals#meal-register">Хоол</a>
+      </details>
+      <details class="nav-group"{% if nav == 'announcements' or nav == 'review' %} open{% endif %}>
+        <summary>Харилцаа холбоо</summary>
+        <a href="{% url 'comms:list' %}"{% if nav == 'announcements' %} aria-current="page"{% endif %}>Ангийн самбар / Мэдээ</a>
+        <a href="{% url 'dashboard:teacher' %}?survey=1#teacher-surveys">Судалгаа</a>
+        <a href="{% url 'comms:list' %}?chat=1">Чат</a>
+      </details>
+      <details class="nav-group">
+        <summary>Санхүү ба баримт бичиг</summary>
+        <span>Санхүү <small>удахгүй</small></span><span>Баримт бичиг <small>удахгүй</small></span>
+      </details>
+      <details class="nav-group"{% if nav == 'profile' %} open{% endif %}>
+        <summary>Багш ба байгууллага</summary>
+        <a href="{% url 'accounts:profile' %}"{% if nav == 'profile' %} aria-current="page"{% endif %}>Багшийн мэдээлэл</a>
+        <a href="{% url 'dashboard:teacher' %}?organization=1#teacher-organization">Бүлэг, цэцэрлэгийн мэдээлэл</a>
+      </details>
     </nav>
 
     {% include "_theme.html" %}

@@ -47,6 +47,30 @@
         <span class="child-gateway__icon"><svg class="ic" aria-hidden="true"><use href="#i-photo"></use></svg></span>
         <span><strong>Өсөлт, зураг, дурсамж</strong><small>Нас бүрийн онцгой мөч, зургийн цомог</small></span>
       </a>
+      <a class="child-gateway__item child-gateway__item--attendance" href="#parent-attendance">
+        <span class="child-gateway__icon"><svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg></span>
+        <span><strong>Ирц</strong><small>Өдөр тутмын ирцийн мэдээлэл</small></span>
+      </a>
+      <a class="child-gateway__item child-gateway__item--meal" href="#parent-meals">
+        <span class="child-gateway__icon"><svg class="ic" aria-hidden="true"><use href="#i-meal"></use></svg></span>
+        <span><strong>Хоол ба цэс</strong><small>Өнөөдрийн меню, хоолны мэдээлэл</small></span>
+      </a>
+      <a class="child-gateway__item child-gateway__item--finance" href="#parent-finance">
+        <span class="child-gateway__icon"><svg class="ic" aria-hidden="true"><use href="#i-money"></use></svg></span>
+        <span><strong>Санхүү</strong><small>Invoice, төлбөр, үлдэгдэл</small></span>
+      </a>
+      <a class="child-gateway__item child-gateway__item--gallery" href="{% url 'portfolio:overview' child.pk %}#gallery">
+        <span class="child-gateway__icon"><svg class="ic" aria-hidden="true"><use href="#i-photo"></use></svg></span>
+        <span><strong>Зургийн цомог</strong><small>Нас бүрийн зураг, дурсамж</small></span>
+      </a>
+      <a class="child-gateway__item child-gateway__item--comparison" href="{% url 'portfolio:overview' child.pk %}#memories">
+        <span class="child-gateway__icon"><svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg></span>
+        <span><strong>Хөгжлийн харьцуулалт</strong><small>2–5 насны хөгжлийг зэрэгцүүлж харах</small></span>
+      </a>
+      <a class="child-gateway__item child-gateway__item--survey" href="#parent-surveys">
+        <span class="child-gateway__icon"><svg class="ic" aria-hidden="true"><use href="#i-survey"></use></svg></span>
+        <span><strong>Судалгаа</strong><small>Багшаас ирсэн асуулга, санал хүсэлт</small></span>
+      </a>
       </div>
     </section>
 
@@ -72,26 +96,49 @@
         <span class="child-gateway__icon"><svg class="ic" aria-hidden="true"><use href="#i-photo"></use></svg></span>
         <span><strong>Зургийн цомог</strong><small>Сонгосон зураг, дурсамжийг үзэх</small></span>
       </a>
-      <button class="child-gateway__item child-gateway__item--finance" type="button" data-parent-finance>
-        <span class="child-gateway__icon"><svg class="ic" aria-hidden="true"><use href="#i-report"></use></svg></span>
-        <span><strong>Санхүү</strong><small>Төлбөр, баримт, үлдэгдлийн мэдээлэл</small></span>
-      </button>
       </div>
-      <div class="parent-finance" data-parent-finance-panel hidden aria-live="polite">
-        <strong>Санхүүгийн мэдээлэл</strong>
-        <p>Төлбөрийн түүх, үлдэгдэл, баримтын жагсаалт энд холбогдоход бэлэн. Одоогоор backend өгөгдөл холбогдоогүй байна.</p>
+      <section class="parent-attendance" id="parent-attendance" aria-labelledby="parent-attendance-title">
+        <div><span>ИРЦИЙН МЭДЭЭЛЭЛ</span><h3 id="parent-attendance-title">{{ child.first_name }}-ийн ирц</h3></div>
+        <p>Ирсэн, чөлөөтэй, өвчтэй, тасалсан, хагас өдөр болон бусад төлөвийн түүх энд харагдана.</p>
+        <small>Ирцийн бодит бүртгэл backend-ээр холбогдоход автоматаар шинэчлэгдэнэ.</small>
+      </section>
+      <section class="parent-surveys" id="parent-surveys" aria-labelledby="parent-surveys-title">
+        <div><span>СУДАЛГАА</span><h3 id="parent-surveys-title">Эцэг эхийн судалгаа</h3></div>
+        <p>Багшаас ирсэн асуулга, санал хүсэлт болон баталгаажуулах судалгаанууд энд харагдана.</p>
+        <button type="button" disabled>Одоогоор шинэ судалгаа алга</button>
+      </section>
+      <section class="parent-meals" id="parent-meals" aria-labelledby="parent-meals-title">
+        <div class="parent-meals__head">
+          <div><span>ХООЛ БА ЦЭС</span><h3 id="parent-meals-title">Өнөөдрийн хоолны мэдээлэл</h3></div>
+          <time data-parent-today></time>
+        </div>
+        <div class="parent-meals__grid">
+          <article><strong>Өглөөний цай</strong><p>Меню backend-ээр холбогдоход энд харагдана.</p></article>
+          <article><strong>Үдийн хоол</strong><p>Меню backend-ээр холбогдоход энд харагдана.</p></article>
+          <article><strong>Үдээс хойших цай</strong><p>Меню backend-ээр холбогдоход энд харагдана.</p></article>
+          <article><strong>Нэмэлт хоол</strong><p>Шаардлагатай үед тусгайлан харуулна.</p></article>
+        </div>
+        <div class="parent-meals__nutrition">
+          <span><small>Илчлэг</small><b>— ккал</b></span><span><small>Уураг</small><b>— г</b></span><span><small>Өөх тос</small><b>— г</b></span><span><small>Нүүрс ус</small><b>— г</b></span>
+        </div>
+        <div class="parent-meals__photo"><svg class="ic" aria-hidden="true"><use href="#i-photo"></use></svg><span>Өнөөдрийн бэлэн болсон хоолны зураг энд харагдана.</span></div>
+        <p class="parent-meals__alert"><strong>Харшлын анхааруулга:</strong> Хүүхдийн харшлын болон тусгай хоолны мэдээллийг менютэй тулган энд анхааруулна.</p>
+      </section>
+      <div class="parent-finance" id="parent-finance" data-parent-finance-panel aria-live="polite">
+        <div class="parent-finance__head"><strong>Санхүүгийн мэдээлэл</strong><span>Энэ сарын төлбөр</span></div>
+        <div class="parent-finance__summary">
+          <span><small>Нэхэмжлэл</small><b>— ₮</b></span>
+          <span><small>Төлсөн</small><b>— ₮</b></span>
+          <span><small>Үлдэгдэл</small><b>— ₮</b></span>
+        </div>
+        <p>Төлбөрийн түүх, invoice, хөнгөлөлт, үлдэгдэл болон баримтын жагсаалт энд холбогдоход бэлэн. Одоогоор backend өгөгдөл холбогдоогүй байна.</p>
       </div>
     </section>
   </section>
   <script>
     (function () {
-      var trigger = document.querySelector('[data-parent-finance]');
-      var panel = document.querySelector('[data-parent-finance-panel]');
-      if (!trigger || !panel) return;
-      trigger.addEventListener('click', function () {
-        panel.hidden = !panel.hidden;
-        if (!panel.hidden) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      });
+      var date = document.querySelector('[data-parent-today]');
+      if (date) date.textContent = new Intl.DateTimeFormat('mn-MN', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date());
     }());
   </script>
 {% endblock %}

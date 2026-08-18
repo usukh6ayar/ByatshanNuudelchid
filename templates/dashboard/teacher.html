@@ -32,24 +32,206 @@
      First, not last. §13 names three: add a child, add an observation,
      assess. The group-scoped two are §5.2's daily case and §6.3's grid,
      both of which were four clicks deep behind a child. {% endcomment %}
-  <section class="section" style="margin-top:0">
+  <section class="section" data-dashboard-overview style="margin-top:0">
     {% include "components/section_head.html" with title="Түргэн үйлдэл" %}
     <div class="actions">
-      {% for group in groups %}
-        <a href="{% url 'observations:group' group.pk %}">
-          <svg class="ic" aria-hidden="true"><use href="#i-observation"></use></svg>
-          {{ group.name }} — бүлгээр ажиглалт
-        </a>
-        <a href="{% url 'assessment:group_grid' group.pk %}">
-          <svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg>
-          Түргэн үнэлгээ
-        </a>
-      {% endfor %}
-      <a href="{% url 'children:create' %}">
-        <svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg>
-        Хүүхэд нэмэх
+      <a class="actions__button" href="?daily=attendance#daily-register">
+        <svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg>
+        Ирц авах
+      </a>
+      {% if nav_group %}<a class="actions__button" href="{% url 'assessment:group_grid' nav_group.pk %}">
+        <svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg>
+        Явцын үнэлгээ
+      </a>
+      {% endif %}
+      <a class="actions__button" href="{% url 'comms:list' %}">
+        <svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg>
+        Ангийн самбар
       </a>
     </div>
+  </section>
+
+  <section class="teacher-organization" id="teacher-organization" hidden aria-labelledby="teacher-organization-title">
+    <div><span>БАГШ БА БАЙГУУЛЛАГА</span><h2 id="teacher-organization-title">Бүлэг, цэцэрлэгийн мэдээлэл</h2><p>Бүлгийн багш нар, хүүхдийн тоо, хүчин чадал болон цэцэрлэгийн үндсэн мэдээллийг энд бөглөнө.</p></div>
+    <form class="teacher-organization__form" data-organization-form data-api="/api/v1/teacher/organization-profile/" novalidate>
+      <div class="teacher-organization__grid">
+        <article><h3>Бүлгийн мэдээлэл</h3><label>Бүлэг<select name="group_id">{% for group in groups %}<option value="{{ group.pk }}">{{ group.name }} · {{ group.school_year.name }}</option>{% empty %}<option value="">Бүлэг сонгох</option>{% endfor %}</select></label><label>Хүүхдийн тоо<input name="child_count" inputmode="numeric" placeholder="Нийт хүүхдийн тоо"></label><label>Бүлгийн хүчин чадал<input name="group_capacity" inputmode="numeric" placeholder="Жишээ: 25"></label><label>Үндсэн багш<input name="primary_teacher_name" placeholder="Багшийн нэр"></label><label>Туслах багш<input name="assistant_teacher_name" placeholder="Туслах багшийн нэр"></label></article>
+        <article><h3>Цэцэрлэгийн мэдээлэл</h3><label>Цэцэрлэгийн нэр<input name="kindergarten_name" placeholder="Цэцэрлэгийн нэр"></label><label>Байгуулагдсан он<input name="founded_year" type="number" min="1800" max="2100" placeholder="Жишээ: 2015"></label><label>Нийт бүлгийн тоо<input name="total_group_count" inputmode="numeric" placeholder="Бүлгийн тоо"></label><label>Хүүхдийн хүчин чадал<input name="kindergarten_capacity" inputmode="numeric" placeholder="Нийт хүчин чадал"></label><label>Хаяг, холбоо барих<textarea name="contact_details" placeholder="Хаяг, утас, и-мэйл"></textarea></label></article>
+      </div>
+      <button class="btn" type="submit">Хадгалах</button><p class="teacher-organization__status" data-organization-status aria-live="polite">Backend холбогдоход <code>POST /api/v1/teacher/organization-profile/</code> руу хадгална.</p>
+    </form>
+  </section>
+
+  {% comment %} Судалгаа — frontend бэлтгэл дэлгэц, `dashboard/teacher.html`-д
+     аль хэдийн байсан хэсгийг өргөтгөв (2026-08-18). Пол нэг асуулттай,
+     Форм судалгаа олон асуулт нэмэх боломжтой (reference-ийн
+     `addSurveyQuestion`/`addSurveyOption`-той адил зарчим). Жинхэнэ
+     Survey/Question/Response загвар байхгүй тул "Ангийн самбарт нийтлэх"
+     хаана ч хадгалахгүй (одоогийн товч аль хэдийн ийм байсан), мөн доорх
+     "Авсан судалгаанууд" жагсаалт үргэлж хоосон төлөвтэй байна — жинхэнэ
+     өгөгдөлгүй тул худал мөр зохиомжлохгүй. {% endcomment %}
+  <section class="teacher-surveys" id="teacher-surveys" hidden aria-labelledby="teacher-surveys-title">
+    <div class="teacher-surveys__head">
+      <div>
+        <span>ЭЦЭГ ЭХИЙН СУДАЛГАА</span>
+        <h2 id="teacher-surveys-title">Судалгаа үүсгэх</h2>
+        <p>Пол эсвэл дэлгэрэнгүй форм судалгааг ангийн самбарт нийтлэхэд бэлдэнэ.</p>
+      </div>
+      <button type="button" data-survey-close aria-label="Хаах">×</button>
+    </div>
+
+    <div class="teacher-surveys__types">
+      <button type="button" class="is-active" data-survey-type="poll">
+        Пол үүсгэх<small>Нэг асуулт, шууд дүн</small>
+      </button>
+      <button type="button" data-survey-type="form">
+        Форм судалгаа<small>Олон асуулт, дэлгэрэнгүй хариулт</small>
+      </button>
+    </div>
+
+    <div class="teacher-surveys__builder">
+      <label>Судалгааны гарчиг<input placeholder="Жишээ: Аялалд оролцох эсэх"></label>
+
+      <div class="teacher-surveys__questions" data-survey-questions>
+        <div class="teacher-surveys__question">
+          <label class="teacher-surveys__question-label">
+            Асуулт <span data-question-num>1</span>
+            <textarea placeholder="Асуултаа бичнэ үү"></textarea>
+          </label>
+          <label>Хариултын төрөл
+            <select data-survey-answer-type>
+              <option value="choice">Нэг сонголт</option>
+              <option value="check">Олон сонголт</option>
+              <option value="text">Бичиж хариулах</option>
+            </select>
+          </label>
+          <div class="teacher-surveys__options" data-survey-options>
+            <label>Сонголт 1<input placeholder="Сонголт"></label>
+            <label>Сонголт 2<input placeholder="Сонголт"></label>
+          </div>
+          <button type="button" class="btn btn--ghost btn--sm" data-add-option>+ Сонголт нэмэх</button>
+        </div>
+      </div>
+
+      <button type="button" class="btn btn--ghost btn--sm" data-add-question hidden>+ Асуулт нэмэх</button>
+
+      <label>Хаагдах огноо <span class="field__opt">— заавал биш</span><input type="date" data-survey-closes></label>
+
+      <div class="teacher-surveys__actions">
+        <button type="button" class="btn" data-survey-publish>Ангийн самбарт нийтлэх</button>
+        <button type="button" class="btn btn--ghost" onclick="window.print()">Хэвлэх</button>
+      </div>
+    </div>
+
+    <div class="teacher-surveys__results">
+      <h3>Судалгааны үр дүн</h3>
+      <div class="teacher-surveys__result-grid">
+        <article><strong>Бөглөсөн</strong><b>—</b><small>Эцэг эх</small></article>
+        <article><strong>Бөглөөгүй</strong><b>—</b><small>Эцэг эх</small></article>
+        <article>
+          <strong>Хариултын график</strong>
+          <div class="teacher-surveys__bars"><span></span><span></span><span></span></div>
+          <small>Хариултууд ирэхэд график гарна.</small>
+        </article>
+      </div>
+      <p>Багшид бөглөсөн, бөглөөгүй эцэг эхийн жагсаалт болон график дүн энд backend-ээр холбогдоно.</p>
+    </div>
+
+    {% comment %} Авсан судалгаанууд — reference's `surveys.html`
+       "Авсан судалгаанууд" list, он цагийн дараалалтай, ••• цэсэнд
+       Засах/Тайлан/Татах/Дахин ашиглах/Устгах. No `Survey` model exists
+       (docs/superpowers/specs — search "Судалгаа" — Phase 3, RFP Модуль 1),
+       so this is always the empty state; the search row above it still
+       works client-side and costs nothing once real cards exist. {% endcomment %}
+    <div class="teacher-surveys__list">
+      <div class="teacher-surveys__list-head">
+        <h3>Авсан судалгаанууд</h3>
+        <label class="sr-only" for="id_survey_search">Судалгаа хайх</label>
+        <input type="search" id="id_survey_search" placeholder="Гарчгаар хайх..."
+               data-survey-search oninput="filterTeacherSurveys()">
+      </div>
+      <div data-survey-list-body>
+        {% include "components/empty.html" with icon="survey" message="Одоогоор судалгаа байхгүй." %}
+      </div>
+    </div>
+  </section>
+
+  <section class="teacher-chat" id="teacher-chat" hidden aria-labelledby="teacher-chat-title" data-api="/api/v1/messages/">
+    <div><span>ХАРИЛЦАА ХОЛБОО</span><h2 id="teacher-chat-title">Чат</h2><p>Эцэг эхтэй бүлэг, хүүхдээр нь харилцах чат. Зурвас илгээх өгөгдөл backend холбогдоход эндээс явна.</p></div>
+    <div class="teacher-chat__layout"><aside><strong>Харилцагчид</strong><button type="button" class="is-active">Бүх эцэг эх <small>Бүлгийн чат</small></button><button type="button">Хүүхэд сонгох <small>Хувийн чат</small></button></aside><div class="teacher-chat__thread"><div class="teacher-chat__empty">💬<strong>Одоогоор зурвас алга</strong><span>Backend холбогдсоны дараа зурвасууд энд харагдана.</span></div><form data-chat-form><input name="message" placeholder="Зурвас бичих…" aria-label="Зурвас"><button class="btn" type="submit">Илгээх</button></form></div></div>
+  </section>
+
+  <section class="teacher-summary" data-dashboard-overview aria-label="Өнөөдрийн товч мэдээлэл">
+    <article class="teacher-summary__card">
+      <span class="teacher-summary__icon">👨‍👩‍👧</span><div><h2>Ангийн бүрэлдэхүүн</h2><strong>{{ child_count }}</strong><b>Нийт хүүхэд</b><p>Хариуцсан бүлгийн бүртгэл</p></div>
+    </article>
+    <article class="teacher-summary__card teacher-summary__card--attendance">
+      <span class="teacher-summary__icon">🗓️</span><div><h2>Өнөөдрийн ирц</h2><strong>— / {{ child_count }}</strong><b>Бүртгэх шаардлагатай</b><div class="teacher-summary__track"><span></span></div><p>Ирц бүртгэсний дараа хувь гарна.</p></div>
+    </article>
+    <article class="teacher-summary__card teacher-summary__card--birthday">
+      <span class="teacher-summary__icon">🎂</span><div><h2>Төрсөн өдрийн санамж</h2>{% if birthdays_today %}<ul>{% for child in birthdays_today %}<li>{{ child.full_name }}</li>{% endfor %}</ul>{% else %}<p>Өнөөдөр төрсөн өдөр байхгүй.</p>{% endif %}</div>
+    </article>
+  </section>
+
+  <section class="teacher-charts" data-dashboard-overview aria-labelledby="teacher-charts-title">
+    <h2 id="teacher-charts-title" class="sr-only">Үнэлгээний графикууд</h2>
+    <article class="teacher-chart-card">
+      <h2>Үнэлгээний арга зүйн гүйцэтгэл</h2>
+      <div class="method-chart">
+        <div class="method-chart__donut"><span>—</span><small>өгөгдөл<br>холбогдоогүй</small></div>
+        <div class="method-chart__rows"><div><span>Ажиглалт</span><i><b style="width:0%"></b></i><small>—</small></div><div><span>Ярилцлага</span><i><b style="width:0%"></b></i><small>—</small></div><div><span>Бүтээл</span><i><b style="width:0%"></b></i><small>—</small></div><div><span>Дүн шинжилгээ</span><i><b style="width:0%"></b></i><small>—</small></div></div>
+      </div>
+      <p>Ажиглалт, ярилцлага, бүтээлийн бодит тоо backend-ээр холбогдоход гарна.</p>
+    </article>
+    <article class="teacher-chart-card">
+      <h2>Хөгжлийн ахицын нэгдсэн график</h2>
+      {% if domain_averages %}
+        <div class="progress-columns">{% for row in domain_averages %}<div><span style="height:{{ row.percent }}%; background:{{ row.color }}"><b>{{ row.percent }}%</b></span><small>{{ row.name }}</small></div>{% endfor %}</div>
+      {% else %}
+        <div class="progress-columns progress-columns--empty"><div><span></span><small>Хэл яриа</small></div><div><span></span><small>Математик</small></div><div><span></span><small>Нийгэмшил</small></div><div><span></span><small>Бие бялдар</small></div><div><span></span><small>Урлаг</small></div></div>
+        <p>Улирал, хөгжлийн үнэлгээ бүртгэгдсэний дараа бодит баганан график гарна.</p>
+      {% endif %}
+    </article>
+  </section>
+
+  <section class="daily-register" id="daily-register" hidden aria-labelledby="daily-register-title">
+    <div class="daily-register__head">
+      <div>
+        <span>ӨДӨР ТУТМЫН БҮРТГЭЛ</span>
+        <h2 id="daily-register-title">Ирц бүртгэх</h2>
+        <p>Бүлэг, өдрөө сонгоод хүүхэд бүрийн төлвийг нэг дор бүртгэнэ.</p>
+      </div>
+      <button type="button" class="daily-register__close" data-daily-close aria-label="Хаах">×</button>
+    </div>
+    <div class="daily-register__filters">
+      <label>Огноо<input type="date" data-daily-date></label>
+      <label>Бүлэг
+        <select data-daily-group>
+          <option value="">Бүлэг сонгох</option>
+          {% for group in groups %}<option value="{{ group.pk }}">{{ group.name }}</option>{% endfor %}
+        </select>
+      </label>
+    </div>
+    <div class="daily-register__statuses" data-daily-statuses></div>
+    <div class="daily-register__empty" data-daily-empty>
+      <svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg>
+      <strong>Хүүхэд бүрийн бүртгэлийн хүснэгт энд гарна</strong>
+      <p>Backend холбогдоход сонгосон бүлгийн хүүхдүүд энд гарч, мөр тус бүр дээрх төлвийн товчоор бүртгэнэ.</p>
+    </div>
+    <p class="daily-register__note">Энэ нь frontend бэлтгэл дэлгэц. Одоогоор ирц, хоолны бүртгэл хадгалахгүй.</p>
+  </section>
+
+  <section class="daily-register meal-register" id="meal-register" hidden aria-labelledby="meal-register-title">
+    <div class="daily-register__head"><div><span>ХООЛНЫ БҮРТГЭЛ</span><h2 id="meal-register-title">Өнөөдрийн хоол</h2><p>Хоолны төрөл, хүүхдийн хоолны төлөв болон бэлэн хоолны зургийг тусад нь бүртгэнэ.</p></div></div>
+    <div class="daily-register__filters"><label>Огноо<input type="date" data-meal-date></label><label>Бүлэг<select><option>Бүлэг сонгох</option>{% for group in groups %}<option value="{{ group.pk }}">{{ group.name }}</option>{% endfor %}</select></label></div>
+    <p class="daily-register__meal-types">Хоолны төрөл: Өглөөний цай · Үдийн хоол · Үдээс хойших цай · Нэмэлт хоол</p>
+    <div class="daily-register__statuses"><button type="button">Авсан</button><button type="button">Аваагүй</button><button type="button">Хэсэгчлэн</button><button type="button">Тусгай хоол</button></div>
+    <section class="daily-kitchen" aria-labelledby="daily-kitchen-title">
+      <div><span>ХООЛНЫ БОДИТ МЭДЭЭЛЭЛ</span><h3 id="daily-kitchen-title">Цэс, шим тэжээл, зураг</h3></div>
+      <div class="daily-kitchen__grid"><label>Өнөөдрийн хоолны нэр<input type="text" placeholder="Жишээ: Ногоотой шөл"></label><label>Хоолны төрөл<select><option>Үдийн хоол</option><option>Өглөөний цай</option><option>Үдээс хойших цай</option><option>Нэмэлт хоол</option></select></label><label>Харшил үүсгэгч<textarea placeholder="Сүү, өндөг, самар зэрэг"></textarea></label><label class="daily-kitchen__photo">Бэлэн болсон хоолны зураг<input type="file" accept="image/*" data-meal-photo><span>Зураг сонгох</span></label></div>
+      <div class="daily-kitchen__preview" data-meal-preview>Сонгосон зураг энд урьдчилан харагдана.</div>
+      <p>Технологи карт, нэг порцын орц болон шим тэжээлийн бодит өгөгдөл backend-ээр холбогдоход автоматаар бөглөгдөнө.</p>
+    </section>
   </section>
 
   {% comment %} ------------------------------------------ quick links
@@ -58,7 +240,7 @@
      Судалгаа, Эцэг эхийн групп чат) are Phase 2/3 or off the roadmap
      entirely (ROADMAP §7.1, CLAUDE.md §7.1), so they render as dashed,
      inert tiles rather than a link with nowhere to go. {% endcomment %}
-  <section class="section">
+  <section class="section dashboard-legacy-links">
     {% include "components/section_head.html" with title="Түргэн холбоос" %}
     <div class="quick">
       <a href="{% url 'children:list' %}">
@@ -87,16 +269,16 @@
         Баримт бичиг
         <span class="quick__soon-tag">Тун удахгүй</span>
       </span>
-      <span class="quick__soon" aria-disabled="true">
+      <a class="quick__soon quick__soon--button" href="#meal-register">
         <svg class="ic" aria-hidden="true"><use href="#i-meal"></use></svg>
         Хоол
-        <span class="quick__soon-tag">Тун удахгүй</span>
-      </span>
-      <span class="quick__soon" aria-disabled="true">
+        <span class="quick__soon-tag">Бүртгэл нээх</span>
+      </a>
+      <button type="button" class="quick__soon quick__soon--button" data-daily-open="finance" aria-controls="daily-register">
         <svg class="ic" aria-hidden="true"><use href="#i-money"></use></svg>
         Санхүү
-        <span class="quick__soon-tag">Тун удахгүй</span>
-      </span>
+        <span class="quick__soon-tag">Удахгүй</span>
+      </button>
       <span class="quick__soon" aria-disabled="true">
         <svg class="ic" aria-hidden="true"><use href="#i-survey"></use></svg>
         Судалгаа
@@ -292,4 +474,186 @@
       </div>
     </div>
   </section>
+  <script>
+    (function () {
+      var panel = document.getElementById('daily-register');
+      if (!panel) return;
+      var heading = document.getElementById('daily-register-title');
+      var description = panel.querySelector('.daily-register__head p');
+      var statusList = panel.querySelector('[data-daily-statuses]');
+      var mealTypes = panel.querySelector('[data-daily-meal-types]');
+      var kitchen = panel.querySelector('[data-daily-kitchen]');
+      var date = panel.querySelector('[data-daily-date]');
+      var current = new URLSearchParams(window.location.search).get('daily') === 'finance' ? 'finance' : 'attendance';
+      var definitions = {
+        attendance: {
+          heading: 'Ирц бүртгэх', description: 'Бүлэг, өдрөө сонгоод хүүхэд бүрийн төлвийг нэг дор бүртгэнэ.',
+          statuses: ['Ирсэн', 'Чөлөөтэй', 'Өвчтэй', 'Тасалсан', 'Хагас өдөр', 'Бусад']
+        },
+        meals: {
+          heading: 'Хоол бүртгэх', description: 'Өглөөний цай, үдийн хоол болон бусад хоолны төлвийг хурдан тэмдэглэнэ.',
+          statuses: ['Авсан', 'Аваагүй', 'Хэсэгчлэн', 'Тусгай хоол']
+        },
+        finance: {
+          heading: 'Санхүүгийн самбар', description: 'Сарын санхүүжилт, invoice, төлбөр болон хоолны зардлыг нэг дор харуулах дэлгэц.',
+          statuses: ['Санхүүжилт', 'Invoice', 'Төлбөр', 'Хоолны зардал']
+        }
+      };
+      function render(mode) {
+        current = mode;
+        var item = definitions[mode] || definitions.attendance;
+        heading.textContent = item.heading;
+        description.textContent = item.description;
+        if (mealTypes) mealTypes.hidden = mode !== 'meals';
+        if (kitchen) kitchen.hidden = mode !== 'meals';
+        statusList.innerHTML = '';
+        item.statuses.forEach(function (label) {
+          var button = document.createElement('button');
+          button.type = 'button'; button.textContent = label;
+          button.setAttribute('aria-pressed', 'false');
+          button.addEventListener('click', function () { button.setAttribute('aria-pressed', button.getAttribute('aria-pressed') !== 'true'); });
+          statusList.appendChild(button);
+        });
+        panel.querySelectorAll('[data-daily-tab]').forEach(function (tab) {
+          tab.setAttribute('aria-selected', tab.getAttribute('data-daily-tab') === mode ? 'true' : 'false');
+        });
+      }
+      if (date && !date.value) date.value = new Date().toISOString().slice(0, 10);
+      document.querySelectorAll('[data-meal-date]').forEach(function (input) { if (!input.value) input.value = new Date().toISOString().slice(0, 10); });
+      var pageParams = new URLSearchParams(window.location.search);
+      var requestedDaily = pageParams.get('daily');
+      var mealPanel = document.getElementById('meal-register');
+      if (requestedDaily === 'attendance') panel.hidden = false;
+      if (requestedDaily === 'meals' && mealPanel) mealPanel.hidden = false;
+      var organization = document.getElementById('teacher-organization');
+      if (organization && pageParams.get('organization') === '1') organization.hidden = false;
+      var chat = document.getElementById('teacher-chat');
+      if (chat && pageParams.get('chat') === '1') chat.hidden = false;
+      var isWorkspace = requestedDaily || pageParams.get('organization') === '1' || pageParams.get('survey') === '1' || pageParams.get('chat') === '1';
+      if (isWorkspace) document.querySelectorAll('[data-dashboard-overview], .daily-register ~ .section').forEach(function (item) { item.hidden = true; });
+      var organizationForm = document.querySelector('[data-organization-form]');
+      if (organizationForm) organizationForm.addEventListener('submit', function (event) { event.preventDefault(); var status = organizationForm.querySelector('[data-organization-status]'); if (status) status.textContent = 'Маягт бэлэн. Backend холбогдоход энэ мэдээлэл цэцэрлэг, бүлэг болон багшийн бүртгэлд хадгалагдана.'; });
+      var chatForm = document.querySelector('[data-chat-form]');
+      if (chatForm) chatForm.addEventListener('submit', function (event) { event.preventDefault(); var input = chatForm.querySelector('[name=message]'); if (input && input.value.trim()) { input.value = ''; input.placeholder = 'Backend холбогдоход зурвас илгээгдэнэ.'; } });
+      document.querySelectorAll('[data-daily-open]').forEach(function (button) {
+        button.addEventListener('click', function () { panel.hidden = false; render(button.getAttribute('data-daily-open')); panel.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+      });
+      panel.querySelectorAll('[data-daily-tab]').forEach(function (tab) { tab.addEventListener('click', function () { render(tab.getAttribute('data-daily-tab')); }); });
+      panel.querySelector('[data-daily-close]').addEventListener('click', function () { panel.hidden = true; });
+      document.querySelectorAll('[data-meal-photo]').forEach(function (input) {
+        input.addEventListener('change', function () {
+          var preview = input.closest('.daily-kitchen').querySelector('[data-meal-preview]');
+          var file = input.files && input.files[0];
+          if (!preview || !file) return;
+          preview.innerHTML = '<img alt="Өнөөдрийн хоолны зураг">';
+          preview.querySelector('img').src = URL.createObjectURL(file);
+        });
+      });
+      render(current);
+    }());
+    (function () {
+      var survey = document.getElementById('teacher-surveys');
+      if (!survey) return;
+      if (new URLSearchParams(window.location.search).get('survey') === '1') survey.hidden = false;
+      survey.querySelector('[data-survey-close]').addEventListener('click', function () { survey.hidden = true; });
+
+      var questionsBox = survey.querySelector('[data-survey-questions]');
+      var addQuestionBtn = survey.querySelector('[data-add-question]');
+      var surveyType = 'poll';
+
+      function wireOptionAdder(block) {
+        var addOptionBtn = block.querySelector('[data-add-option]');
+        addOptionBtn.addEventListener('click', function () {
+          var options = block.querySelector('[data-survey-options]');
+          var number = options.children.length + 1;
+          var label = document.createElement('label');
+          label.textContent = 'Сонголт ' + number;
+          var input = document.createElement('input');
+          input.placeholder = 'Сонголт';
+          label.appendChild(input);
+          options.appendChild(label);
+        });
+      }
+      function wireAnswerType(block) {
+        var select = block.querySelector('[data-survey-answer-type]');
+        var options = block.querySelector('[data-survey-options]');
+        var addOptionBtn = block.querySelector('[data-add-option]');
+        function sync() {
+          var isText = select.value === 'text';
+          options.hidden = isText;
+          addOptionBtn.hidden = isText;
+        }
+        select.addEventListener('change', sync);
+        sync();
+      }
+      survey.querySelectorAll('.teacher-surveys__question').forEach(function (block) {
+        wireOptionAdder(block);
+        wireAnswerType(block);
+      });
+
+      function renumberQuestions() {
+        questionsBox.querySelectorAll('.teacher-surveys__question').forEach(function (block, index) {
+          var marker = block.querySelector('[data-question-num]');
+          if (marker) marker.textContent = String(index + 1);
+        });
+      }
+
+      addQuestionBtn.addEventListener('click', function () {
+        var first = questionsBox.querySelector('.teacher-surveys__question');
+        var block = first.cloneNode(true);
+        block.querySelectorAll('input, textarea').forEach(function (field) { field.value = ''; });
+        var select = block.querySelector('[data-survey-answer-type]');
+        if (select) select.value = 'choice';
+        var options = block.querySelector('[data-survey-options]');
+        options.innerHTML = '';
+        ['Сонголт 1', 'Сонголт 2'].forEach(function (text) {
+          var label = document.createElement('label');
+          label.textContent = text;
+          var input = document.createElement('input');
+          input.placeholder = 'Сонголт';
+          label.appendChild(input);
+          options.appendChild(label);
+        });
+        questionsBox.appendChild(block);
+        wireOptionAdder(block);
+        wireAnswerType(block);
+        renumberQuestions();
+      });
+
+      // "Пол" — нэг асуулт, шууд дүн (§ client's own wording): "+ Асуулт
+      // нэмэх" зөвхөн "Форм судалгаа" горимд харагдана, Пол руу шилжихэд
+      // нэмэлт асуултууд арилна — гарчгийн утга хэвээр үлдэнэ.
+      function setSurveyType(type) {
+        surveyType = type;
+        survey.querySelectorAll('[data-survey-type]').forEach(function (item) {
+          item.classList.toggle('is-active', item.getAttribute('data-survey-type') === type);
+        });
+        addQuestionBtn.hidden = type !== 'form';
+        if (type === 'poll') {
+          questionsBox.querySelectorAll('.teacher-surveys__question').forEach(function (block, index) {
+            if (index > 0) block.remove();
+          });
+          renumberQuestions();
+        }
+      }
+      survey.querySelectorAll('[data-survey-type]').forEach(function (button) {
+        button.addEventListener('click', function () { setSurveyType(button.getAttribute('data-survey-type')); });
+      });
+
+      survey.querySelector('[data-survey-publish]').addEventListener('click', function () { this.textContent = 'Нийтлэхэд бэлэн'; });
+    }());
+
+    // Судалгаа хайх — "Авсан судалгаанууд" жагсаалт хоосон атлаа энд
+    // зогсохгүй, жинхэнэ мөрүүд орж ирэхэд шууд ажиллана (.survey-list-card
+    // элемент бүр дээрээ data-survey-search агуулна гэж таамаглана).
+    function filterTeacherSurveys() {
+      var input = document.getElementById('id_survey_search');
+      if (!input) return;
+      var query = input.value.trim().toLowerCase();
+      document.querySelectorAll('.survey-list-card').forEach(function (card) {
+        var haystack = (card.dataset.surveySearch || '').toLowerCase();
+        card.hidden = query !== '' && haystack.indexOf(query) === -1;
+      });
+    }
+  </script>
 {% endblock %}
