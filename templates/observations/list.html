@@ -1,4 +1,5 @@
 {% extends base_template %}
+{% load static %}
 {% comment %} RFP §5.1, §5.2 — one child's observations, redesigned 2026-08-16
    as the screen the entry form returns to.
 
@@ -40,22 +41,617 @@
     </span>
   </div>
 
-  {% comment %} The primary action sits above the filters: a teacher arrives
-     here to record far more often than to search. {% endcomment %}
-  <div class="btn-row" style="margin-top:var(--s4)">
-    {% if can_record %}
-      <a class="btn" href="{% url 'observations:create' child.pk %}">
-        <svg class="ic ic--sm" aria-hidden="true"><use href="#i-plus"></use></svg>
-        Ажиглалт нэмэх
-      </a>
-    {% elif is_guardian %}
-      {# §5.4 — the family's own contribution #}
+  {% comment %} Everything below reacts to which tab is active, so both
+     matched types' ids are resolved once here rather than re-found in four
+     different places — every check below is `filters.type == buteel_pk` or
+     `== yarilzlaga_pk` (Django's `{% with %}` cannot itself hold a
+     comparison, only a value). Both are matched by name, not a hard-coded
+     id: ObservationType rows are seed data and their ids are not
+     guaranteed stable across environments. Two separate matcher loops,
+     nested, since each has to stay open around everything below it. {% endcomment %}
+  {% for item in types %}{% if "Бүтээл" in item.name %}
+    {% with buteel_pk=item.pk|stringformat:"s" %}
+  {% for item2 in types %}{% if "Ярилцлага" in item2.name %}
+    {% with yarilzlaga_pk=item2.pk|stringformat:"s" %}
+  {% comment %} A third match, for the hidden `type` field the trigger's
+     form now posts — it used to be a visible <select>, but which of the
+     three types this is is already decided by which tab/trigger the
+     teacher is on, exactly as the reference's own hidden
+     `observation_type` input does per tab.
+
+     The green tab is not one ObservationType — three rows contain
+     "ажиглалт" (Өдөр тутмын, Үйл ажиллагаанд суурилсан, Эцэг эхийн
+     оруулсан), which is exactly what the select being removed let a
+     teacher choose between. An exact match on "Өдөр тутмын ажиглалт" (the
+     one shown pre-selected in the client's mockup) picks a single row
+     rather than the substring match matching all three and rendering this
+     whole block three times over. {% endcomment %}
+  {% for item3 in types %}{% if item3.name == "Өдөр тутмын ажиглалт" %}
+    {% with ajiglalt_pk=item3.pk|stringformat:"s" %}
+
+  {% comment %} Three "tabs" — client's mockup. Each is a real link applying
+     the existing `?type=` filter, the same query the <select> inside the
+     filter panel below already sends. The count only shows on whichever
+     tab matches the active filter — the real current result count, not a
+     guess at the other two. {% endcomment %}
+  <div class="type-tabs" style="margin-top:var(--s4)">
+    <a class="type-tab type-tab--green" href="?"
+       {% if not filters.type %}aria-current="true"{% endif %}>
+      <span class="type-tab__icon" aria-hidden="true">
+        <svg class="ic ic--sm" aria-hidden="true"><use href="#i-observation"></use></svg>
+      </span>
+      Ажиглалт
+      {% if not filters.type %}<span class="type-tab__count">{{ page.paginator.count }}</span>{% endif %}
+    </a>
+
+    <a class="type-tab type-tab--blue" href="?type={{ yarilzlaga_pk }}"
+       {% if filters.type == yarilzlaga_pk %}aria-current="true"{% endif %}>
+      <span class="type-tab__icon" aria-hidden="true">
+        <svg class="ic ic--sm" aria-hidden="true"><use href="#i-chat"></use></svg>
+      </span>
+      Ярилцлага
+      {% if filters.type == yarilzlaga_pk %}<span class="type-tab__count">{{ page.paginator.count }}</span>{% endif %}
+    </a>
+
+    <a class="type-tab type-tab--amber" href="?type={{ buteel_pk }}"
+       {% if filters.type == buteel_pk %}aria-current="true"{% endif %}>
+      <span class="type-tab__icon" aria-hidden="true">
+        <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
+      </span>
+      Бүтээл
+      {% if filters.type == buteel_pk %}<span class="type-tab__count">{{ page.paginator.count }}</span>{% endif %}
+    </a>
+  </div>
+
+  {% comment %} The "add" row is now a <details> that opens in place —
+     client's own reference site uses ?tab=&open=1&from= for exactly this
+     (land on the list with the create form already expanded). It posts
+     straight to the real observations:create, using the `types`,
+     `domains` and `levels` this view's own context already carries — no
+     view.py change, `_posted()` reads request.POST the same way whichever
+     page sent it. `domain_rows`' per-domain checked/level state does not
+     apply here (a new observation starts blank), so the checkboxes and
+     selects are simply unchecked/unset, same as a fresh create page.
+     {% endcomment %}
+  {% if can_record %}
+    <details class="addnote" {% if request.GET.open %}open{% endif %}>
+      <summary class="note-type {% if filters.type == buteel_pk %}note-type--amber{% elif filters.type == yarilzlaga_pk %}note-type--blue{% else %}note-type--green{% endif %}">
+        <span class="note-type__icon" aria-hidden="true">
+          <svg class="ic ic--sm" aria-hidden="true"><use href="#i-plus"></use></svg>
+        </span>
+        <span>
+          <span class="note-type__title">
+            {% if filters.type == buteel_pk %}Шинэ бүтээл нэмэх{% elif filters.type == yarilzlaga_pk %}Шинэ ярилцлага нэмэх{% else %}Шинэ ажиглалт нэмэх{% endif %}
+          </span>
+          <span class="note-type__sub">Хүүхдийн хөгжлийн шинэ тэмдэглэл</span>
+        </span>
+        <svg class="ic addnote__chevron" aria-hidden="true"><use href="#i-review"></use></svg>
+      </summary>
+
+      <div class="addnote__body">
+        {% comment %} A separate titled, closable card — client's mockup
+           (`.card` + `<h3>Шинэ ажиглалт</h3>` + `×` in child_notes.html) —
+           rather than the numbered sections floating directly under the
+           trigger row. The close button sits outside the <form> so it
+           needs no `formnovalidate`; it only toggles the parent <details>
+           shut, same DOM the summary row already controls. {% endcomment %}
+        <div class="addnote__card {% if filters.type == buteel_pk %}addnote__card--amber{% elif filters.type == yarilzlaga_pk %}addnote__card--blue{% endif %}">
+          <div class="addnote__card-head">
+            <h3>
+              {% if filters.type == buteel_pk %}Шинэ бүтээл{% elif filters.type == yarilzlaga_pk %}Шинэ ярилцлага{% else %}Шинэ ажиглалт{% endif %}
+            </h3>
+            <button type="button" class="addnote__close" aria-label="Хаах"
+                    onclick="this.closest('details.addnote').removeAttribute('open')">×</button>
+          </div>
+
+        <form method="post" action="{% url 'observations:create' child.pk %}"
+              id="addnote-form"
+              data-detail-url-template="{% url 'observations:detail' child.pk 0 %}"
+              enctype="multipart/form-data">
+          {% csrf_token %}
+
+          {% comment %} Four numbered sections — client's "Шинэ ажиглалт"
+             mockup draws these as circled 1–4, the last on a tinted card.
+             The first three carry the active type's colour
+             (`.obs-form-section.is-green/is-blue/is-amber` in the
+             reference), resolved the same way the trigger above resolves
+             it — repeated inline rather than `{% with %}`, since Django's
+             `with` can't branch three ways across an if/elif/else and stay
+             open past `{% endif %}`. Presentation only: the fields and
+             their names underneath are the same ones observations:create
+             already parses. {% endcomment %}
+          <div class="form-step {% if filters.type == buteel_pk %}form-step--amber{% elif filters.type == yarilzlaga_pk %}form-step--blue{% else %}form-step--green{% endif %}">
+            <div class="form-step__head">
+              <span class="form-step__num">1</span>
+              Үндсэн мэдээлэл
+            </div>
+            <div class="fieldgrid">
+              <div class="field">
+                <label for="id_addnote_date">Ажиглалтын огноо *</label>
+                <input type="date" name="observed_on" id="id_addnote_date" required
+                       oninput="updateAddnoteQuarter(this.value)">
+              </div>
+              {% comment %} Read-only, computed from the date field above by
+                 the same Sept–Aug table list.html already groups the page
+                 by — there is no `quarter` field on Observation to save an
+                 override into (the app always derives it from
+                 `observed_on`, here and everywhere else), so this shows
+                 the real value rather than a control that would silently
+                 do nothing on submit. {% endcomment %}
+              <div class="field">
+                <label for="id_addnote_quarter">Улирал</label>
+                <input type="text" id="id_addnote_quarter" value="—" readonly
+                       aria-live="polite">
+              </div>
+              {% comment %} No longer a visible field — which of the three
+                 types this is is already decided by which tab/trigger the
+                 teacher opened (the reference's own hidden
+                 `observation_type` input works the same way per tab), so
+                 asking again in the form itself was the same choice twice.
+                 `_posted()` still reads `request.POST.get("type")` exactly
+                 as before. {% endcomment %}
+              <input type="hidden" name="type"
+                     value="{% if filters.type == buteel_pk %}{{ buteel_pk }}{% elif filters.type == yarilzlaga_pk %}{{ yarilzlaga_pk }}{% else %}{{ ajiglalt_pk }}{% endif %}">
+              {% comment %} Client's "Өдрийн дэглэмээс сонгох" list — a
+                 fixed set for this Phase 1 form, same as the reference's
+                 own hard-coded <select> (not a DevelopmentDomain-style
+                 admin table, since it isn't RFP-listed as one — CLAUDE.md
+                 §2.3). Posts into the real `activity_name` field
+                 (observations:create already reads it); on the group
+                 form that same field stays free text, since one planned
+                 activity for a whole group ("Блокоор барих") and one
+                 daily-routine slot for a single child are different
+                 things sharing a field name, not the same value. {% endcomment %}
+              {% comment %} Бүтээл gets its own fixed list here — client's
+                 "Бүтээлийн төрөл" — instead of the daily-routine one; both
+                 post into the same real `activity_name` field, so only one
+                 renders at a time rather than the field appearing twice.
+                 {% endcomment %}
+              {% if filters.type == buteel_pk %}
+                <div class="field field--full">
+                  <label for="id_addnote_activity">Бүтээлийн төрөл *</label>
+                  <select name="activity_name" id="id_addnote_activity" required>
+                    <option value="">Сонгох</option>
+                    <option value="Сэдэвт зураг">Сэдэвт зураг</option>
+                    <option value="Чөлөөт зураг">Чөлөөт зураг</option>
+                    <option value="Наамал">Наамал</option>
+                    <option value="Баримал">Баримал</option>
+                    <option value="Хайчилбар">Хайчилбар</option>
+                    <option value="Зохион бүтээх">Зохион бүтээх</option>
+                    <option value="Гар урлал">Гар урлал</option>
+                    <option value="Бусад">Бусад</option>
+                  </select>
+                </div>
+              {% else %}
+                <div class="field field--full">
+                  <label for="id_addnote_activity">Үйл ажиллагааны төрөл *</label>
+                  <select name="activity_name" id="id_addnote_activity" required>
+                    <option value="">Өдрийн дэглэмээс сонгох</option>
+                    <option value="Өглөөний хүлээн авалт">01. Өглөөний хүлээн авалт</option>
+                    <option value="Тоглоомын цаг">02. Тоглоомын цаг</option>
+                    <option value="Өглөөний дасгал">03. Өглөөний дасгал</option>
+                    <option value="Өглөөний цай">04. Өглөөний цай</option>
+                    <option value="Сургалт, үйл ажиллагаа">05. Сургалт, үйл ажиллагаа</option>
+                    <option value="Ариун цэвэр дадал хэвшил">06. Ариун цэвэр дадал хэвшил</option>
+                    <option value="Зугаалгын цаг">07. Зугаалгын цаг</option>
+                    <option value="Өдрийн хоол">08. Өдрийн хоол</option>
+                    <option value="Өдрийн унтлага">09. Өдрийн унтлага</option>
+                    <option value="Үдийн цай">10. Үдийн цай</option>
+                    <option value="Ганцаарчилсан сургалт">11. Ганцаарчилсан сургалт</option>
+                    <option value="Хөгжөөн баясгах үйл ажиллагаа">12. Хөгжөөн баясгах үйл ажиллагаа</option>
+                    <option value="Таралт">13. Таралт</option>
+                  </select>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="form-step {% if filters.type == buteel_pk %}form-step--amber{% elif filters.type == yarilzlaga_pk %}form-step--blue{% else %}form-step--green{% endif %}">
+            <div class="form-step__head">
+              <span class="form-step__num">2</span>
+              Хөтөлбөрийн үнэлгээ
+            </div>
+            {% comment %} "Сургалтын чиглэл" — corrected. It was wired to
+               the 9 real `DevelopmentDomain` rows (Бие бялдар, Хэл яриа,
+               ...), which is a different, assessment-scoring taxonomy
+               (§6.2). The client's actual "Сургалтын чиглэл" — the label
+               on this exact field in their own source spreadsheet
+               (~/Downloads/ажиглалт.xlsx) and in the reference's
+               `sud_data.js` — is the 7-item national curriculum set
+               (НСХ/ХЭМ/ХЯ/БНО/МАТ/ЗУ/ХӨГ). This select now lists those 7,
+               and "Холбогдох СҮД" below reads directly off it and
+               "Хөгжлийн түвшин" — one chiglэл, picked once, not asked for
+               twice.
+
+               Because that taxonomy has no `DevelopmentDomain` row to
+               match, there is nothing valid to POST into `domains`/
+               `level_<id>` from it any more — a see §6.2 domain link on
+               this quick form would have to come from a real
+               `DevelopmentDomain`, which is what the checklist this
+               replaced actually did. That capability stays on
+               `assessment:child`'s own multi-domain matrix rather than
+               being faked here against the wrong taxonomy. {% endcomment %}
+            <div class="fieldgrid">
+              <div class="field">
+                <label for="id_addnote_direction">Сургалтын чиглэл *</label>
+                {% comment %} Locked to "Зураг, урлал" for Бүтээл — client's
+                   own `<select id="buteen-direction" disabled>`: an
+                   artwork note is always tagged this direction, so there
+                   is nothing to choose. `disabled` still lets
+                   `updateSudOptions()` read `.value`; a disabled field
+                   just never posts, which this one never did anyway.
+                   {% endcomment %}
+                <select id="id_addnote_direction" required onchange="updateSudOptions()"
+                        {% if filters.type == buteel_pk %}disabled{% endif %}>
+                  {% if filters.type == buteel_pk %}
+                    <option value="ZUR" selected>Зураг, урлал</option>
+                  {% else %}
+                    <option value="">Сонгох</option>
+                    <option value="NSH">Нийгэм-сэтгэл хөдлөл</option>
+                    <option value="HEM">Хөдөлгөөн, эрүүл мэнд</option>
+                    <option value="HEL">Хэл яриа</option>
+                    <option value="BNO">Байгаль, нийгмийн орчин</option>
+                    <option value="MAT">Математик</option>
+                    <option value="ZUR">Зураг, урлал</option>
+                    <option value="HUG">Хөгжим</option>
+                  {% endif %}
+                </select>
+              </div>
+              <div class="field">
+                <label for="id_addnote_level">Хөгжлийн түвшин *</label>
+                {% comment %} Roman numerals — "I-р түвшин" etc., the
+                   source spreadsheet's own level headers (and the
+                   reference's), not `AssessmentLevel.label` ("1. Дэмжлэг
+                   шаардлагатай" ...). That labelling belongs to §6.2
+                   scoring; this select drives SUD_DATA's "1".."4" lookup
+                   only and posts nowhere on its own, so it uses the
+                   curriculum document's own words. {% endcomment %}
+                <select id="id_addnote_level" required onchange="updateSudOptions()">
+                  <option value="">Сонгох</option>
+                  <option value="1">I-р түвшин</option>
+                  <option value="2">II-р түвшин</option>
+                  <option value="3">III-р түвшин</option>
+                  <option value="4">IV-р түвшин</option>
+                </select>
+              </div>
+            </div>
+
+            {% comment %} "Холбогдох СҮД" — reads `id_addnote_direction` and
+               `id_addnote_level` directly (`updateSudOptions()`), no
+               separate chiglэл field of its own. There is still no
+               `sud_code` column on Observation to save into (a migration —
+               backend work). It does not write into "Хүүхдийн хийсэн
+               үйлдэл" or any other field either — a teacher reads the
+               matched criterion here and writes their own note below; the
+               full text shows under the select rather than being pushed
+               into text the teacher did not write. {% endcomment %}
+            <div class="field field--full">
+              <label for="id_addnote_sud_select">
+                Холбогдох СҮД <span class="field__opt">— заавал биш</span>
+              </label>
+              <select id="id_addnote_sud_select" onchange="showSudHint()">
+                <option value="">Эхлээд чиглэл, түвшин сонгоно уу</option>
+              </select>
+              <p class="hint" id="id_addnote_sud_hint"></p>
+            </div>
+          </div>
+
+          {% if filters.type == buteel_pk %}
+            {% comment %} Бүтээл gets client's own four steps (3–6) rather
+               than the shared step 3/4 the other two types use — it asks
+               for genuinely different things (an artwork's name, the
+               child's own explanation of it, a separate конclusion from
+               the observation itself). Six free-text Observation fields
+               exist (activity_name, situation, child_did, child_said,
+               teacher_comment, next_steps) and six things need saying
+               here, so each maps to one — `situation` and `child_did`
+               were unused by this form until now. {% endcomment %}
+            <div class="form-step form-step--amber">
+              <div class="form-step__head">
+                <span class="form-step__num">3</span>
+                Бүтээлийн мэдээлэл
+              </div>
+
+              <div class="field">
+                <label for="id_addnote_artwork_name">
+                  Бүтээлийн нэр <span class="field__opt">— заавал биш</span>
+                </label>
+                <input type="text" name="situation" id="id_addnote_artwork_name"
+                       placeholder="Бүтээлийн нэр...">
+              </div>
+
+              <div class="field">
+                <label for="id_addnote_child_said">
+                  Хүүхдийн тайлбар <span class="field__opt">— заавал биш</span>
+                </label>
+                <textarea name="child_said" id="id_addnote_child_said"
+                          placeholder="Хүүхэд бүтээлийнхээ тухай юу хэлсэн бэ?"></textarea>
+              </div>
+
+              {% comment %} `observations:create` itself still has no file
+                 handling (no `request.FILES`) — an observation and its
+                 photo are two different models (`Observation` /
+                 `apps.media.ObservationMedia`), and the photo needs the
+                 observation's own id, which does not exist until the first
+                 save succeeds. `media:observation_attach` already does
+                 exactly this attach step and is real (apps/media, wired to
+                 `observations/detail.html`) — the JS below calls
+                 `observations:create` first, then that same attach
+                 endpoint with the chosen file, then lands on the detail
+                 page. Two requests, one click; nothing here is faked, both
+                 endpoints already exist and already work from
+                 `observations/detail.html`. {% endcomment %}
+              <div class="field field--full">
+                <label for="id_addnote_photo">Бүтээлийн зураг *</label>
+                <div class="photofield">
+                  <label class="photofield__picker" for="id_addnote_photo">
+                    <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
+                    Зураг сонгох
+                  </label>
+                  <input type="file" name="photo" id="id_addnote_photo"
+                         class="photofield__input" accept="image/jpeg,image/png"
+                         required onchange="previewAddnotePhoto(this)">
+                  <span class="photofield__name" id="id_addnote_photo_name">Зураг сонгоогүй</span>
+                </div>
+                <div class="photofield__preview" id="id_addnote_photo_preview" hidden>
+                  <img alt="Сонгосон зураг">
+                </div>
+                <p class="hint">JPEG эсвэл PNG. Хадгалахад автоматаар хавсаргана.</p>
+              </div>
+            </div>
+
+            <div class="form-step form-step--amber">
+              <div class="form-step__head">
+                <span class="form-step__num">4</span>
+                Багшийн ажиглалт
+              </div>
+              <div class="field">
+                <label for="id_addnote_comment" class="sr-only">Бүтээлээс ямар чадвар, онцлог ажиглагдсан бэ?</label>
+                <textarea name="teacher_comment" id="id_addnote_comment"
+                          placeholder="Бүтээлээс ямар чадвар, онцлог ажиглагдсан бэ?"></textarea>
+                <div class="chip-row">
+                  <button type="button" class="chip" data-append-to="id_addnote_comment" data-text="Өнгө, дүрсээ бие даан сонгосон">Өнгө, дүрсээ сонгосон</button>
+                  <button type="button" class="chip" data-append-to="id_addnote_comment" data-text="Санаагаа бүтээлээрээ илэрхийлсэн">Санаагаа илэрхийлсэн</button>
+                  <button type="button" class="chip" data-append-to="id_addnote_comment" data-text="Материалыг зориулалтын дагуу ашигласан">Материалаа зөв ашигласан</button>
+                  <button type="button" class="chip" data-append-to="id_addnote_comment" data-text="Гарын жижиг булчингийн зохицуулалт сайн байсан">Гарын жижиг булчин</button>
+                  <button type="button" class="chip" data-append-to="id_addnote_comment" data-text="Орон зай, байрлалыг зохистой ашигласан">Зохиомж сайтай</button>
+                  <button type="button" class="chip" data-append-to="id_addnote_comment" data-text="Бүтээлээ дуусгахдаа тууштай ажилласан">Тууштай ажилласан</button>
+                  <button type="button" class="chip" data-append-to="id_addnote_comment" data-text="Багшийн чиглүүлгээр гүйцэтгэсэн">Чиглүүлгээр хийсэн</button>
+                  <button type="button" class="chip" data-append-to="id_addnote_comment" data-text="Өмнөх бүтээлээс ахиц ажиглагдсан">Ахиц ажиглагдсан</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-step form-step--amber">
+              <div class="form-step__head">
+                <span class="form-step__num">5</span>
+                Дүгнэлт
+              </div>
+              <div class="field">
+                <label for="id_addnote_did">Бүтээлийн дүгнэлт</label>
+                <textarea name="child_did" id="id_addnote_did"
+                          placeholder="Бүтээлээс харагдсан чадвар, ахиц, онцлогийг нэгтгэн бичнэ үү..."></textarea>
+                <div class="chip-row">
+                  <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Санаагаа бүтээлээрээ тодорхой илэрхийлж байна">Санаагаа илэрхийлсэн</button>
+                  <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Өнгө, дүрс, материалаа бие даан сонгон ашиглах чадвартай байна">Бие даан бүтээсэн</button>
+                  <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Гарын жижиг булчингийн зохицуулалт сайжирсан">Жижиг булчин хөгжсөн</button>
+                  <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Орон зай, байрлалыг зохистой ашиглан бүтээлээ гүйцэтгэсэн">Зохиомж сайтай</button>
+                  <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Өмнөх бүтээлтэй харьцуулахад ахиц ажиглагдсан">Ахиц гарсан</button>
+                  <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Бүтээлээ дуусгахад нэмэлт чиглүүлэг шаардлагатай байна">Чиглүүлэг хэрэгтэй</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-step form-step--accent">
+              <div class="form-step__head">
+                <span class="form-step__num">6</span>
+                Хэрхэн хөгжүүлэх
+              </div>
+              <div class="field">
+                <label for="id_addnote_next">Шийдэл</label>
+                <textarea name="next_steps" id="id_addnote_next"
+                          placeholder="Дараагийн бүтээлээр ямар чадварыг, хэрхэн хөгжүүлэх вэ?"></textarea>
+                <div class="chip-row">
+                  <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Өнгө, дүрсээ бие даан сонгох боломж олгоно">Бие даан сонгуулна</button>
+                  <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Гарын жижиг булчинг хөгжүүлэх хайчлах, нугалах, баримлах дасгал ажиллуулна">Жижиг булчин хөгжүүлнэ</button>
+                  <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Шинэ материал, хэрэглэгдэхүүн туршиж ашиглах боломж олгоно">Шинэ материал ашиглуулна</button>
+                  <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Бүтээлийн санаагаа урьдчилан ярилцаж, төлөвлөхөд чиглүүлнэ">Санаагаа төлөвлүүлнэ</button>
+                  <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Өмнөх бүтээлээ ажиглан сайжруулах зүйлээ өөрөөр нь сонгуулна">Бүтээлээ сайжруулна</button>
+                  <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Бусадтай хамтарсан бүтээл хийлгэнэ">Хамтарсан бүтээл хийнэ</button>
+                </div>
+              </div>
+
+              <label class="choice">
+                <input type="checkbox" name="visible_to_parents" id="id_addnote_visible">
+                <span class="choice__body">
+                  <span class="choice__title">Эцэг эхэд харагдуулах</span>
+                  <span class="choice__note">Идэвхжүүлэхэд эцэг эхийн хуудсанд харагдана. Анхны төлөв — харагдахгүй.</span>
+                </span>
+              </label>
+              <label class="choice">
+                <input type="checkbox" name="include_in_report" id="id_addnote_report" checked>
+                <span class="choice__body">
+                  <span class="choice__title">Нэгдсэн тайланд оруулах</span>
+                </span>
+              </label>
+            </div>
+          {% else %}
+          {% comment %} Step 3's own name and its field label follow the
+             active type — client's mockup titles this step "Ярилцлагын
+             тэмдэглэл" for an interview and labels the field "Асуулт,
+             хариулт" there, rather than "Ажиглалтын тэмдэглэл" / "Хүүхдийн
+             хийсэн үйлдэл" for every type alike. Same `child_did` field
+             underneath either way — presentation only. {% endcomment %}
+          <div class="form-step {% if filters.type == yarilzlaga_pk %}form-step--blue{% else %}form-step--green{% endif %}">
+            <div class="form-step__head">
+              <span class="form-step__num">3</span>
+              {% if filters.type == yarilzlaga_pk %}Ярилцлагын тэмдэглэл{% else %}Ажиглалтын тэмдэглэл{% endif %}
+            </div>
+
+            <div class="field">
+              <label for="id_addnote_did">
+                {% if filters.type == yarilzlaga_pk %}Асуулт, хариулт{% else %}Хүүхдийн хийсэн үйлдэл{% endif %}
+              </label>
+              <textarea name="child_did" id="id_addnote_did"
+                        placeholder="{% if filters.type == yarilzlaga_pk %}Асуулт болон хүүхдийн хариултыг аль болох өөрчлөлгүй тэмдэглэнэ үү...{% else %}Хүүхэд юу хийсэн, хэрхэн оролцсоныг бодитоор тэмдэглэнэ үү...{% endif %}"></textarea>
+              <div class="chip-row">
+                <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Бие дааж">Бие дааж</button>
+                <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Бусадтай хамтран">Бусадтай хамтран</button>
+                <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Багшийн дэмжлэгтэй">Багшийн дэмжлэгтэй</button>
+                <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Өмнөхөөс ахицтай">Өмнөхөөс ахицтай</button>
+                <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Давтаж бататгах">Давтаж бататгах</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="id_addnote_comment">Багшийн тайлбар</label>
+              <textarea name="teacher_comment" id="id_addnote_comment"></textarea>
+            </div>
+
+            {% comment %} Optional evidence photo — same two-request JS flow
+               as the Бүтээл step above (observations:create has no file
+               field of its own; the file is attached to the new record via
+               the already-existing media:observation_attach right after).
+               {% endcomment %}
+            <div class="field field--full">
+              <label for="id_addnote_photo">
+                Баримт зураг <span class="field__opt">— заавал биш</span>
+              </label>
+              <div class="photofield">
+                <label class="photofield__picker" for="id_addnote_photo">
+                  <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
+                  Зураг сонгох
+                </label>
+                <input type="file" name="photo" id="id_addnote_photo"
+                       class="photofield__input" accept="image/jpeg,image/png"
+                       onchange="previewAddnotePhoto(this)">
+                <span class="photofield__name" id="id_addnote_photo_name">Зураг сонгоогүй</span>
+              </div>
+              <div class="photofield__preview" id="id_addnote_photo_preview" hidden>
+                <img alt="Сонгосон зураг">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-step form-step--accent">
+            <div class="form-step__head">
+              <span class="form-step__num">4</span>
+              Дараагийн дэмжлэг
+            </div>
+
+            <div class="field">
+              <label for="id_addnote_next" class="sr-only">Дараагийн удаа юуг, хэрхэн дэмжих вэ?</label>
+              <textarea name="next_steps" id="id_addnote_next"
+                        placeholder="Дараагийн удаа юуг, хэрхэн дэмжих вэ?"></textarea>
+              <div class="chip-row">
+                <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Бие даан хийлгэнэ">Бие даан хийлгэнэ</button>
+                <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Давтан бататгана">Давтан бататгана</button>
+                <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Хамтран ажиллуулна">Хамтран ажиллуулна</button>
+                <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Чиглүүлж дэмжинэ">Чиглүүлж дэмжинэ</button>
+                <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Дэмжлэгийг багасгана">Дэмжлэгийг багасгана</button>
+              </div>
+            </div>
+
+            <label class="choice">
+              <input type="checkbox" name="visible_to_parents" id="id_addnote_visible">
+              <span class="choice__body">
+                <span class="choice__title">Эцэг эхэд харагдуулах</span>
+                <span class="choice__note">Идэвхжүүлэхэд эцэг эхийн хуудсанд харагдана. Анхны төлөв — харагдахгүй.</span>
+              </span>
+            </label>
+
+            <label class="choice">
+              <input type="checkbox" name="include_in_report" id="id_addnote_report" checked>
+              <span class="choice__body">
+                <span class="choice__title">Нэгдсэн тайланд оруулах</span>
+              </span>
+            </label>
+          </div>
+          {% endif %}
+
+          <div class="btn-row" style="margin-top:var(--s4)">
+            <button type="submit" class="btn" id="addnote-submit">
+              <svg class="ic ic--sm" aria-hidden="true"><use href="#i-check"></use></svg>
+              <span id="addnote-submit-label">Хадгалах</span>
+            </button>
+          </div>
+        </form>
+        </div>
+      </div>
+    </details>
+  {% elif is_guardian %}
+    {# §5.4 — the family's own contribution #}
+    <div class="btn-row" style="margin-top:var(--s4)">
       <a class="btn" href="{% url 'observations:parent_create' child.pk %}">
         <svg class="ic ic--sm" aria-hidden="true"><use href="#i-plus"></use></svg>
         Миний ажиглалт нэмэх
       </a>
-    {% endif %}
+    </div>
+  {% endif %}
+
+  {% comment %} Two more real entry points — client's mockup. "Нэгдсэн
+     дүгнэлт бичих" goes to the child's term-by-term matrix
+     (assessment:child), the closest existing screen to "write a
+     consolidated write-up" — there is no separate summary screen.
+     "Эцэг эхийн бичсэн тэмдэглэл" reuses the `source` filter this view
+     already supports; the count shows only once that filter is the active
+     one, same rule as the tabs above. {% endcomment %}
+  <div class="grid grid--2" style="margin-top:var(--s4)">
+    <a class="btn btn--ghost" href="{% url 'assessment:child' child.pk %}">
+      Нэгдсэн дүгнэлт бичих
+    </a>
+    <a class="btn btn--ghost" href="?source=parent"
+       style="display:flex; justify-content:space-between">
+      Эцэг эхийн бичсэн тэмдэглэл
+      {% if filters.source == 'parent' %}
+        <span class="badge badge--muted">{{ page.paginator.count }}</span>
+      {% endif %}
+    </a>
   </div>
+
+  {% comment %} Live client-side filter bar — matches the reference app's
+     own behaviour (its #observationSearch/#observationDirectionFilter/
+     #observationPeriodFilter are plain inputs with a JS listener, not a
+     submitting form): it filters the .memo-card elements already
+     rendered on this page instantly, no round trip. Domain names and
+     observed_on are real data already in each card's data-attributes;
+     nothing here is a guess. Only reaches the current page's cards — the
+     type tabs above and the disclosure below still do the real,
+     paginated, server-side filtering. {% endcomment %}
+  <div class="filterbar" style="margin-top:var(--s4)">
+    <div>
+      <label for="id_q">Хайх</label>
+      <input type="search" id="id_q" placeholder="Тэмдэглэлээс хайх..."
+             oninput="filterMemoCards()">
+    </div>
+    <div>
+      <label for="id_domain_top">Сургалтын чиглэл</label>
+      <select id="id_domain_top" onchange="filterMemoCards()">
+        <option value="">Бүх чиглэл</option>
+        {% for item in domains %}
+          <option value="{{ item.pk }}">{{ item.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="id_month_top">Хугацаа</label>
+      <select id="id_month_top" onchange="filterMemoCards()">
+        <option value="">Бүх сар</option>
+        <option value="9">9 дүгээр сар</option><option value="10">10 дугаар сар</option>
+        <option value="11">11 дүгээр сар</option><option value="12">12 дугаар сар</option>
+        <option value="1">1 дүгээр сар</option><option value="2">2 дугаар сар</option>
+        <option value="3">3 дугаар сар</option><option value="4">4 дүгээр сар</option>
+        <option value="5">5 дугаар сар</option><option value="6">6 дугаар сар</option>
+        <option value="7">7 дугаар сар</option><option value="8">8 дугаар сар</option>
+      </select>
+    </div>
+    <span class="filterbar__go">
+      <span class="badge badge--muted" id="memoFilterCount">
+        {{ page.paginator.count }} {% if filters.type == buteel_pk %}бүтээл{% else %}ажиглалт{% endif %}
+      </span>
+    </span>
+  </div>
+  <p class="notes-filter-empty" id="memoFilterEmpty">Тохирох тэмдэглэл олдсонгүй.</p>
 
   {% comment %} RFP §11's filters, exactly the six the view already reads:
      type, source, domain, level and the date interval. Nothing new. Two
@@ -143,87 +739,41 @@
 
   {% if page.paginator.count %}
     <div class="listmeta">
-      <span>Нийт {{ page.paginator.count }} ажиглалт</span>
+      <span>Нийт {{ page.paginator.count }} {% if filters.type == buteel_pk %}бүтээл{% else %}ажиглалт{% endif %}</span>
       {% if page.paginator.num_pages > 1 %}
         <span>{{ page.number }} / {{ page.paginator.num_pages }} хуудас</span>
       {% endif %}
     </div>
   {% endif %}
 
-  <div class="obshead" aria-hidden="true">
-    <span>Огноо</span>
-    <span>Ажиглалт</span>
-    <span>Төлөв</span>
-    <span></span>
-  </div>
+  {% if page.object_list %}
+    {% comment %} Quarter grouping — the client's reference app groups every
+       list it draws this way. There is no Term on this view's context to
+       derive it from (and Term date ranges vary by kindergarten anyway),
+       so the group is the same fixed Sept–Aug month table the reference
+       itself uses (its routes.py `month_to_quarter`), computed here from
+       the real `observed_on` — not a database lookup, and not a guess.
+       Four passes over the same page rather than one grouped pass:
+       Django's {% regroup %} needs the list pre-sorted by the key it
+       groups on, and `page` is ordered by -observed_on, not by quarter.
+       {% endcomment %}
 
-  <div class="obslist">
-    {% for observation in page %}
-      <div class="obsrow">
-        <a class="obsrow__main"
-           href="{% url 'observations:detail' child.pk observation.pk %}">
-          <span class="obsrow__date">
-            <b>{{ observation.observed_on|date:"d" }}</b>
-            {{ observation.observed_on|date:"m" }} сар
-          </span>
-          <span class="obsrow__body">
-            <span class="obsrow__title">{{ observation.summary }}</span>
-            <span class="obsrow__meta">
-              {{ observation.type.name }}
-              · {{ observation.get_source_display }}
-              {% if observation.created_by %} · {{ observation.created_by }}{% endif %}
-            </span>
-          </span>
-          {% if observation.domain_links.all %}
-            <span class="obsrow__chips">
-              {% for link in observation.domain_links.all %}
-                <span class="badge"
-                      style="background:{{ link.domain.color }}1a; color:{{ link.domain.color }}">
-                  {{ link.domain.name }}{% if link.level %} · {{ link.level.label }}{% endif %}
-                </span>
-              {% endfor %}
-            </span>
-          {% endif %}
-        </a>
-
-        <div class="obsrow__flags">
-          {% comment %} §5.1 — who may see this. Since 2026-08-16 a teacher's
-             observation starts closed, so "Хувийн" is the common case and is
-             deliberately quiet rather than a warning: it is the normal state
-             of a working note, not a problem. {% endcomment %}
-          {% if observation.visible_to_parents %}
-            <span class="badge badge--ok">Эцэг эхэд харагдана</span>
-          {% else %}
-            <span class="badge badge--muted">Хувийн</span>
-          {% endif %}
-
-          {% if observation.source == 'parent' %}
-            <span class="badge {% if observation.review_status == 'approved' %}badge--ok{% else %}badge--warn{% endif %}">
-              {{ observation.get_review_status_display }}
-            </span>
-          {% endif %}
-
-          {% if observation.media_links.all %}
-            <span class="obsrow__photo">
-              <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
-              {{ observation.media_links.all|length }}
-              <span class="sr-only">зураг хавсаргасан</span>
-            </span>
-          {% endif %}
-        </div>
-
-        {% if can_record %}
-          <a class="obsrow__edit"
-             href="{% url 'observations:edit' child.pk observation.pk %}">
-            Засах<span class="sr-only"> — {{ observation.summary }}</span>
-          </a>
-        {% endif %}
-      </div>
-    {% empty %}
-      {% comment %} Two empty states, one for each reason the list can be
-         bare: nothing recorded yet, or a filter that matched nothing. Both
-         offer the way out of themselves. {% endcomment %}
-      {% if filters.type or filters.source or filters.domain or filters.level or filters.from or filters.to %}
+    {% include "observations/_quarter_group.html" with q_label="I улирал" q_months="9,10,11" %}
+    {% include "observations/_quarter_group.html" with q_label="II улирал" q_months="12,1,2" %}
+    {% include "observations/_quarter_group.html" with q_label="III улирал" q_months="3,4,5" %}
+    {% include "observations/_quarter_group.html" with q_label="IV улирал" q_months="6,7,8" %}
+  {% else %}
+      {% comment %} Three empty states, in order of specificity: the Бүтээл
+         tab open and empty gets its own wording and an add action (client's
+         mockup — "Дээрх товч дарж шинэ бүтээл нэмнэ үү"), any other filter
+         that matched nothing gets the generic clear-filter message, and no
+         filter at all is the true first-time-here state. {% endcomment %}
+      {% if filters.type == buteel_pk and can_record %}
+        {% url 'observations:create' child.pk as create_buteel_url %}
+        {% include "components/empty.html" with icon="observation" message="Бүтээл байхгүй байна. Дээрх товч дарж шинэ бүтээл нэмнэ үү." action=create_buteel_url action_label="Шинэ бүтээл нэмэх" %}
+      {% elif filters.type == buteel_pk %}
+        {% include "components/empty.html" with icon="observation" message="Бүтээл байхгүй байна." %}
+      {% elif filters.type or filters.source or filters.domain or filters.level or filters.from or filters.to %}
         {% url 'observations:list' child.pk as clear_url %}
         {% include "components/empty.html" with icon="observation" message="Энэ шүүлтэд тохирох ажиглалт олдсонгүй." action=clear_url action_label="Шүүлтийг цэвэрлэх" %}
       {% elif can_record %}
@@ -235,8 +785,7 @@
       {% else %}
         {% include "components/empty.html" with icon="observation" message="Ажиглалт бүртгэгдээгүй байна." %}
       {% endif %}
-    {% endfor %}
-  </div>
+  {% endif %}
 
   {% comment %} The querystring is rebuilt from `filters` rather than from
      `request.GET.urlencode`, which already carried `page` and produced
@@ -257,4 +806,208 @@
       </nav>
     {% endwith %}
   {% endif %}
+
+    {% endwith %}
+  {% endif %}{% endfor %}
+    {% endwith %}
+  {% endif %}{% endfor %}
+  {% endwith %}
+{% endif %}{% endfor %}
+
+{% comment %} The 7-direction curriculum content-standard lookup —
+   `static/js/sud_data.js`, copied verbatim from the client's own file,
+   which defines `window.SUD_DATA`/`window.DIRECTIONS`. Loaded here rather
+   than in <head>: nothing outside this "Холбогдох СҮД" field needs it.
+   {% endcomment %}
+<script src="{% static 'js/sud_data.js' %}"></script>
+
+{% comment %} Live filter over the rendered .memo-cards, and the per-quarter
+   counts/hiding that goes with it — the same client-side behaviour the
+   reference app's own Хайх/Хугацаа/Сургалтын чиглэл controls have. Runs
+   once on load (so quarters with nothing in them start hidden) and again
+   on every filter change. {% endcomment %}
+<script>
+  {% comment %} Wires the quick-phrase chips — present in this form's
+     markup already but, unlike the copies of this same script in
+     observations/form.html and assessment/term_report.html, never
+     actually connected here. Appends a chip's phrase into its textarea,
+     comma-joined if the field already has text. {% endcomment %}
+  document.querySelectorAll(".chip[data-append-to]").forEach(function (chip) {
+    chip.addEventListener("click", function () {
+      var field = document.getElementById(chip.dataset.appendTo);
+      if (!field) return;
+      var text = chip.dataset.text;
+      field.value = field.value.trim() ? field.value.trim() + ", " + text : text;
+      field.focus();
+    });
+  });
+
+  function filterMemoCards() {
+    var q = (document.getElementById("id_q").value || "").trim().toLowerCase();
+    var domain = document.getElementById("id_domain_top").value;
+    var month = document.getElementById("id_month_top").value;
+    var visibleTotal = 0;
+
+    document.querySelectorAll(".quarter-section").forEach(function (section) {
+      var visibleInSection = 0;
+      section.querySelectorAll(".memo-card").forEach(function (card) {
+        var matchesSearch = !q || (card.dataset.search || "").indexOf(q) !== -1;
+        var matchesDomain = !domain || (" " + (card.dataset.domain || "") + " ").indexOf(" " + domain + " ") !== -1;
+        var matchesMonth = !month || card.dataset.month === month;
+        var show = matchesSearch && matchesDomain && matchesMonth;
+        card.hidden = !show;
+        if (show) visibleInSection++;
+      });
+      section.hidden = visibleInSection === 0;
+      var countEl = section.querySelector(".quarter-section__count");
+      if (countEl) countEl.textContent = visibleInSection + " тэмдэглэл";
+      visibleTotal += visibleInSection;
+    });
+
+    var emptyEl = document.getElementById("memoFilterEmpty");
+    if (emptyEl) emptyEl.style.display = visibleTotal === 0 ? "block" : "none";
+
+    var countEl = document.getElementById("memoFilterCount");
+    if (countEl) countEl.textContent = visibleTotal + " тэмдэглэл";
+  }
+  document.addEventListener("DOMContentLoaded", filterMemoCards);
+
+  {% comment %} Same Sept–Aug table the server groups the page by (and
+     `_quarter_group.html` tests each card's month against). Read-only
+     display only — there is no field to save an override into. {% endcomment %}
+  function updateAddnoteQuarter(dateValue) {
+    var el = document.getElementById("id_addnote_quarter");
+    if (!el) return;
+    var month = dateValue ? parseInt(dateValue.split("-")[1], 10) : 0;
+    var byMonth = {9:"1-р улирал",10:"1-р улирал",11:"1-р улирал",
+                   12:"2-р улирал",1:"2-р улирал",2:"2-р улирал",
+                   3:"3-р улирал",4:"3-р улирал",5:"3-р улирал",
+                   6:"4-р улирал",7:"4-р улирал",8:"4-р улирал"};
+    el.value = byMonth[month] || "—";
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    var dateEl = document.getElementById("id_addnote_date");
+    if (dateEl) updateAddnoteQuarter(dateEl.value);
+  });
+
+  {% comment %} Rebuilds the СҮД options from `window.SUD_DATA` whenever
+     "Сургалтын чиглэл" or "Хөгжлийн түвшин" changes — both are needed to
+     look anything up (`SUD_DATA[direction][level]`). Reads the same
+     `id_addnote_direction` select "Сургалтын чиглэл" uses; no second
+     chiglэл field of its own. {% endcomment %}
+  function updateSudOptions() {
+    var dirSel = document.getElementById("id_addnote_direction");
+    var levelSel = document.getElementById("id_addnote_level");
+    var sudSel = document.getElementById("id_addnote_sud_select");
+    if (!dirSel || !levelSel || !sudSel) return;
+    var direction = dirSel.value;
+    var level = levelSel.value;
+    sudSel.innerHTML = "";
+    if (!direction || !level || typeof SUD_DATA === "undefined") {
+      var placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "Эхлээд чиглэл, түвшин сонгоно уу";
+      sudSel.appendChild(placeholder);
+      return;
+    }
+    var items = (SUD_DATA[direction] && SUD_DATA[direction][level]) || [];
+    var placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = items.length ? "Сонгох..." : "Тохирох СҮД олдсонгүй";
+    sudSel.appendChild(placeholder);
+    items.forEach(function (item) {
+      var opt = document.createElement("option");
+      opt.value = item.code;
+      opt.textContent = item.code + " — " + item.text;
+      opt.dataset.text = item.text;
+      sudSel.appendChild(opt);
+    });
+  }
+
+  {% comment %} Read-only reference text under the select — it does not
+     touch "Хүүхдийн хийсэн үйлдэл" or any other field. There is no
+     `sud_code` column on Observation to save a selection into either (a
+     migration — backend work), so this is a lookup a teacher reads while
+     writing their own note, not something the form captures. {% endcomment %}
+  function showSudHint() {
+    var sudSel = document.getElementById("id_addnote_sud_select");
+    var hint = document.getElementById("id_addnote_sud_hint");
+    if (!sudSel || !hint) return;
+    var opt = sudSel.options[sudSel.selectedIndex];
+    hint.textContent = (opt && opt.value) ? (opt.value + " — " + (opt.dataset.text || "")) : "";
+  }
+
+  {% comment %} Filename + live preview under the picker button — purely
+     cosmetic, matches the reference's evidence-picker behaviour. {% endcomment %}
+  function previewAddnotePhoto(input) {
+    var nameEl = document.getElementById("id_addnote_photo_name");
+    var previewWrap = document.getElementById("id_addnote_photo_preview");
+    var file = input.files && input.files[0];
+    if (!file) {
+      if (nameEl) nameEl.textContent = "Зураг сонгоогүй";
+      if (previewWrap) previewWrap.hidden = true;
+      return;
+    }
+    if (nameEl) nameEl.textContent = file.name;
+    if (previewWrap) {
+      var img = previewWrap.querySelector("img");
+      img.src = URL.createObjectURL(file);
+      previewWrap.hidden = false;
+    }
+  }
+
+  {% comment %} `observations:create` has no file field — the photo is a
+     separate model (`apps.media.ObservationMedia`) that needs the new
+     observation's id, which does not exist until this POST succeeds. So a
+     photo is genuinely attached in a second real request, to the same
+     `media:observation_attach` endpoint `observations/detail.html` already
+     uses, right after the first succeeds — not faked, both endpoints exist
+     and both save for real. If no photo was chosen, this does nothing and
+     the form posts exactly as it always has. If anything about the
+     two-request flow fails, it falls back to a plain form submit so the
+     existing server-rendered error page still shows, same as without
+     JS. {% endcomment %}
+  document.addEventListener("DOMContentLoaded", function () {
+    var form = document.getElementById("addnote-form");
+    if (!form) return;
+    var detailUrlTemplate = form.dataset.detailUrlTemplate;
+    var submitBtn = document.getElementById("addnote-submit");
+    var submitLabel = document.getElementById("addnote-submit-label");
+
+    form.addEventListener("submit", function (event) {
+      var photoInput = document.getElementById("id_addnote_photo");
+      var file = photoInput && photoInput.files && photoInput.files[0];
+      if (!file || !detailUrlTemplate) return;
+
+      event.preventDefault();
+      submitBtn.disabled = true;
+      if (submitLabel) submitLabel.textContent = "Хадгалж байна...";
+
+      fetch(form.action, {
+        method: "POST", body: new FormData(form), credentials: "same-origin",
+      }).then(function (response) {
+        if (!response.redirected) throw new Error("create-failed");
+
+        var match = response.url.match(/\/(\d+)\/$/);
+        if (!match) { window.location = response.url; return; }
+
+        if (submitLabel) submitLabel.textContent = "Зураг хавсаргаж байна...";
+        var attachUrl = detailUrlTemplate.replace(/0\/$/, match[1] + "/") + "zurag/";
+        var photoData = new FormData();
+        photoData.append("photo", file);
+        photoData.append("csrfmiddlewaretoken",
+          form.querySelector("[name=csrfmiddlewaretoken]").value);
+
+        return fetch(attachUrl, {
+          method: "POST", body: photoData, credentials: "same-origin",
+        }).then(function () { window.location = response.url; },
+                function () { window.location = response.url; });
+      }).catch(function () {
+        submitBtn.disabled = false;
+        if (submitLabel) submitLabel.textContent = "Хадгалах";
+        HTMLFormElement.prototype.submit.call(form);
+      });
+    });
+  });
+</script>
 {% endblock %}

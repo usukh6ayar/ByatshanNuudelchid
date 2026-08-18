@@ -20,6 +20,7 @@ from django.urls import reverse
 
 from apps.media import services as media_services
 from apps.media.tests.test_media import make_jpeg
+from apps.observations import selectors as observation_selectors
 from apps.observations import services as observation_services
 from apps.observations.models import ObservationType
 
@@ -168,55 +169,40 @@ def test_the_edit_action_is_hidden_from_a_guardian(client, world):
     assert reverse("children:edit", args=[world["bataa"].pk]) not in body
 
 
-# ------------------------------------------ record a note, 2026-08-18
-# The single "Ажиглалт нэмэх" button became one card per §5.2 type, from the
-# client's mockup. The cards come from `ObservationType`, so what is worth
-# pinning is that they follow the table rather than a list in the template —
-# and that the one a guardian's own submission is filed under is not offered
-# to a teacher as something to write.
+# -------------------------------------- where a note is started, 2026-08-18
+#
+# This page briefly carried one card per §5.2 type (PR #2). The `front-v2`
+# redesign turned it into a gateway and moved those entry points onto
+# `assessment/child.html` and `assessment/group_grid.html`, so the assertions
+# that pinned them to this markup are gone.
+#
+# What is kept is the rule underneath them, which no redesign changes: the
+# list a teacher may file a note under is the `ObservationType` table minus
+# the row a guardian's own submission uses. It is pinned on the selector now
+# rather than on markup, because the markup is what keeps moving.
+#
+# For review: `front-v2` hard-codes three tiles — Ажиглалт / Ярилцлага /
+# Бүтээл — and "Ярилцлага" is not a row in `ObservationType` at all. That is a
+# CLAUDE.md §2.3 question for the pull request, not something a test settles.
 
 
-def test_the_page_offers_a_card_for_each_teacher_observation_type(client, world):
-    login(client, world["dulmaa"])
-
-    body = client.get(detail_url(world["bataa"])).content.decode()
-
-    for code in ("daily", "artwork", "activity"):
-        name = ObservationType.objects.get(kindergarten=None, code=code).name
-        assert name in body, f"no entry point for observation type: {code}"
-
-
-def test_the_parent_submission_type_is_not_offered_to_a_teacher(client, world):
+def test_a_teacher_is_not_offered_the_parent_submission_type(world):
     """§5.2 — a teacher's own note is never "an observation the parent
     entered". Offering it as an entry point would misfile the record."""
-    login(client, world["dulmaa"])
+    codes = {
+        entry.code
+        for entry in observation_selectors.teacher_observation_types(world["naran"])
+    }
 
-    body = client.get(detail_url(world["bataa"])).content.decode()
-    parent_type = ObservationType.objects.get(kindergarten=None, code="parent")
-
-    assert f"?type={parent_type.pk}" not in body
+    assert "parent" not in codes
+    assert {"daily", "artwork", "activity"} <= codes
 
 
-def test_a_kindergartens_own_type_gets_a_card_without_a_template_change(
-    client, world,
-):
-    """CLAUDE.md §2.3 — the types are a table an administrator edits."""
-    login(client, world["dulmaa"])
+def test_a_kindergartens_own_type_joins_the_list_without_a_code_change(world):
+    """CLAUDE.md §2.3 — the types are a table an administrator edits, so a
+    screen that offers them has to read the table and not a literal list."""
     own = ObservationType.objects.create(
         kindergarten=world["naran"], code="interview", name="Ярилцлага",
     )
 
-    body = client.get(detail_url(world["bataa"])).content.decode()
-
-    assert "Ярилцлага" in body
-    assert f"?type={own.pk}" in body
-
-
-def test_a_guardian_is_offered_no_note_cards(client, world):
-    """§5.4 gives families their own screen; `observations:create` answers
-    404 for them, so a card here would be a link into a refusal."""
-    login(client, world["bataa_mother"])
-
-    body = client.get(detail_url(world["bataa"])).content.decode()
-
-    assert "Тэмдэглэл бүртгэх" not in body
+    assert own in observation_selectors.teacher_observation_types(world["naran"])

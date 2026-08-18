@@ -139,14 +139,10 @@ def child_detail(request, child_id):
         )[:RECENT_ASSESSMENTS],
         "about": portfolio_selectors.about_me(child),
         "age_profiles": portfolio_selectors.age_profiles(child),
-
-        # The client's mockup opens the note-recording action as one card per
-        # kind of note rather than a single button. The kinds are §5.2's own
-        # `ObservationType` rows (CLAUDE.md §2.3), not a list written into the
-        # template — a kindergarten that adds its own type gets a card for it.
-        "observation_types": observation_selectors.teacher_observation_types(
-            child.kindergarten_id
-        ),
+        # `observation_types` was passed here for PR #2's per-type cards. The
+        # front-v2 redesign moved those entry points to the assessment
+        # screens, so the read is gone rather than left costing a query on
+        # every child page for a variable no template uses.
     })
 
 

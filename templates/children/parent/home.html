@@ -1,7 +1,10 @@
 {% extends "base_parent.html" %}
-{% comment %} The family's landing screen — RFP §2.3, modelled on
-   `docs/design/screens/parent-home.jpeg` and rebuilt 2026-08-16 in the
-   design system established by the child profile (docs/UI_AUDIT.md).
+{% comment %} The family's landing screen — RFP §2.3.
+
+   The July 28 reference used a deliberately short journey: choose a child,
+   then choose the thing to see.  That is restored here using only routes
+   already available in this Django application.  It keeps the home useful
+   for a parent on a phone instead of making them scan a long mixed feed.
 
    **How this differs from the child profile, and why it has to.** The two
    screens are one journey and they share a vocabulary, so the risk is that
@@ -38,138 +41,48 @@
 
   {% include "components/child_switcher.html" %}
 
-  {% comment %} ------------------------------------------------ the child
-     Compact and tappable, not the profile's hero: this is the way in to
-     that screen, so repeating it whole would leave the family looking at
-     the same block twice in two taps. {% endcomment %}
-  <a class="childcard" href="{% url 'children:parent_child_detail' child.pk %}">
-    {% include "components/avatar.html" with person=child size="lg" %}
-    <span class="childcard__body">
-      <span class="childcard__name">{{ child.full_name }}</span>
-      <span class="childcard__meta">
-        <span class="badge badge--brand">{{ child.age }} нас</span>
-        {% if enrollment %}
-          <span class="badge badge--muted">{{ enrollment.group.name }}</span>
-        {% endif %}
+  <section class="parent-hub" aria-label="{{ child.full_name }}-ийн мэдээлэл">
+    <a class="parent-hub__child" href="{% url 'children:parent_child_detail' child.pk %}">
+      {% include "components/avatar.html" with person=child size="lg" %}
+      <span>
+        <span class="parent-hub__child-name">{{ child.full_name }}</span>
+        <span class="parent-hub__child-meta">
+          {{ child.age }} нас{% if enrollment %} · {{ enrollment.group.name }}{% endif %}
+        </span>
+        <span class="parent-hub__child-go">Хүүхдийн дэлгэрэнгүй хуудас →</span>
       </span>
-      <span class="childcard__hint">Хүүхдийн хуудас нээх →</span>
-    </span>
-  </a>
+    </a>
 
-  {% comment %} --------------------------------------------- announcements
-     §8.1. The home is the notification surface — the profile has none —
-     so this comes before the child's own records. Unread is marked, which
-     is the reason a family opens the screen at all. {% endcomment %}
-  {% if announcements %}
-    <section class="section">
-      {% url 'comms:list' as comms_url %}
-      {% include "components/section_head.html" with title="Мэдэгдэл" link=comms_url %}
-      <div class="card">
-        <div class="feed">
-          {% for announcement in announcements %}
-            <a class="feed__item" href="{% url 'comms:detail' announcement.pk %}">
-              <span class="tile__icon tile__icon--sm">
-                <svg class="ic ic--sm" aria-hidden="true"><use href="#i-bell"></use></svg>
-              </span>
-              <span class="feed__body">
-                <span class="feed__title">
-                  {{ announcement.title }}
-                  {% if announcement.is_important %}
-                    <span class="badge badge--warn">Чухал</span>
-                  {% elif not announcement.is_read %}
-                    <span class="badge badge--brand">Шинэ</span>
-                  {% endif %}
-                </span>
-                <span class="feed__meta">
-                  {{ announcement.published_at|date:"Y.m.d"|default:"—" }}
-                  {% if announcement.author %} · {{ announcement.author }}{% endif %}
-                </span>
-              </span>
-            </a>
-          {% endfor %}
-        </div>
-      </div>
-    </section>
-  {% endif %}
+    <div class="parent-hub__label">
+      <strong>{{ child.first_name }}-ийн мэдээлэл</strong>
+      <span>Доорх хэсгээс сонгоно уу</span>
+    </div>
 
-  {% comment %} ------------------------------------------- recent moments
-     Photographs reached through observations this guardian may read. The
-     visibility gate is in `recent_media_for_child` and is covered by
-     apps/children/tests/test_parent_profile_visibility.py — never here.
-     {% endcomment %}
-  {% if moments %}
-    <section class="section">
-      {% include "components/section_head.html" with title="Сүүлийн мөчүүд" %}
-      <div class="moments">
-        {% for link in moments %}
-          <a href="{% url 'observations:detail' child.pk link.observation_id %}"
-             title="{{ link.caption|default:link.observation.summary }}">
-            <img src="{% url 'media:serve' link.media_file.public_id 'full' %}"
-                 alt="{{ link.caption|default:link.observation.summary }}"
-                 loading="lazy">
-          </a>
-        {% endfor %}
-      </div>
-    </section>
-  {% endif %}
-
-  {% comment %} --------------------------------------- recent observations
-     Three, against the profile's four — see the note on the constants in
-     apps/children/views/parent.py. Shown even when empty: a family whose
-     child has just started should be told the teacher has not written yet,
-     rather than find no trace that observations exist. {% endcomment %}
-  <section class="section">
-    {% include "components/section_head.html" with title="Багшийн ажиглалт" %}
-    {% if observations %}
-      <div class="timeline">
-        {% for observation in observations %}
-          <a class="timeline__item"
-             href="{% url 'observations:detail' child.pk observation.pk %}">
-            <span class="timeline__date">
-              <span>{{ observation.observed_on|date:"d" }}</span>
-              {{ observation.observed_on|date:"m" }} сар
-            </span>
-            <span class="timeline__body">
-              <span class="timeline__title">{{ observation.summary }}</span>
-              <span class="timeline__meta">
-                {{ observation.type.name }}
-                {% if observation.created_by %} · {{ observation.created_by.last_name }}{% endif %}
-              </span>
-            </span>
-          </a>
-        {% endfor %}
-      </div>
-      <div class="btn-row" style="margin-top:var(--s3)">
-        <a class="btn btn--ghost btn--sm" href="{% url 'observations:list' child.pk %}">
-          Бүх ажиглалтыг харах →
-        </a>
-      </div>
-    {% else %}
-      {% include "components/empty.html" with icon="observation" message="Багш одоогоор ажиглалт бүртгээгүй байна." %}
-    {% endif %}
-  </section>
-
-  {% comment %} "Түргэн холбоос" in the mockup. Every tile goes somewhere
-     that exists — the drawn grid of nine includes Ирц, Эрүүл мэнд, Хоол and
-     Төлбөр, which do not. {% endcomment %}
-  <section class="section">
-    {% include "components/section_head.html" with title="Түргэн холбоос" %}
-    <div class="quick">
-      <a href="{% url 'portfolio:overview' child.pk %}">
-        <svg class="ic" aria-hidden="true"><use href="#i-portfolio"></use></svg>
-        Хувийн хавтас
+    <div class="parent-hub__grid">
+      <a class="parent-action parent-action--portfolio" href="{% url 'portfolio:overview' child.pk %}">
+        <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-portfolio"></use></svg></span>
+        <span><strong>Хүүхдийн мэдээлэл</strong><small>Миний тухай, нас насны хөгжил</small></span>
+        <b aria-hidden="true">→</b>
       </a>
-      <a href="{% url 'observations:list' child.pk %}">
-        <svg class="ic" aria-hidden="true"><use href="#i-observation"></use></svg>
-        Ажиглалт
+      <a class="parent-action parent-action--observation" href="{% url 'observations:list' child.pk %}">
+        <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-observation"></use></svg></span>
+        <span><strong>Би цэцэрлэгтээ</strong><small>Ажиглалт, зураг, тэмдэглэл</small></span>
+        <b aria-hidden="true">→</b>
       </a>
-      <a href="{% url 'assessment:child' child.pk %}">
-        <svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg>
-        Хөгжлийн үнэлгээ
+      <a class="parent-action parent-action--assessment" href="{% url 'assessment:child' child.pk %}">
+        <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg></span>
+        <span><strong>Хөгжлийн үнэлгээ</strong><small>Хөгжлийн чиглэл бүрийн ахиц</small></span>
+        <b aria-hidden="true">→</b>
       </a>
-      <a href="{% url 'reports:request' child.pk %}">
-        <svg class="ic" aria-hidden="true"><use href="#i-report"></use></svg>
-        Тайлан татах
+      <a class="parent-action parent-action--report" href="{% url 'reports:request' child.pk %}">
+        <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-report"></use></svg></span>
+        <span><strong>Тайлан, дурсамж</strong><small>Хувийн тайлангаа татах</small></span>
+        <b aria-hidden="true">→</b>
+      </a>
+      <a class="parent-action parent-action--news" href="{% url 'comms:list' %}">
+        <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg></span>
+        <span><strong>Мэдээ, мэдэгдэл</strong><small>{% if unread_announcements %}{{ unread_announcements }} шинэ мэдэгдэл{% else %}Багшийн мэдээлэл, зар{% endif %}</small></span>
+        <b aria-hidden="true">→</b>
       </a>
     </div>
   </section>

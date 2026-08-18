@@ -112,13 +112,23 @@
            textarea above. Nothing is stored separately and no field is added:
            this is the same `child_did` the view already reads, typed faster.
            A teacher writing eighteen notes a day types these words every
-           time. {% endcomment %}
-        <div class="chiprow">
-          <button type="button" class="chip" data-append-to="id_child_did">Бие дааж</button>
-          <button type="button" class="chip" data-append-to="id_child_did">Бусадтай хамтран</button>
-          <button type="button" class="chip" data-append-to="id_child_did">Багшийн дэмжлэгтэй</button>
-          <button type="button" class="chip" data-append-to="id_child_did">Өмнөхөөс ахицтай</button>
-          <button type="button" class="chip" data-append-to="id_child_did">Давтаж бататгах</button>
+           time.
+
+           `data-text` rather than the button's own label, because the two
+           differ elsewhere on this branch: `observations/list.html` shows a
+           short chip and inserts a full sentence. One convention across every
+           screen that has chips. {% endcomment %}
+        <div class="chip-row">
+          <button type="button" class="chip" data-append-to="id_child_did"
+                  data-text="Бие дааж">Бие дааж</button>
+          <button type="button" class="chip" data-append-to="id_child_did"
+                  data-text="Бусадтай хамтран">Бусадтай хамтран</button>
+          <button type="button" class="chip" data-append-to="id_child_did"
+                  data-text="Багшийн дэмжлэгтэй">Багшийн дэмжлэгтэй</button>
+          <button type="button" class="chip" data-append-to="id_child_did"
+                  data-text="Өмнөхөөс ахицтай">Өмнөхөөс ахицтай</button>
+          <button type="button" class="chip" data-append-to="id_child_did"
+                  data-text="Давтаж бататгах">Давтаж бататгах</button>
         </div>
       </div>
 
@@ -177,13 +187,19 @@
         </label>
         <textarea name="next_steps" id="id_next_steps"
                   placeholder="Дараагийн удаа юуг, хэрхэн дэмжих вэ?">{{ form.next_steps|default:'' }}</textarea>
-        <div class="chiprow">
-          <button type="button" class="chip" data-append-to="id_next_steps">Бие даан хийлгэнэ</button>
-          <button type="button" class="chip" data-append-to="id_next_steps">Давтан бататгана</button>
-          <button type="button" class="chip" data-append-to="id_next_steps">Хамтран ажиллуулна</button>
-          <button type="button" class="chip" data-append-to="id_next_steps">Хэрэгсэл, дүрсээр дэмжинэ</button>
-          <button type="button" class="chip" data-append-to="id_next_steps">Чиглүүлж дэмжинэ</button>
-          <button type="button" class="chip" data-append-to="id_next_steps">Дэмжлэгийг багасгана</button>
+        <div class="chip-row">
+          <button type="button" class="chip" data-append-to="id_next_steps"
+                  data-text="Бие даан хийлгэнэ">Бие даан хийлгэнэ</button>
+          <button type="button" class="chip" data-append-to="id_next_steps"
+                  data-text="Давтан бататгана">Давтан бататгана</button>
+          <button type="button" class="chip" data-append-to="id_next_steps"
+                  data-text="Хамтран ажиллуулна">Хамтран ажиллуулна</button>
+          <button type="button" class="chip" data-append-to="id_next_steps"
+                  data-text="Хэрэгсэл, дүрсээр дэмжинэ">Хэрэгсэл, дүрсээр дэмжинэ</button>
+          <button type="button" class="chip" data-append-to="id_next_steps"
+                  data-text="Чиглүүлж дэмжинэ">Чиглүүлж дэмжинэ</button>
+          <button type="button" class="chip" data-append-to="id_next_steps"
+                  data-text="Дэмжлэгийг багасгана">Дэмжлэгийг багасгана</button>
         </div>
       </div>
     </section>
@@ -278,22 +294,20 @@
     </div>
   </form>
 
-  {% comment %} Appends a chip's own label to the textarea it names —
-     comma-joined when the field already has text. No framework and no state
-     beyond the field itself; the result is exactly what typing the phrase by
-     hand would produce, so a browser with JavaScript off simply sees six
-     buttons that do nothing and the textarea still works. {% endcomment %}
-  <script>
-    document.querySelectorAll(".chip[data-append-to]").forEach(function (chip) {
-      chip.addEventListener("click", function () {
-        var field = document.getElementById(chip.dataset.appendTo);
-        if (!field) return;
-        var phrase = chip.textContent.trim();
-        var current = field.value.trim();
-        field.value = current ? current + ", " + phrase : phrase;
-        field.focus();
-      });
-    });
-  </script>
 </div>
+
+{% comment %} Appends a chip's phrase to its textarea — comma-joined if the
+   field already has text. No framework, no state beyond the field itself;
+   equivalent to typing the phrase by hand. {% endcomment %}
+<script>
+  document.querySelectorAll(".chip[data-append-to]").forEach(function (chip) {
+    chip.addEventListener("click", function () {
+      var field = document.getElementById(chip.dataset.appendTo);
+      if (!field) return;
+      var text = chip.dataset.text;
+      field.value = field.value.trim() ? field.value.trim() + ", " + text : text;
+      field.focus();
+    });
+  });
+</script>
 {% endblock %}

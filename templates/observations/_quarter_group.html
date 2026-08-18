@@ -1,0 +1,64 @@
+{% comment %} One quarter's card grid — included four times by
+   observations/list.html, once per fixed Sept–Aug month range (q_months is
+   a comma-padded string like ",9,10,11," so membership can be tested with
+   the `in` operator's substring match without a custom filter). Included
+   templates share the parent's context, so `page`, `child` and
+   `can_record` are already here. {% endcomment %}
+{% with q_months=","|add:q_months|add:"," %}
+  <details class="quarter-section" data-quarter="{{ q_label }}" open>
+    <summary>
+      <svg class="ic ic--sm quarter-section__chevron" aria-hidden="true"><use href="#i-review"></use></svg>
+      {{ q_label }}
+      {% comment %} Count is read off the rendered cards by JS on load
+         (updateQuarterCounts in list.html) rather than computed here —
+         there is no custom template filter to count a filtered subset of
+         `page.object_list` without one. {% endcomment %}
+      <span class="quarter-section__count"></span>
+    </summary>
+    <div class="memo-grid">
+      {% for observation in page.object_list %}
+        {% with month_pad=","|add:observation.observed_on|date:"n"|add:"," %}
+          {% if month_pad in q_months %}
+            <a class="memo-card"
+               href="{% url 'observations:detail' child.pk observation.pk %}"
+               style="{% with first_domain=observation.domain_links.all.0 %}{% if first_domain %}--accent:{{ first_domain.domain.color }};{% endif %}{% endwith %}"
+               data-domain="{% for link in observation.domain_links.all %}{{ link.domain.pk }} {% endfor %}"
+               data-month="{{ observation.observed_on|date:'n' }}"
+               data-search="{{ observation.summary|lower }} {{ observation.type.name|lower }}">
+              {% if observation.media_links.all.0 %}
+                <img class="memo-card__thumb"
+                     src="{% url 'media:serve' observation.media_links.all.0.media_file.public_id 'full' %}"
+                     alt="" loading="lazy">
+              {% else %}
+                <span class="memo-card__placeholder" aria-hidden="true">
+                  <svg class="ic" aria-hidden="true"><use href="#i-observation"></use></svg>
+                </span>
+              {% endif %}
+              <span class="memo-card__body">
+                <span class="memo-card__meta">
+                  <span class="memo-card__date">{{ observation.observed_on|date:"Y.m.d" }}</span>
+                  <span class="memo-card__type">{{ observation.type.name }}</span>
+                </span>
+                <span class="memo-card__content">
+                  {% if observation.summary %}{{ observation.summary }}{% else %}Тэмдэглэлгүй{% endif %}
+                </span>
+                <span class="memo-card__flags">
+                  {% if observation.visible_to_parents %}
+                    <span class="badge badge--ok">Эцэг эхэд харагдана</span>
+                  {% else %}
+                    <span class="badge badge--muted">Хувийн</span>
+                  {% endif %}
+                  {% if observation.source == 'parent' %}
+                    <span class="badge {% if observation.review_status == 'approved' %}badge--ok{% else %}badge--warn{% endif %}">
+                      {{ observation.get_review_status_display }}
+                    </span>
+                  {% endif %}
+                </span>
+              </span>
+            </a>
+          {% endif %}
+        {% endwith %}
+      {% endfor %}
+    </div>
+  </details>
+{% endwith %}
