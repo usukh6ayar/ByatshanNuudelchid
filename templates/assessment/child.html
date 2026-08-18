@@ -3,10 +3,40 @@
    guardian sees the same table with only the published terms in it; the
    filtering happened in the selector, not here. {% endcomment %}
 
-{% block title %}Хөгжлийн үнэлгээ{% endblock %}
-{% block heading %}Хөгжлийн үнэлгээ — {{ child.full_name }}{% endblock %}
+{% block title %}{% if request.GET.report %}Хөгжлийн тайлан{% else %}Явцын үнэлгээ{% endif %}{% endblock %}
+{% block heading %}{% if request.GET.report %}Хөгжлийн тайлан — {{ child.full_name }}{% else %}Явцын үнэлгээ — {{ child.full_name }}{% endif %}{% endblock %}
 
 {% block content %}
+  {% comment %} The July 28 flow begins with the kind of record a teacher is
+     about to make.  These all use the existing child observation screen;
+     its tabs and expanded form keep the actual data entry in one place. {% endcomment %}
+  {% if can_record and not request.GET.report %}
+    <section class="section" style="margin-top:0">
+      {% include "components/section_head.html" with title="Явцын үнэлгээ" note="Тэмдэглэлийн төрлөө сонгоно уу" %}
+      <div class="type-tabs progress-type-tabs">
+        <a class="type-tab type-tab--green" href="{% url 'observations:list' child.pk %}?open=1">
+          <span class="type-tab__icon" aria-hidden="true">
+            <svg class="ic ic--sm" aria-hidden="true"><use href="#i-observation"></use></svg>
+          </span>
+          Ажиглалт
+        </a>
+        <a class="type-tab type-tab--blue" href="{% url 'observations:list' child.pk %}?open=1">
+          <span class="type-tab__icon" aria-hidden="true">
+            <svg class="ic ic--sm" aria-hidden="true"><use href="#i-chat"></use></svg>
+          </span>
+          Ярилцлага
+        </a>
+        <a class="type-tab type-tab--amber" href="{% url 'observations:list' child.pk %}?open=1">
+          <span class="type-tab__icon" aria-hidden="true">
+            <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
+          </span>
+          Бүтээл
+        </a>
+      </div>
+    </section>
+  {% endif %}
+
+  {% if request.GET.report or not can_record %}
   {% if no_enrollment %}
     <div class="card">
       <p class="empty">
@@ -21,6 +51,68 @@
       </p>
     </div>
   {% else %}
+    {% comment %} Report dashboard — a presentation of the values already in
+       `matrix`; no score, percentage, or comparison is invented here. {% endcomment %}
+    <section class="report-dashboard" aria-label="Хөгжлийн тайлангийн тойм">
+      <div class="report-dashboard__hero">
+        <span class="report-dashboard__kicker">ХҮҮХДИЙН ХӨГЖЛИЙН ТАЙЛАН</span>
+        <h2>{{ child.full_name }}</h2>
+        <p>{{ school_year.name }} · {{ group.name }}</p>
+      </div>
+
+      <div class="report-dashboard__stats">
+        <div class="report-stat report-stat--purple">
+          <span>ҮНЭЛГЭЭНИЙ ЧИГЛЭЛ</span>
+          <strong>{{ matrix.rows|length }}</strong>
+          <small>хөгжлийн чиглэл</small>
+        </div>
+        <div class="report-stat report-stat--blue">
+          <span>ХИЧЭЭЛИЙН УЛИРАЛ</span>
+          <strong>{{ terms|length }}</strong>
+          <small>улирлын үнэлгээ</small>
+        </div>
+        <div class="report-stat report-stat--green">
+          <span>ҮНЭЛГЭЭНИЙ ТҮВШИН</span>
+          <strong>1–4</strong>
+          <small>түвшнээр харуулна</small>
+        </div>
+      </div>
+
+      <div class="report-chart-card">
+        <div class="report-chart-card__head">
+          <div>
+            <span>АГУУЛГААР</span>
+            <h2>Чиглэл тус бүрийн явц</h2>
+          </div>
+          <div class="report-chart-card__key">
+            {% for term in terms %}<span>{{ term.name }}</span>{% endfor %}
+          </div>
+        </div>
+
+        <div class="report-domain-chart">
+          {% for row in matrix.rows %}
+            <div class="report-domain-chart__row">
+              <span class="report-domain-chart__label">
+                <i style="background:{{ row.domain.color }}"></i>{{ row.domain.name }}
+              </span>
+              <span class="report-domain-chart__bars" aria-label="{{ row.domain.name }}-ийн улирлын үнэлгээ">
+                {% for cell in row.cells %}
+                  {% if cell %}
+                    <span class="report-bar" style="--level:{{ cell.level.value }}; --bar-color:{{ cell.level.color }}" title="{{ cell.term.name }}: {{ cell.level.value }}. {{ cell.level.label }}">
+                      <b>{{ cell.level.value }}</b>
+                    </span>
+                  {% else %}
+                    <span class="report-bar report-bar--empty" title="Үнэлгээ хийгдээгүй"></span>
+                  {% endif %}
+                {% endfor %}
+              </span>
+            </div>
+          {% endfor %}
+        </div>
+        <p class="report-chart-card__note">Багана бүр нь тухайн улирлын 1–4 түвшний үнэлгээг илэрхийлнэ.</p>
+      </div>
+    </section>
+
     <div class="card">
       <h2>{{ school_year.name }} · {{ group.name }}</h2>
 
@@ -169,5 +261,6 @@
         {% endif %}
       {% endfor %}
     {% endif %}
+  {% endif %}
   {% endif %}
 {% endblock %}
