@@ -275,46 +275,49 @@
     </a>
   </div>
 
-  {% comment %} Always-visible search row — client's mockup. Хайх has no
-     backend text search yet (selectors.child_observations has nothing to
-     match against), so it is disabled rather than silently doing nothing
-     on submit. Сургалтын чиглэл and Хугацаа are the same real `domain`,
-     `from` and `to` filters as the disclosure below, just surfaced here so
-     they do not need a click to reach. Submitting either form keeps
-     `type` as a hidden field, so the active tab survives. {% endcomment %}
-  <form method="get" class="filterbar" style="margin-top:var(--s4)">
-    <input type="hidden" name="type" value="{{ filters.type }}">
+  {% comment %} Live client-side filter bar — matches the reference app's
+     own behaviour (its #observationSearch/#observationDirectionFilter/
+     #observationPeriodFilter are plain inputs with a JS listener, not a
+     submitting form): it filters the .memo-card elements already
+     rendered on this page instantly, no round trip. Domain names and
+     observed_on are real data already in each card's data-attributes;
+     nothing here is a guess. Only reaches the current page's cards — the
+     type tabs above and the disclosure below still do the real,
+     paginated, server-side filtering. {% endcomment %}
+  <div class="filterbar" style="margin-top:var(--s4)">
     <div>
       <label for="id_q">Хайх</label>
-      <input type="search" id="id_q" placeholder="Тэмдэглэлээс хайх..." disabled
-             title="Тун удахгүй">
+      <input type="search" id="id_q" placeholder="Тэмдэглэлээс хайх..."
+             oninput="filterMemoCards()">
     </div>
     <div>
       <label for="id_domain_top">Сургалтын чиглэл</label>
-      <select name="domain" id="id_domain_top">
+      <select id="id_domain_top" onchange="filterMemoCards()">
         <option value="">Бүх чиглэл</option>
         {% for item in domains %}
-          <option value="{{ item.pk }}"
-            {% if filters.domain == item.pk|stringformat:"s" %}selected{% endif %}>
-            {{ item.name }}
-          </option>
+          <option value="{{ item.pk }}">{{ item.name }}</option>
         {% endfor %}
       </select>
     </div>
     <div>
-      <label for="id_from_top">Хугацаа — эхлэх</label>
-      <input type="date" name="from" id="id_from_top" value="{{ filters.from }}">
+      <label for="id_month_top">Хугацаа</label>
+      <select id="id_month_top" onchange="filterMemoCards()">
+        <option value="">Бүх сар</option>
+        <option value="9">9 дүгээр сар</option><option value="10">10 дугаар сар</option>
+        <option value="11">11 дүгээр сар</option><option value="12">12 дугаар сар</option>
+        <option value="1">1 дүгээр сар</option><option value="2">2 дугаар сар</option>
+        <option value="3">3 дугаар сар</option><option value="4">4 дүгээр сар</option>
+        <option value="5">5 дугаар сар</option><option value="6">6 дугаар сар</option>
+        <option value="7">7 дугаар сар</option><option value="8">8 дугаар сар</option>
+      </select>
     </div>
-    <div>
-      <label for="id_to_top">Хугацаа — дуусах</label>
-      <input type="date" name="to" id="id_to_top" value="{{ filters.to }}">
-    </div>
-    <div class="filterbar__go">
-      <button type="submit" class="btn btn--ghost">
+    <span class="filterbar__go">
+      <span class="badge badge--muted" id="memoFilterCount">
         {{ page.paginator.count }} {% if filters.type == buteel_pk %}бүтээл{% else %}ажиглалт{% endif %}
-      </button>
-    </div>
-  </form>
+      </span>
+    </span>
+  </div>
+  <p class="notes-filter-empty" id="memoFilterEmpty">Тохирох тэмдэглэл олдсонгүй.</p>
 
   {% comment %} RFP §11's filters, exactly the six the view already reads:
      type, source, domain, level and the date interval. Nothing new. Two
@@ -409,76 +412,23 @@
     </div>
   {% endif %}
 
-  <div class="obshead" aria-hidden="true">
-    <span>Огноо</span>
-    <span>Ажиглалт</span>
-    <span>Төлөв</span>
-    <span></span>
-  </div>
+  {% if page.object_list %}
+    {% comment %} Quarter grouping — the client's reference app groups every
+       list it draws this way. There is no Term on this view's context to
+       derive it from (and Term date ranges vary by kindergarten anyway),
+       so the group is the same fixed Sept–Aug month table the reference
+       itself uses (its routes.py `month_to_quarter`), computed here from
+       the real `observed_on` — not a database lookup, and not a guess.
+       Four passes over the same page rather than one grouped pass:
+       Django's {% regroup %} needs the list pre-sorted by the key it
+       groups on, and `page` is ordered by -observed_on, not by quarter.
+       {% endcomment %}
 
-  <div class="obslist">
-    {% for observation in page %}
-      <div class="obsrow">
-        <a class="obsrow__main"
-           href="{% url 'observations:detail' child.pk observation.pk %}">
-          <span class="obsrow__date">
-            <b>{{ observation.observed_on|date:"d" }}</b>
-            {{ observation.observed_on|date:"m" }} сар
-          </span>
-          <span class="obsrow__body">
-            <span class="obsrow__title">{{ observation.summary }}</span>
-            <span class="obsrow__meta">
-              {{ observation.type.name }}
-              · {{ observation.get_source_display }}
-              {% if observation.created_by %} · {{ observation.created_by }}{% endif %}
-            </span>
-          </span>
-          {% if observation.domain_links.all %}
-            <span class="obsrow__chips">
-              {% for link in observation.domain_links.all %}
-                <span class="badge"
-                      style="background:{{ link.domain.color }}1a; color:{{ link.domain.color }}">
-                  {{ link.domain.name }}{% if link.level %} · {{ link.level.label }}{% endif %}
-                </span>
-              {% endfor %}
-            </span>
-          {% endif %}
-        </a>
-
-        <div class="obsrow__flags">
-          {% comment %} §5.1 — who may see this. Since 2026-08-16 a teacher's
-             observation starts closed, so "Хувийн" is the common case and is
-             deliberately quiet rather than a warning: it is the normal state
-             of a working note, not a problem. {% endcomment %}
-          {% if observation.visible_to_parents %}
-            <span class="badge badge--ok">Эцэг эхэд харагдана</span>
-          {% else %}
-            <span class="badge badge--muted">Хувийн</span>
-          {% endif %}
-
-          {% if observation.source == 'parent' %}
-            <span class="badge {% if observation.review_status == 'approved' %}badge--ok{% else %}badge--warn{% endif %}">
-              {{ observation.get_review_status_display }}
-            </span>
-          {% endif %}
-
-          {% if observation.media_links.all %}
-            <span class="obsrow__photo">
-              <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
-              {{ observation.media_links.all|length }}
-              <span class="sr-only">зураг хавсаргасан</span>
-            </span>
-          {% endif %}
-        </div>
-
-        {% if can_record %}
-          <a class="obsrow__edit"
-             href="{% url 'observations:edit' child.pk observation.pk %}">
-            Засах<span class="sr-only"> — {{ observation.summary }}</span>
-          </a>
-        {% endif %}
-      </div>
-    {% empty %}
+    {% include "observations/_quarter_group.html" with q_label="I улирал" q_months="9,10,11" %}
+    {% include "observations/_quarter_group.html" with q_label="II улирал" q_months="12,1,2" %}
+    {% include "observations/_quarter_group.html" with q_label="III улирал" q_months="3,4,5" %}
+    {% include "observations/_quarter_group.html" with q_label="IV улирал" q_months="6,7,8" %}
+  {% else %}
       {% comment %} Three empty states, in order of specificity: the Бүтээл
          tab open and empty gets its own wording and an add action (client's
          mockup — "Дээрх товч дарж шинэ бүтээл нэмнэ үү"), any other filter
@@ -501,8 +451,7 @@
       {% else %}
         {% include "components/empty.html" with icon="observation" message="Ажиглалт бүртгэгдээгүй байна." %}
       {% endif %}
-    {% endfor %}
-  </div>
+  {% endif %}
 
   {% comment %} The querystring is rebuilt from `filters` rather than from
      `request.GET.urlencode`, which already carried `page` and produced
@@ -528,4 +477,41 @@
   {% endif %}{% endfor %}
   {% endwith %}
 {% endif %}{% endfor %}
+
+{% comment %} Live filter over the rendered .memo-cards, and the per-quarter
+   counts/hiding that goes with it — the same client-side behaviour the
+   reference app's own Хайх/Хугацаа/Сургалтын чиглэл controls have. Runs
+   once on load (so quarters with nothing in them start hidden) and again
+   on every filter change. {% endcomment %}
+<script>
+  function filterMemoCards() {
+    var q = (document.getElementById("id_q").value || "").trim().toLowerCase();
+    var domain = document.getElementById("id_domain_top").value;
+    var month = document.getElementById("id_month_top").value;
+    var visibleTotal = 0;
+
+    document.querySelectorAll(".quarter-section").forEach(function (section) {
+      var visibleInSection = 0;
+      section.querySelectorAll(".memo-card").forEach(function (card) {
+        var matchesSearch = !q || (card.dataset.search || "").indexOf(q) !== -1;
+        var matchesDomain = !domain || (" " + (card.dataset.domain || "") + " ").indexOf(" " + domain + " ") !== -1;
+        var matchesMonth = !month || card.dataset.month === month;
+        var show = matchesSearch && matchesDomain && matchesMonth;
+        card.hidden = !show;
+        if (show) visibleInSection++;
+      });
+      section.hidden = visibleInSection === 0;
+      var countEl = section.querySelector(".quarter-section__count");
+      if (countEl) countEl.textContent = visibleInSection + " тэмдэглэл";
+      visibleTotal += visibleInSection;
+    });
+
+    var emptyEl = document.getElementById("memoFilterEmpty");
+    if (emptyEl) emptyEl.style.display = visibleTotal === 0 ? "block" : "none";
+
+    var countEl = document.getElementById("memoFilterCount");
+    if (countEl) countEl.textContent = visibleTotal + " тэмдэглэл";
+  }
+  document.addEventListener("DOMContentLoaded", filterMemoCards);
+</script>
 {% endblock %}

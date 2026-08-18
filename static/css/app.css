@@ -373,6 +373,76 @@ a { color: var(--brand); }
 .addnote[open] .addnote__chevron { transform: rotate(180deg); }
 .addnote__body { padding: var(--s4) var(--s1) 0; }
 
+/* Observation list — card grid grouped by quarter, matching the client's
+   own reference implementation (child_notes.html / child_notes.css) rather
+   than a row list. Each card's accent is the observation's real domain
+   colour (`domain_links.0.domain.color`) when it has one, brand otherwise —
+   the reference tints by `direction`, which is this app's `domain`. */
+.memo-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--s4); margin-top: var(--s4);
+}
+.memo-card {
+  --accent: var(--brand);
+  position: relative; overflow: hidden; isolation: isolate;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); display: flex; flex-direction: column;
+  text-decoration: none; color: inherit;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.memo-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(20,20,30,.09); }
+.memo-card::after {
+  content: ""; position: absolute; z-index: -1; right: -24px; bottom: -28px;
+  width: 80px; height: 80px; border-radius: 50%; background: var(--accent);
+  opacity: .1;
+}
+.memo-card__thumb {
+  width: 100%; aspect-ratio: 1.5; object-fit: cover;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--bg);
+}
+.memo-card__placeholder {
+  width: 100%; aspect-ratio: 1.5; display: grid; place-items: center;
+  background: var(--bg); color: var(--accent);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.memo-card__body { padding: var(--s3) var(--s4) var(--s4); display: flex; flex-direction: column; gap: var(--s2); }
+.memo-card__meta { display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center; }
+.memo-card__date {
+  padding: 3px 9px; border-radius: 999px; background: var(--bg); color: var(--muted);
+  font-size: var(--t-label); font-weight: 700;
+}
+.memo-card__type {
+  padding: 3px 9px; border-radius: 999px; font-size: var(--t-label); font-weight: 700;
+  background: color-mix(in srgb, var(--accent) 14%, var(--card)); color: var(--accent);
+}
+.memo-card__content {
+  color: var(--ink); font-size: var(--t-meta); font-weight: 600; line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.memo-card__flags { display: flex; gap: var(--s2); margin-top: auto; padding-top: var(--s1); }
+
+/* One <details> per quarter — grouping is computed from the observation's
+   real `observed_on` month against the school year's Sept–Aug calendar
+   (Term date ranges are not in this view's context, so the same fixed
+   month table the client's own reference app uses is what decides the
+   group, not a database lookup). */
+.quarter-section { margin-top: var(--s4); }
+.quarter-section > summary {
+  display: flex; align-items: center; gap: var(--s2); cursor: pointer;
+  list-style: none; font-weight: 700; padding: var(--s2) 0;
+}
+.quarter-section > summary::-webkit-details-marker { display: none; }
+.quarter-section__chevron { transition: transform .15s ease; }
+.quarter-section[open] .quarter-section__chevron { transform: rotate(180deg); }
+.quarter-section__count { margin-left: auto; color: var(--muted); font-weight: 600; font-size: var(--t-meta); }
+
+/* Client-side filter bar over the memo cards — this is what the reference
+   app's own Хайх/Хугацаа controls do (filter DOM nodes already on the
+   page), not a server round trip. */
+.memo-card[hidden] { display: none; }
+.notes-filter-empty { display: none; padding: var(--s5) 0; text-align: center; color: var(--muted); }
+
 /* Numbered sections inside the inline create form — the client's mockup
    draws the "Шинэ ажиглалт" form as four numbered circles, the last
    ("Дараагийн дэмжлэг") on a tinted card. Wraps the same real fields as
