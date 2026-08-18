@@ -60,6 +60,7 @@
     {% comment %} ------------------------------------------- 1. Ажиглалт {% endcomment %}
     <section class="formsec">
       <div class="formsec__head">
+        <span class="formsec__num" aria-hidden="true">1</span>
         <h2>Ажиглалт</h2>
       </div>
 
@@ -95,6 +96,7 @@
     {% comment %} ------------------------------------ 2. Нөхцөл байдал {% endcomment %}
     <section class="formsec">
       <div class="formsec__head">
+        <span class="formsec__num" aria-hidden="true">2</span>
         <h2>Нөхцөл байдал</h2>
       </div>
 
@@ -106,10 +108,16 @@
       <div class="field">
         <label for="id_child_did">Хүүхдийн хийсэн үйлдэл</label>
         <textarea name="child_did" id="id_child_did">{{ form.child_did|default:'' }}</textarea>
-        {% comment %} Quick-insert phrases — client's mockup. Clicking one
-           appends the phrase into the textarea above; nothing is stored
-           separately, this is a convenience over the same real `child_did`
-           field. {% endcomment %}
+        {% comment %} Quick-insert phrases — clicking one appends it to the
+           textarea above. Nothing is stored separately and no field is added:
+           this is the same `child_did` the view already reads, typed faster.
+           A teacher writing eighteen notes a day types these words every
+           time.
+
+           `data-text` rather than the button's own label, because the two
+           differ elsewhere on this branch: `observations/list.html` shows a
+           short chip and inserts a full sentence. One convention across every
+           screen that has chips. {% endcomment %}
         <div class="chip-row">
           <button type="button" class="chip" data-append-to="id_child_did"
                   data-text="Бие дааж">Бие дааж</button>
@@ -133,6 +141,7 @@
     {% comment %} ---------------------------------- 3. Багшийн дүгнэлт {% endcomment %}
     <section class="formsec">
       <div class="formsec__head">
+        <span class="formsec__num" aria-hidden="true">3</span>
         <h2>Багшийн дүгнэлт</h2>
       </div>
 
@@ -176,7 +185,8 @@
         <label for="id_next_steps">
           Дараагийн дэмжлэг, төлөвлөгөө <span class="field__opt">— заавал биш</span>
         </label>
-        <textarea name="next_steps" id="id_next_steps">{{ form.next_steps|default:'' }}</textarea>
+        <textarea name="next_steps" id="id_next_steps"
+                  placeholder="Дараагийн удаа юуг, хэрхэн дэмжих вэ?">{{ form.next_steps|default:'' }}</textarea>
         <div class="chip-row">
           <button type="button" class="chip" data-append-to="id_next_steps"
                   data-text="Бие даан хийлгэнэ">Бие даан хийлгэнэ</button>
@@ -185,7 +195,7 @@
           <button type="button" class="chip" data-append-to="id_next_steps"
                   data-text="Хамтран ажиллуулна">Хамтран ажиллуулна</button>
           <button type="button" class="chip" data-append-to="id_next_steps"
-                  data-text="Хэрэгсэл дүрсээр дэмжинэ">Хэрэгсэл дүрсээр дэмжинэ</button>
+                  data-text="Хэрэгсэл, дүрсээр дэмжинэ">Хэрэгсэл, дүрсээр дэмжинэ</button>
           <button type="button" class="chip" data-append-to="id_next_steps"
                   data-text="Чиглүүлж дэмжинэ">Чиглүүлж дэмжинэ</button>
           <button type="button" class="chip" data-append-to="id_next_steps"
@@ -202,6 +212,7 @@
        approved (`observations.selectors._readable`). {% endcomment %}
     <section class="formsec">
       <div class="formsec__head">
+        <span class="formsec__num" aria-hidden="true">4</span>
         <h2>Эцэг эхэд харагдах байдал</h2>
       </div>
 
@@ -237,6 +248,7 @@
     {% comment %} ----------------------------------------------- 5. Зураг {% endcomment %}
     <section class="formsec">
       <div class="formsec__head">
+        <span class="formsec__num" aria-hidden="true">5</span>
         <h2>Зураг</h2>
       </div>
 
@@ -281,6 +293,7 @@
       <a class="btn btn--ghost" href="{% url 'observations:list' child.pk %}">Болих</a>
     </div>
   </form>
+
 </div>
 
 {% comment %} Appends a chip's phrase to its textarea — comma-joined if the

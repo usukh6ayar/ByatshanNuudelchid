@@ -142,3 +142,53 @@ def test_the_search_keeps_the_other_filters(client, world):
     assert response.status_code == 200
     assert response.context["filters"]["q"] == "Батаа"
     assert response.context["filters"]["age"] == "4"
+
+
+# --------------------------------------------- the row menu, 2026-08-18
+# The row's single "Засах" pill became a "⋮" menu, from the client's mockup.
+# The row therefore gained two destinations without gaining a control, and
+# both of them are pages that already existed.
+
+
+def test_every_row_offers_the_three_actions(client, world):
+    login(client, world["dulmaa"])
+
+    body = client.get(LIST_URL).content.decode()
+    child = world["bataa"]
+
+    for name in ("portfolio:overview", "children:edit", "reports:request"):
+        assert reverse(name, args=[child.pk]) in body, (
+            f"the row menu lost its {name} entry"
+        )
+
+
+def test_the_row_menu_needs_no_javascript(client, world):
+    """A native <details>: it opens, closes on Esc and is announced as a
+    disclosure with no script and no ARIA. If it ever becomes a <button> with
+    a click handler, this is what says so."""
+    login(client, world["dulmaa"])
+
+    body = client.get(LIST_URL).content.decode()
+
+    assert '<details class="rowmenu">' in body
+
+
+def test_the_row_menu_adds_no_query_per_row(client, world, make_child):
+    """CLAUDE.md §3.5 — reversing three URLs per row is not a database read,
+    and this is what keeps it that way if one of them ever grows a lookup."""
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+
+    login(client, world["dulmaa"])
+
+    with CaptureQueriesContext(connection) as first:
+        client.get(LIST_URL)
+    baseline = len(first.captured_queries)
+
+    for index in range(5):
+        make_child(world["naran"], world["sunflower"], first_name=f"Цэс{index}")
+
+    with CaptureQueriesContext(connection) as second:
+        client.get(LIST_URL)
+
+    assert len(second.captured_queries) == baseline

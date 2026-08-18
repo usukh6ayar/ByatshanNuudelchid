@@ -1764,6 +1764,11 @@ a.tile:hover { border-color: var(--brand); }
   margin: 0 0 var(--s3); color: var(--muted); font-size: var(--t-meta);
 }
 
+/* Quick-insert phrases live at `.chip-row` / `.chip` further up this file.
+   Two definitions arrived in the 2026-08-18 merge — one per branch — and the
+   later one silently won. The duplicate is gone; `.chip-row` is the name,
+   because three templates use it against one that used `.chiprow`. */
+
 /* -------------------------------------------------------------- fields */
 
 .field { margin-top: var(--s3); }
@@ -2169,9 +2174,14 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
 
 /* Search stays visible at every width: it is how this screen is used. The
    other six filters live behind the disclosure below it. */
-.searchbar { display: flex; gap: var(--s2); margin-top: var(--s4); }
+.searchbar { display: flex; gap: var(--s2); margin-top: var(--s4); align-items: center; }
 .searchbar input[type=search] { flex: 1; min-width: 0; }
 .searchbar .btn { flex: 0 0 auto; min-height: 44px; }
+/* Decoration, not a control: the field already has a visible placeholder and
+   an sr-only label. Hidden under 480px, where the 20px it costs is 20px the
+   placeholder does not have. */
+.searchbar__ic { flex: 0 0 auto; width: 20px; height: 20px; color: var(--faint); }
+@media (max-width: 479px) { .searchbar__ic { display: none; } }
 
 .kidlist { display: flex; flex-direction: column; gap: var(--s2); }
 
@@ -2222,19 +2232,43 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
 
 .kidrow__flags { display: flex; gap: var(--s2); flex-wrap: wrap; }
 
-.kidrow__edit {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-height: 44px; min-width: 44px; padding: 0 var(--s3);
+/* Per-row action menu — the client's mockup, added 2026-08-18. It replaces
+   the "Засах" pill that used to sit here, so the row gained two destinations
+   (the portfolio and the PDF) without gaining a second control.
+
+   A native <details>: it opens with no JavaScript, closes on Esc, and is
+   focusable and announced as a disclosure without any ARIA. The panel is
+   absolutely positioned, so opening it does not push the rows below it. */
+.rowmenu { position: relative; justify-self: start; }
+.rowmenu > summary {
+  list-style: none; cursor: pointer;
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
   border-radius: var(--radius-sm); border: 1px solid var(--line);
   background: var(--card); color: var(--muted);
-  text-decoration: none; font-size: var(--t-label); font-weight: 600;
-  justify-self: start;
 }
-.kidrow__edit:hover { color: var(--brand); border-color: var(--brand); }
+.rowmenu > summary::-webkit-details-marker { display: none; }
+.rowmenu > summary:hover,
+.rowmenu[open] > summary { color: var(--brand); border-color: var(--brand); }
+
+.rowmenu__list {
+  position: absolute; right: 0; top: calc(44px + var(--s1)); z-index: 20;
+  min-width: 190px; padding: var(--s1);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius-sm); box-shadow: var(--shadow);
+}
+.rowmenu__list a {
+  display: flex; align-items: center; gap: var(--s2);
+  min-height: 44px; padding: 0 var(--s2);
+  border-radius: var(--radius-ctl);
+  text-decoration: none; color: var(--ink); font-size: var(--t-meta);
+}
+.rowmenu__list a:hover { background: var(--bg); color: var(--brand); }
+.rowmenu__list .ic { color: var(--faint); flex: 0 0 auto; }
+.rowmenu__list a:hover .ic { color: var(--brand); }
 
 @media (min-width: 900px) {
-  .kidrow { grid-template-columns: 1fr 72px 150px auto 84px; }
-  .kidrow__edit { justify-self: stretch; }
+  .kidrow { grid-template-columns: 1fr 72px 150px auto 48px; }
 }
 
 /* The row's main link wrapped a 40px avatar and inherited its height — four
@@ -2262,46 +2296,30 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
   .kidrow__main { flex: 1 0 100%; }
   .kidrow__cell { color: var(--muted); }
   .kidrow__flags { flex: 1 0 100%; }
-  /* The edit button goes: the row already opens the child, "Засах" is on
-     that page one tap further in, and a per-row secondary button is the
-     "nested tiny action" the brief rules out — it also doubled the card. */
-  .kidrow__edit { display: none; }
+  /* The menu stays on a phone where the old "Засах" pill did not. That pill
+     was a full-width secondary button that doubled the card's height — the
+     "nested tiny action" the brief rules out. A 44px icon sits inside the
+     row's existing line and costs no height at all, and it is now the only
+     way to reach the portfolio and the PDF without opening the child. */
+  .rowmenu__list { right: 0; left: auto; }
 }
 /* The separator belongs to the phone layout only: on a desktop the two are
    distinct columns under their own headings. */
 .kidrow__sep { display: none; }
 @media (max-width: 899px) { .kidrow__sep { display: inline; color: var(--faint); } }
 
-/* Per-row "⋮" action menu — client's mockup: Тайлан / Засах / PDF /
-   Устгах. Replaces the old single Засах link with one 44px trigger, so it
-   does not add row height on a phone the way a second visible button
-   would. <details>, so it needs no JavaScript. Устгах has no route yet —
-   there is no archive/delete endpoint exposed to a teacher — so it renders
-   muted and inert rather than linking to a 404. */
-.menu { position: relative; justify-self: start; }
-.menu > summary {
-  list-style: none; cursor: pointer;
-  display: inline-flex; align-items: center; justify-content: center;
-  min-height: 44px; min-width: 44px;
-  border-radius: var(--radius-sm); border: 1px solid var(--line);
-  background: var(--card); color: var(--muted);
-}
-.menu > summary::-webkit-details-marker { display: none; }
-.menu > summary:hover { color: var(--brand); border-color: var(--brand); }
-.menu__list {
-  position: absolute; right: 0; top: 48px; z-index: 20; min-width: 168px;
-  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm);
-  box-shadow: var(--shadow); padding: var(--s1);
-}
-.menu__list a, .menu__list .menu__soon {
+/* The row menu itself is `.rowmenu`, defined above. Both branches built it
+   in the 2026-08-18 merge — this branch as `.menu`, main as `.rowmenu` — and
+   the duplicate block that no template referenced is gone. `Устгах` has no
+   route yet (no archive endpoint is exposed to a teacher), so it renders as
+   an inert, muted `.rowmenu__soon` rather than a link to a 404. */
+.rowmenu__soon {
   display: flex; align-items: center; gap: var(--s2);
-  padding: var(--s2) var(--s3); border-radius: var(--radius-ctl);
-  text-decoration: none; color: var(--ink); font-size: var(--t-label);
+  min-height: 44px; padding: 0 var(--s2);
+  border-radius: var(--radius-ctl);
+  color: var(--faint); font-size: var(--t-meta); cursor: default;
 }
-.menu__list a:hover { background: var(--bg); }
-.menu__list .menu__soon { color: var(--faint); cursor: default; }
-
-@media (min-width: 900px) { .menu { justify-self: stretch; } }
+.rowmenu__soon .ic { color: var(--faint); flex: 0 0 auto; }
 
 /* ================================================== teacher child detail
    Added 2026-08-16. Deliberately *not* the parent profile: that screen opens
@@ -2356,6 +2374,11 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
 
 .workbar { display: flex; gap: var(--s2); flex-wrap: wrap; margin-top: var(--s4); }
 .workbar .btn { min-height: 44px; }
+
+/* The per-type note cards this branch drew as `.notetype` moved onto
+   `assessment/child.html` and `assessment/group_grid.html` in the
+   2026-08-18 merge, where they are `.note-type` — defined further up
+   this file. The orphaned block is gone; no template referenced it. */
 
 /* --------------------------------------------------------- side panels
    Quieter than a card: a hairline and a heading, so the reference column

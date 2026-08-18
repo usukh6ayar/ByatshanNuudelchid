@@ -20,6 +20,7 @@ from django.urls import reverse
 
 from apps.media import services as media_services
 from apps.media.tests.test_media import make_jpeg
+from apps.observations import selectors as observation_selectors
 from apps.observations import services as observation_services
 from apps.observations.models import ObservationType
 
@@ -166,3 +167,42 @@ def test_the_edit_action_is_hidden_from_a_guardian(client, world):
     body = client.get(detail_url(world["bataa"])).content.decode()
 
     assert reverse("children:edit", args=[world["bataa"].pk]) not in body
+
+
+# -------------------------------------- where a note is started, 2026-08-18
+#
+# This page briefly carried one card per §5.2 type (PR #2). The `front-v2`
+# redesign turned it into a gateway and moved those entry points onto
+# `assessment/child.html` and `assessment/group_grid.html`, so the assertions
+# that pinned them to this markup are gone.
+#
+# What is kept is the rule underneath them, which no redesign changes: the
+# list a teacher may file a note under is the `ObservationType` table minus
+# the row a guardian's own submission uses. It is pinned on the selector now
+# rather than on markup, because the markup is what keeps moving.
+#
+# For review: `front-v2` hard-codes three tiles — Ажиглалт / Ярилцлага /
+# Бүтээл — and "Ярилцлага" is not a row in `ObservationType` at all. That is a
+# CLAUDE.md §2.3 question for the pull request, not something a test settles.
+
+
+def test_a_teacher_is_not_offered_the_parent_submission_type(world):
+    """§5.2 — a teacher's own note is never "an observation the parent
+    entered". Offering it as an entry point would misfile the record."""
+    codes = {
+        entry.code
+        for entry in observation_selectors.teacher_observation_types(world["naran"])
+    }
+
+    assert "parent" not in codes
+    assert {"daily", "artwork", "activity"} <= codes
+
+
+def test_a_kindergartens_own_type_joins_the_list_without_a_code_change(world):
+    """CLAUDE.md §2.3 — the types are a table an administrator edits, so a
+    screen that offers them has to read the table and not a literal list."""
+    own = ObservationType.objects.create(
+        kindergarten=world["naran"], code="interview", name="Ярилцлага",
+    )
+
+    assert own in observation_selectors.teacher_observation_types(world["naran"])

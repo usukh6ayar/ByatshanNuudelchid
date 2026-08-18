@@ -160,7 +160,13 @@ def observation_create(request, child_id):
         return redirect("observations:detail", child_id=child.pk,
                         observation_id=observation.pk)
 
-    context |= {"form": {}, "domain_rows": _domain_rows(child),
+    # `?type=` preselects the observation type, so the child page can offer
+    # one entry point per §5.2 type instead of a single "Ажиглалт нэмэх" that
+    # always lands on the same first option. Not validated here: an id that
+    # matches no `<option>` simply leaves the select on its default, and the
+    # POST path resolves the type against `types_for` regardless.
+    context |= {"form": {"type": request.GET.get("type", "")},
+                "domain_rows": _domain_rows(child),
                 "observed_on_value": _observed_on_value()}
     return render(request, "observations/form.html", context)
 

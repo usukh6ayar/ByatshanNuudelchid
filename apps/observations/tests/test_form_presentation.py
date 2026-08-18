@@ -15,6 +15,7 @@ a browser and are wrong anyway:
 """
 
 import datetime as dt
+import re
 
 import pytest
 from django.urls import reverse
@@ -187,3 +188,59 @@ def test_every_field_still_reaches_the_view(client, world):
                  "child_did", "child_said", "teacher_comment", "next_steps",
                  "visible_to_parents", "include_in_report", "domains"):
         assert f'name="{name}"' in body, f"field missing from the form: {name}"
+
+
+# ------------------------------------------------ entry points, 2026-08-18
+# The child page now offers one card per §5.2 type instead of a single
+# "Ажиглалт нэмэх". That is only honest if the card actually lands on its own
+# type, so `?type=` preselects — and the preselection must not have picked up
+# any of the form's other defaults on the way.
+
+
+def test_a_type_in_the_query_string_preselects_it(client, world):
+    """The child page's per-type cards each carry `?type=`. Without this the
+    three cards are three doors into the same room."""
+    login(client, world["dulmaa"])
+    artwork = ObservationType.objects.get(kindergarten=None, code="artwork")
+
+    body = client.get(f"{create_url(world['bataa'])}?type={artwork.pk}").content.decode()
+    selected = re.findall(r'<option value="(\d+)"\s+selected', body)
+
+    assert selected == [str(artwork.pk)]
+
+
+def test_a_form_opened_without_a_type_preselects_nothing(client, world):
+    """Unchanged behaviour: the browser falls back to the first option, which
+    is what it did before `?type=` existed."""
+    login(client, world["dulmaa"])
+
+    body = client.get(create_url(world["bataa"])).content.decode()
+
+    assert re.findall(r'<option value="(\d+)"\s+selected', body) == []
+
+
+def test_a_bogus_type_is_ignored_rather_than_answered(client, world):
+    """`?type=` is not validated — an id that matches no option simply leaves
+    the select alone. It must not error, and it must not select anything."""
+    login(client, world["dulmaa"])
+
+    response = client.get(f"{create_url(world['bataa'])}?type=999999")
+    body = response.content.decode()
+
+    assert response.status_code == 200
+    assert re.findall(r'<option value="(\d+)"\s+selected', body) == []
+
+
+def test_preselecting_a_type_does_not_tick_parent_visibility(client, world):
+    """The 2026-08-16 privacy decision: a new observation is **not** visible
+    to families until a teacher says so. `?type=` puts a value into `form`,
+    which is the same dict the visibility checkbox reads — this is what says
+    it stayed empty."""
+    login(client, world["dulmaa"])
+    artwork = ObservationType.objects.get(kindergarten=None, code="artwork")
+
+    body = client.get(f"{create_url(world['bataa'])}?type={artwork.pk}").content.decode()
+
+    assert not re.search(r'id="id_visible"[^>]*checked', body)
+    # The report checkbox is ticked by default and must have stayed that way.
+    assert re.search(r'id="id_report"[^>]*checked', body)
