@@ -4,11 +4,14 @@
 
    **What this screen actually is.** One development domain across the whole
    group, for one term — not a children × domains matrix.
-   `selectors.group_grid(user, group, term, domain)` takes a single domain and
-   the view resolves it from `?domain=`; the domain and term selectors at the
-   top are how a teacher moves between them. So the shape is three columns —
-   child, previous term, this term's level — and it never needed the
-   horizontal scroll the old table had.
+   `selectors.group_grid(user, group, term, domain)` takes a single domain
+   and the view resolves it from `?domain=`, defaulting to the group's
+   first domain and its current term when neither is given — this screen
+   (2026-08-18) no longer offers a form to pick a different one, on
+   client's mockup, so the resolved pair is stated once, in the idbar
+   badges, rather than twice. So the shape is three columns — child,
+   previous term, this term's level — and it never needed the horizontal
+   scroll the old table had.
 
    **The one real change: the level control.** It was a `<select>` per child:
    open, scroll, pick, eighteen times. It is now four radio chips with the
@@ -21,80 +24,22 @@
    Still one form, one save, one transaction: a teacher who changes their
    mind half way down the list has not already written five rows. {% endcomment %}
 
-{% block title %}Түргэн үнэлгээ{% endblock %}
-{% block heading %}Түргэн үнэлгээ{% endblock %}
+{% block title %}Явцын үнэлгээ{% endblock %}
+{% block heading %}Явцын үнэлгээ{% endblock %}
 {% block lede %}
   <p class="lede">Бүлгийн бүх хүүхдийг нэг чиглэлээр дараалан үнэлнэ.</p>
 {% endblock %}
 
 {% block content %}
-  {% comment %} The context, in words, before anything else: which group,
-     which year, which domain, which term. All four are real values from the
-     backend — §9. {% endcomment %}
-  <div class="idbar">
-    <div class="idbar__body">
-      <h2 class="idbar__name">{{ group.name }}</h2>
-      <div class="idbar__meta">
-        <span class="badge badge--muted">{{ group.school_year.name }}</span>
-        {% if domain %}
-          <span class="badge"
-                style="background:{{ domain.color }}1a; color:{{ domain.color }}">
-            {{ domain.name }}
-          </span>
-        {% endif %}
-        {% if term %}<span class="badge badge--brand">{{ term.name }}</span>{% endif %}
-      </div>
-    </div>
-  </div>
-
-  <form method="get" class="filterbar" style="margin-top:var(--s4)">
-    {% comment %} The group selector, added 2026-08-17 with the navigation
-       work. The sidebar's "Үнэлгээ" link has to point at *some* group, and a
-       teacher may hold several — so the screen states which one it is on and
-       lets them switch, rather than the navigation choosing silently.
-
-       Rendered only when there is a choice to make: one group is not a
-       decision, and a select with a single option is furniture.
-
-       `assignable_groups` is what populates it, which is also what the view
-       validates against — a group id outside it is simply not found (§21.4).
-       {% endcomment %}
-    {% if nav_groups|length > 1 %}
-      <div>
-        <label for="id_group">Бүлэг</label>
-        <select name="group" id="id_group"
-                onchange="this.form.action=this.value; this.form.submit()">
-          {% for item in nav_groups %}
-            <option value="{% url 'assessment:group_grid' item.pk %}"
-              {% if item.pk == group.pk %}selected{% endif %}>
-              {{ item.name }} ({{ item.school_year.name }})
-            </option>
-          {% endfor %}
-        </select>
-      </div>
-    {% endif %}
-    <div>
-      <label for="id_domain">Хөгжлийн чиглэл</label>
-      <select name="domain" id="id_domain">
-        {% for item in domains %}
-          <option value="{{ item.pk }}"
-            {% if domain.pk == item.pk %}selected{% endif %}>{{ item.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div>
-      <label for="id_term">Улирал</label>
-      <select name="term" id="id_term">
-        {% for item in terms %}
-          <option value="{{ item.pk }}"
-            {% if term.pk == item.pk %}selected{% endif %}>{{ item.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="filterbar__go">
-      <button type="submit" class="btn btn--ghost">Харах</button>
-    </div>
-  </form>
+  {% comment %} No group/domain/term filter form here — the view already
+     defaults sensibly with nothing in the query string (`domains.first()`,
+     the resolved current term via `services.resolve_term`), and a teacher
+     reaches this specific group's grid from the dashboard's per-group
+     "Явцын үнэлгээ" link or the sidebar, so there is nothing to pick.
+     2026-08-18: the read-only group/year/domain/term badge row that used to
+     sit here was removed too, per client feedback — it stated facts the
+     teacher already knows from having just clicked into this group.
+     {% endcomment %}
 
   {% if not term %}
     {% include "components/empty.html" with icon="assessment" message="Энэ хичээлийн жилд улирал тохируулаагүй байна. Администратор улирлыг үүсгэсний дараа үнэлгээ хийнэ." %}
@@ -121,8 +66,15 @@
         <form method="get">
           <input type="hidden" name="domain" value="{{ domain.pk }}">
           <input type="hidden" name="term" value="{{ term.pk }}">
+          <div class="searchbar" style="margin-top:0">
+            <label for="id_focus_child_search" class="sr-only">Хүүхэд хайх</label>
+            <input type="search" id="id_focus_child_search"
+                   placeholder="Хүүхэд хайх..." autocomplete="off"
+                   oninput="filterFocusChild(this.value)"
+                   onkeydown="if (event.key === 'Enter') { event.preventDefault(); pickFirstVisibleFocusChild(); }">
+          </div>
           <label for="id_focus_child" class="sr-only">Хүүхэд</label>
-          <select name="focus_child" id="id_focus_child" onchange="this.form.submit()">
+          <select name="focus_child" id="id_focus_child" onchange="this.form.submit()" style="margin-top:var(--s2)">
             {% for row in rows %}
               <option value="{{ row.child.pk }}"
                 {% if row.child.pk|stringformat:"s" == focus_id %}selected{% endif %}>
@@ -165,6 +117,85 @@
           </a>
         </div>
       </section>
+
+    {% comment %} Төлөвлөлтийн тойм — client's mockup places a four-band
+       timeline (Бага/Дунд/Ахлах/Бэлтгэл бүлэг) above the grid so a teacher
+       sees at a glance where this group sits across the years. The four
+       bands and their order are the fixed national `Group.AgeBand` choices
+       (apps/tenants/models.py) — same category as an already-established
+       CLAUDE.md §2.3 exception for system-level enums, not something an
+       administrator configures per kindergarten. The "current" band and the
+       year under each one come from two real fields already on `group` —
+       `group.age_band` and `group.school_year.starts_on` — so this table is
+       plain arithmetic on data already in context, not a stand-in for a
+       missing backend selector (`_band_track` in apps/dashboard/selectors.py
+       computes the identical projection from the same two fields; it is
+       private to that dashboard and not reusable here without a backend
+       change, so the four branches below mirror its math directly in the
+       template instead of waiting on that refactor). {% endcomment %}
+    <section class="section" style="margin-top:var(--s5)">
+      {% include "components/section_head.html" with title="Төлөвлөлтийн тойм" %}
+      {% if group.age_band %}
+        {% with s=group.school_year.starts_on.year %}
+          <div class="bandtrack">
+            {% if group.age_band == "junior" %}
+              <div class="bandtrack__item bandtrack__item--current"><span class="bandtrack__label">Бага бүлэг</span><span class="bandtrack__years">{{ s }}–{{ s|add:"1" }}</span></div>
+              <div class="bandtrack__item bandtrack__item--ahead"><span class="bandtrack__label">Дунд бүлэг</span><span class="bandtrack__years">{{ s|add:"1" }}–{{ s|add:"2" }}</span></div>
+              <div class="bandtrack__item bandtrack__item--ahead"><span class="bandtrack__label">Ахлах бүлэг</span><span class="bandtrack__years">{{ s|add:"2" }}–{{ s|add:"3" }}</span></div>
+              <div class="bandtrack__item bandtrack__item--ahead"><span class="bandtrack__label">Бэлтгэл бүлэг</span><span class="bandtrack__years">{{ s|add:"3" }}–{{ s|add:"4" }}</span></div>
+            {% elif group.age_band == "middle" %}
+              <div class="bandtrack__item bandtrack__item--done"><span class="bandtrack__label">Бага бүлэг</span><span class="bandtrack__years">{{ s|add:"-1" }}–{{ s }}</span></div>
+              <div class="bandtrack__item bandtrack__item--current"><span class="bandtrack__label">Дунд бүлэг</span><span class="bandtrack__years">{{ s }}–{{ s|add:"1" }}</span></div>
+              <div class="bandtrack__item bandtrack__item--ahead"><span class="bandtrack__label">Ахлах бүлэг</span><span class="bandtrack__years">{{ s|add:"1" }}–{{ s|add:"2" }}</span></div>
+              <div class="bandtrack__item bandtrack__item--ahead"><span class="bandtrack__label">Бэлтгэл бүлэг</span><span class="bandtrack__years">{{ s|add:"2" }}–{{ s|add:"3" }}</span></div>
+            {% elif group.age_band == "senior" %}
+              <div class="bandtrack__item bandtrack__item--done"><span class="bandtrack__label">Бага бүлэг</span><span class="bandtrack__years">{{ s|add:"-2" }}–{{ s|add:"-1" }}</span></div>
+              <div class="bandtrack__item bandtrack__item--done"><span class="bandtrack__label">Дунд бүлэг</span><span class="bandtrack__years">{{ s|add:"-1" }}–{{ s }}</span></div>
+              <div class="bandtrack__item bandtrack__item--current"><span class="bandtrack__label">Ахлах бүлэг</span><span class="bandtrack__years">{{ s }}–{{ s|add:"1" }}</span></div>
+              <div class="bandtrack__item bandtrack__item--ahead"><span class="bandtrack__label">Бэлтгэл бүлэг</span><span class="bandtrack__years">{{ s|add:"1" }}–{{ s|add:"2" }}</span></div>
+            {% else %}
+              <div class="bandtrack__item bandtrack__item--done"><span class="bandtrack__label">Бага бүлэг</span><span class="bandtrack__years">{{ s|add:"-3" }}–{{ s|add:"-2" }}</span></div>
+              <div class="bandtrack__item bandtrack__item--done"><span class="bandtrack__label">Дунд бүлэг</span><span class="bandtrack__years">{{ s|add:"-2" }}–{{ s|add:"-1" }}</span></div>
+              <div class="bandtrack__item bandtrack__item--done"><span class="bandtrack__label">Ахлах бүлэг</span><span class="bandtrack__years">{{ s|add:"-1" }}–{{ s }}</span></div>
+              <div class="bandtrack__item bandtrack__item--current"><span class="bandtrack__label">Бэлтгэл бүлэг</span><span class="bandtrack__years">{{ s }}–{{ s|add:"1" }}</span></div>
+            {% endif %}
+          </div>
+        {% endwith %}
+      {% else %}
+        {% include "components/empty.html" with icon="cake" message="Энэ бүлгийн нас (age_band) администраторын хэсэгт тохируулаагүй тул он дараалал харагдахгүй байна." %}
+      {% endif %}
+
+      {% comment %} Сарын норм (нэг хүүхдэд сард 1-5 тэмдэглэл) — 7.24-д байгаа
+         тохиргоо. `Observation`-д зорилтын тоо хадгалах багана алга, зорилтыг
+         тохируулж, биелэлтийг тоолох selector ч алга (backend хайлт баталгаажсан
+         — apps/dashboard/selectors.py, apps/observations/selectors.py-д
+         байхгүй). Тиймээс энд зөвхөн хоосон төлөв үзүүлж, backend бэлэн
+         болмогц бодит тоогоор солино. {% endcomment %}
+      {% include "components/empty.html" with icon="soon" message="Сарын тэмдэглэлийн зорилт (хүүхэд бүрт сард хэдэн тэмдэглэл) энд удахгүй нэмэгдэнэ." %}
+    </section>
+
+    {% comment %} Санал болгох хүүхдийн карт — аль хүүхдэд энэ сард хамгийн бага
+       тэмдэглэл бичигдсэнийг харуулах зорилготой (7.24). Дээрх зорилтын тоо
+       байхгүй тул харьцуулах өгөгдөл алга — backend талд шийдэгдэх хүртэл
+       хоосон төлвөөр үлдээв. {% endcomment %}
+    <section class="section" style="margin-top:var(--s5)">
+      {% include "components/section_head.html" with title="Санал болгох хүүхэд" %}
+      {% include "components/empty.html" with icon="soon" message="Хамгийн бага тэмдэглэлтэй хүүхдийг санал болгох боломж энд удахгүй нэмэгдэнэ." %}
+    </section>
+
+    {% comment %} Сар/улирал/жил/сүүлийн үеийн ахиц — 7.24-ийн quick_assess
+       харагдана. Хүүхэд бүрийн тэмдэглэлийг сараар бүлэглэх selector алга
+       (TruncMonth ашигласан aggregation хаана ч алга), тиймээс энд ч мөн
+       backend хүлээгдэж буй хоосон төлөв. "Тайлан харах" холбоос нь ганц
+       өөрөө бодит зүйл — 7.24-д группын жилийн тайлан руу орсон ч энд ийм
+       тайлан алга, харин одоо анхаарч буй хүүхдийн улирлын тайлан
+       (reports:request, RFP §549) бодитоор байгаа тул "Хүүхэд сонгох"-оор
+       сонгосон хүүхэд рүү холбов. {% endcomment %}
+    <section class="section" style="margin-top:var(--s5)">
+      {% url 'reports:request' focus_id as focus_report_url %}
+      {% include "components/section_head.html" with title="Ахиц" link=focus_report_url link_label="Тайлан харах" %}
+      {% include "components/empty.html" with icon="soon" message="Сар, улирал, жилээр бүлэглэсэн ахицын харагдац энд удахгүй нэмэгдэнэ." %}
+    </section>
     {% endwith %}
 
     {% comment %} §12 — how much work is left, from the selector's own
@@ -256,4 +287,25 @@
       </div>
     </form>
   {% endif %}
+
+  <script>
+    function filterFocusChild(term) {
+      var needle = term.trim().toLowerCase();
+      var select = document.getElementById("id_focus_child");
+      if (!select) return;
+      Array.prototype.forEach.call(select.options, function (opt) {
+        opt.hidden = needle !== "" && opt.textContent.toLowerCase().indexOf(needle) === -1;
+      });
+    }
+
+    function pickFirstVisibleFocusChild() {
+      var select = document.getElementById("id_focus_child");
+      if (!select) return;
+      var match = Array.prototype.find.call(select.options, function (opt) { return !opt.hidden; });
+      if (match) {
+        select.value = match.value;
+        select.form.submit();
+      }
+    }
+  </script>
 {% endblock %}
