@@ -39,7 +39,7 @@
      RFP §3.4, §4.4 — the photograph is served through the permission check
      at /media/<uuid>/full/. There is no direct link to a child's image.
      {% endcomment %}
-  <div class="folio">
+  <div class="folio" id="child-information">
     {% if child.photo %}
       <img class="folio__photo"
            src="{% url 'media:serve' child.photo.public_id 'full' %}"
@@ -86,7 +86,7 @@
      §4.1 — the first story element, so it gets real prose at a readable
      measure rather than a definition list squeezed into two columns.
      {% endcomment %}
-  <section class="section">
+  <section class="section" id="about">
     {% url 'portfolio:about_me_edit' child.pk as about_url %}
     {% include "components/section_head.html" with title="Миний тухай" link=about_url link_label=about|yesno:"Засах,Бөглөх" %}
 
@@ -139,7 +139,7 @@
   {% comment %} ------------------------------------------- Нас 2–5
      §4.3. `completeness.ages_filled` and `ages_total` are the selector's own
      counts — a real figure, not a computed score. {% endcomment %}
-  <section class="section">
+  <section class="section" id="age-profiles">
     {% include "components/section_head.html" with title="Насны хуудсууд" note="2–5 насны хөгжлийн тэмдэглэл" %}
 
     <p style="margin:0 0 var(--s3)">
@@ -188,12 +188,155 @@
     </div>
   </section>
 
+  {% comment %} ------------------------------------------- Насны харьцуулалт
+     2026-08-18 — ported from the reference's `teacher/comparison.html`
+     (its own side-by-side view of the four age pages, as opposed to the
+     "Насны хуудсууд" cards above, which only preview one age at a time).
+     Every field used here already sits on `age_profiles` — the same dict
+     the cards above loop over, just read across ages instead of down one —
+     so this is presentation only, no new selector or view. Height/weight
+     growth and the photo-comparison row from the reference are left out on
+     purpose: `AboutMe.height_cm`/`weight_kg` is a single current value with
+     no per-age history, and per-age photo albums are ROADMAP.md Phase 2
+     ("photo albums") — both need a schema change, not a template one.
+     Shown only once at least one age has something to compare. {% endcomment %}
+  <section class="section" id="memories">
+      {% include "components/section_head.html" with title="Насны харьцуулалт" note="2–5 насны мэдээллийг зэрэгцүүлж харах" %}
+      {% if completeness.ages_filled > 0 %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              {% for age, profile in age_profiles.items %}<th>{{ age }} нас</th>{% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% comment %} Nine explicit rows rather than a looped field list —
+               Django templates can't look up an attribute by a variable
+               name without a custom filter, and adding one means a new
+               apps/*/templatetags/*.py file, which is backend code this
+               developer does not touch. Repetitive but plain. {% endcomment %}
+            <tr>
+              <td class="name">Дуртай өнгө</td>
+              {% for age, profile in age_profiles.items %}
+                <td>{% if profile.favorite_color %}{{ profile.favorite_color }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
+              {% endfor %}
+            </tr>
+            <tr>
+              <td class="name">Дуртай хоол</td>
+              {% for age, profile in age_profiles.items %}
+                <td>{% if profile.favorite_food %}{{ profile.favorite_food }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
+              {% endfor %}
+            </tr>
+            <tr>
+              <td class="name">Дуртай тоглоом</td>
+              {% for age, profile in age_profiles.items %}
+                <td>{% if profile.favorite_toy %}{{ profile.favorite_toy }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
+              {% endfor %}
+            </tr>
+            <tr>
+              <td class="name">Дуртай ном</td>
+              {% for age, profile in age_profiles.items %}
+                <td>{% if profile.favorite_book %}{{ profile.favorite_book }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
+              {% endfor %}
+            </tr>
+            <tr>
+              <td class="name">Дуртай дуу</td>
+              {% for age, profile in age_profiles.items %}
+                <td>{% if profile.favorite_song %}{{ profile.favorite_song }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
+              {% endfor %}
+            </tr>
+            <tr>
+              <td class="name">Дуртай үлгэр</td>
+              {% for age, profile in age_profiles.items %}
+                <td>{% if profile.favorite_story %}{{ profile.favorite_story }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
+              {% endfor %}
+            </tr>
+            <tr>
+              <td class="name">Дуртай кино</td>
+              {% for age, profile in age_profiles.items %}
+                <td>{% if profile.favorite_movie %}{{ profile.favorite_movie }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
+              {% endfor %}
+            </tr>
+            <tr>
+              <td class="name">Дуртай хувцас</td>
+              {% for age, profile in age_profiles.items %}
+                <td>{% if profile.favorite_clothes %}{{ profile.favorite_clothes }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
+              {% endfor %}
+            </tr>
+            <tr>
+              <td class="name">Дуртай үйл ажиллагаа</td>
+              {% for age, profile in age_profiles.items %}
+                <td>{% if profile.favorite_activity %}{{ profile.favorite_activity }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
+              {% endfor %}
+            </tr>
+            <tr>
+              <td class="name">Зан чанар</td>
+              {% for age, profile in age_profiles.items %}
+                <td>{% if profile.personality %}{{ profile.personality|truncatechars:80 }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
+              {% endfor %}
+            </tr>
+            <tr>
+              <td class="name">Гэр бүлийн гишүүд</td>
+              {% for age, profile in age_profiles.items %}
+                <td>{% if profile.family_members %}{{ profile.family_members|truncatechars:80 }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
+              {% endfor %}
+            </tr>
+            <tr>
+              <td class="name">Шинээр эзэмшсэн чадвар</td>
+              {% for age, profile in age_profiles.items %}
+                <td>{% if profile.new_skills %}{{ profile.new_skills|truncatechars:80 }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
+              {% endfor %}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        {% include "components/empty.html" with icon="portfolio" message="Нас насны мэдээлэл бөглөгдвөл энд зэрэгцүүлж харна." %}
+      {% endif %}
+
+      <div class="memory-gallery" aria-label="Нас насны зураг, дурсамж">
+        <div class="memory-gallery__head">
+          <div>
+            <h3>Өсөлт, зураг, дурсамж</h3>
+            <p>Нас бүрийн онцгой мөчийн зургийг сонгож урьдчилан харна.</p>
+          </div>
+          <span class="badge badge--muted">Зураг нэмэх</span>
+        </div>
+        <div class="memory-gallery__grid">
+          {% for age, profile in age_profiles.items %}
+            <article class="memory-card" data-memory-card>
+              <div class="memory-card__preview" data-memory-preview aria-live="polite">
+                <svg class="ic" aria-hidden="true"><use href="#i-photo"></use></svg>
+                <span>{{ age }} насны зураг</span>
+              </div>
+              <div class="memory-card__body">
+                <strong>{{ age }} нас</strong>
+                {% if profile and profile.new_skills %}
+                  <p>{{ profile.new_skills|truncatechars:72 }}</p>
+                {% else %}
+                  <p>Энэ насны онцгой мөчөө зурагтай нь хадгална.</p>
+                {% endif %}
+                <label class="memory-card__upload">
+                  <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
+                  Зураг сонгох
+                  <input type="file" accept="image/*" data-memory-input aria-label="{{ age }} насны зураг сонгох">
+                </label>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+        <p class="memory-gallery__hint">Сонгосон зураг энэ хуудсан дээр урьдчилан харагдана. Серверийн хадгалалтыг дараагийн backend холболтоор идэвхжүүлнэ.</p>
+      </div>
+    </section>
+
   {% comment %} ------------------------------------- Төрсөн өдрийн тэмдэглэл
      §4.2. One form per birthday, posting to a POST-only endpoint that
      redirects back here — so they save independently and this page is the
      only place they can be written. A single form wrapping all of them
      would make one save overwrite every other note. {% endcomment %}
-  <section class="section">
+  <section class="section" id="birthdays">
     {% include "components/section_head.html" with title="Төрсөн өдрийн тэмдэглэл" %}
 
     {% if birthdays %}
@@ -232,4 +375,21 @@
          href="{% url 'children:detail' child.pk %}">← Хүүхдийн хуудас</a>
     {% endif %}
   </div>
+
+  <script>
+    document.querySelectorAll('[data-memory-input]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        var file = input.files && input.files[0];
+        var card = input.closest('[data-memory-card]');
+        var preview = card && card.querySelector('[data-memory-preview]');
+        if (!file || !preview) return;
+        var reader = new FileReader();
+        reader.addEventListener('load', function () {
+          preview.innerHTML = '<img alt="Сонгосон зураг" src="' + reader.result + '">';
+          preview.classList.add('has-image');
+        });
+        reader.readAsDataURL(file);
+      });
+    });
+  </script>
 {% endblock %}
