@@ -116,92 +116,125 @@
         <form method="post" action="{% url 'observations:create' child.pk %}">
           {% csrf_token %}
 
-          <div class="fieldgrid">
-            <div class="field">
-              <label for="id_addnote_date">Ажиглалтын огноо</label>
-              <input type="date" name="observed_on" id="id_addnote_date" required>
+          {% comment %} Four numbered sections — client's "Шинэ ажиглалт"
+             mockup draws these as circled 1–4, the last on a tinted card.
+             Presentation only: the fields and their names underneath are
+             the same ones observations:create already parses. {% endcomment %}
+          <div class="form-step">
+            <div class="form-step__head">
+              <span class="form-step__num">1</span>
+              Үндсэн мэдээлэл
+            </div>
+            <div class="fieldgrid">
+              <div class="field">
+                <label for="id_addnote_date">Ажиглалтын огноо *</label>
+                <input type="date" name="observed_on" id="id_addnote_date" required>
+              </div>
+              <div class="field">
+                <label for="id_addnote_type">Ажиглалтын төрөл *</label>
+                <select name="type" id="id_addnote_type" required>
+                  {% for item in types %}
+                    <option value="{{ item.pk }}"
+                      {% if filters.type == item.pk|stringformat:"s" %}selected{% endif %}>
+                      {{ item.name }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-step">
+            <div class="form-step__head">
+              <span class="form-step__num">2</span>
+              Хөгжлийн үнэлгээ
             </div>
             <div class="field">
-              <label for="id_addnote_type">Ажиглалтын төрөл</label>
-              <select name="type" id="id_addnote_type" required>
-                {% for item in types %}
-                  <option value="{{ item.pk }}"
-                    {% if filters.type == item.pk|stringformat:"s" %}selected{% endif %}>
-                    {{ item.name }}
-                  </option>
+              <label id="addnote_domains_label">Хэд хэдэн чиглэл сонгож болно <span class="field__opt">— заавал биш</span></label>
+              <div class="domainlist" role="group" aria-labelledby="addnote_domains_label">
+                {% for item in domains %}
+                  <div class="domainrow">
+                    <input type="checkbox" name="domains" value="{{ item.pk }}" id="id_addnote_domain_{{ item.pk }}">
+                    <label for="id_addnote_domain_{{ item.pk }}">{{ item.name }}</label>
+                    <select name="level_{{ item.pk }}" aria-label="{{ item.name }} — ажиглагдсан түвшин">
+                      <option value="">Түвшин —</option>
+                      {% for level in levels %}
+                        <option value="{{ level.pk }}">{{ level.value }}. {{ level.label }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
                 {% endfor %}
-              </select>
+              </div>
             </div>
           </div>
 
-          <div class="field">
-            <label for="id_addnote_activity">
-              Үйл ажиллагааны нэр <span class="field__opt">— заавал биш</span>
+          <div class="form-step">
+            <div class="form-step__head">
+              <span class="form-step__num">3</span>
+              Ажиглалтын тэмдэглэл
+            </div>
+
+            <div class="field">
+              <label for="id_addnote_activity">
+                Гарчиг <span class="field__opt">— заавал биш</span>
+              </label>
+              <input type="text" name="activity_name" id="id_addnote_activity"
+                     placeholder="Тэмдэглэлийн товч гарчиг...">
+            </div>
+
+            <div class="field">
+              <label for="id_addnote_did">Хүүхдийн хийсэн үйлдэл</label>
+              <textarea name="child_did" id="id_addnote_did"
+                        placeholder="Хүүхэд юу хийсэн, хэрхэн оролцсоныг бодитоор тэмдэглэнэ үү..."></textarea>
+              <div class="chip-row">
+                <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Бие дааж">Бие дааж</button>
+                <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Бусадтай хамтран">Бусадтай хамтран</button>
+                <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Багшийн дэмжлэгтэй">Багшийн дэмжлэгтэй</button>
+                <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Өмнөхөөс ахицтай">Өмнөхөөс ахицтай</button>
+                <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Давтаж бататгах">Давтаж бататгах</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="id_addnote_comment">Багшийн тайлбар</label>
+              <textarea name="teacher_comment" id="id_addnote_comment"></textarea>
+            </div>
+          </div>
+
+          <div class="form-step form-step--accent">
+            <div class="form-step__head">
+              <span class="form-step__num">4</span>
+              Дараагийн дэмжлэг
+            </div>
+
+            <div class="field">
+              <label for="id_addnote_next" class="sr-only">Дараагийн удаа юуг, хэрхэн дэмжих вэ?</label>
+              <textarea name="next_steps" id="id_addnote_next"
+                        placeholder="Дараагийн удаа юуг, хэрхэн дэмжих вэ?"></textarea>
+              <div class="chip-row">
+                <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Бие даан хийлгэнэ">Бие даан хийлгэнэ</button>
+                <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Давтан бататгана">Давтан бататгана</button>
+                <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Хамтран ажиллуулна">Хамтран ажиллуулна</button>
+                <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Чиглүүлж дэмжинэ">Чиглүүлж дэмжинэ</button>
+                <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Дэмжлэгийг багасгана">Дэмжлэгийг багасгана</button>
+              </div>
+            </div>
+
+            <label class="choice">
+              <input type="checkbox" name="visible_to_parents" id="id_addnote_visible">
+              <span class="choice__body">
+                <span class="choice__title">Эцэг эхэд харагдуулах</span>
+                <span class="choice__note">Идэвхжүүлэхэд эцэг эхийн хуудсанд харагдана. Анхны төлөв — харагдахгүй.</span>
+              </span>
             </label>
-            <input type="text" name="activity_name" id="id_addnote_activity">
-          </div>
 
-          <div class="field">
-            <label for="id_addnote_did">Хүүхдийн хийсэн үйлдэл</label>
-            <textarea name="child_did" id="id_addnote_did"></textarea>
-            <div class="chip-row">
-              <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Бие дааж">Бие дааж</button>
-              <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Бусадтай хамтран">Бусадтай хамтран</button>
-              <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Багшийн дэмжлэгтэй">Багшийн дэмжлэгтэй</button>
-              <button type="button" class="chip" data-append-to="id_addnote_did" data-text="Өмнөхөөс ахицтай">Өмнөхөөс ахицтай</button>
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="id_addnote_comment">Багшийн тайлбар</label>
-            <textarea name="teacher_comment" id="id_addnote_comment"></textarea>
-          </div>
-
-          <div class="field">
-            <label id="addnote_domains_label">Хөгжлийн чиглэл ба үнэлгээ <span class="field__opt">— заавал биш</span></label>
-            <div class="domainlist" role="group" aria-labelledby="addnote_domains_label">
-              {% for item in domains %}
-                <div class="domainrow">
-                  <input type="checkbox" name="domains" value="{{ item.pk }}" id="id_addnote_domain_{{ item.pk }}">
-                  <label for="id_addnote_domain_{{ item.pk }}">{{ item.name }}</label>
-                  <select name="level_{{ item.pk }}" aria-label="{{ item.name }} — ажиглагдсан түвшин">
-                    <option value="">Түвшин —</option>
-                    {% for level in levels %}
-                      <option value="{{ level.pk }}">{{ level.value }}. {{ level.label }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              {% endfor %}
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="id_addnote_next">
-              Дараагийн дэмжлэг, төлөвлөгөө <span class="field__opt">— заавал биш</span>
+            <label class="choice">
+              <input type="checkbox" name="include_in_report" id="id_addnote_report" checked>
+              <span class="choice__body">
+                <span class="choice__title">Нэгдсэн тайланд оруулах</span>
+              </span>
             </label>
-            <textarea name="next_steps" id="id_addnote_next"></textarea>
-            <div class="chip-row">
-              <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Бие даан хийлгэнэ">Бие даан хийлгэнэ</button>
-              <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Давтан бататгана">Давтан бататгана</button>
-              <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Хамтран ажиллуулна">Хамтран ажиллуулна</button>
-              <button type="button" class="chip" data-append-to="id_addnote_next" data-text="Чиглүүлж дэмжинэ">Чиглүүлж дэмжинэ</button>
-            </div>
           </div>
-
-          <label class="choice">
-            <input type="checkbox" name="visible_to_parents" id="id_addnote_visible">
-            <span class="choice__body">
-              <span class="choice__title">Эцэг эхэд харагдуулах</span>
-              <span class="choice__note">Идэвхжүүлэхэд эцэг эхийн хуудсанд харагдана. Анхны төлөв — харагдахгүй.</span>
-            </span>
-          </label>
-
-          <label class="choice">
-            <input type="checkbox" name="include_in_report" id="id_addnote_report" checked>
-            <span class="choice__body">
-              <span class="choice__title">Нэгдсэн тайланд оруулах</span>
-            </span>
-          </label>
 
           <div class="btn-row" style="margin-top:var(--s4)">
             <button type="submit" class="btn">

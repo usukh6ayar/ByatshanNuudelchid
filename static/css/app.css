@@ -373,6 +373,27 @@ a { color: var(--brand); }
 .addnote[open] .addnote__chevron { transform: rotate(180deg); }
 .addnote__body { padding: var(--s4) var(--s1) 0; }
 
+/* Numbered sections inside the inline create form — the client's mockup
+   draws the "Шинэ ажиглалт" form as four numbered circles, the last
+   ("Дараагийн дэмжлэг") on a tinted card. Wraps the same real fields as
+   .formsec/.field elsewhere; this is presentation only. */
+.form-step {
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  padding: var(--s4); margin-top: var(--s4);
+}
+.form-step:first-child { margin-top: 0; }
+.form-step--accent { background: var(--brand-soft); border-color: transparent; }
+.form-step__head {
+  display: flex; align-items: center; gap: var(--s3);
+  font-weight: 700; font-size: var(--t-title);
+}
+.form-step__num {
+  width: 26px; height: 26px; border-radius: 50%; background: var(--card);
+  border: 1px solid var(--line); display: grid; place-items: center;
+  font-size: var(--t-label); font-weight: 700; color: var(--muted); flex-shrink: 0;
+}
+.form-step .field:first-of-type { margin-top: var(--s3); }
+
 .badge {
   display: inline-block; padding: 3px 9px; border-radius: 999px;
   font-size: .78rem; font-weight: 600;
