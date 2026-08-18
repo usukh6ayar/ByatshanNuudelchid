@@ -20,13 +20,14 @@
    template reaches for a relation that would cost a query per row
    (CLAUDE.md §3.5); `test_list_presentation.py` holds that flat. {% endcomment %}
 
-{% block title %}Хүүхдийн жагсаалт{% endblock %}
-{% block heading %}Хүүхдүүд{% endblock %}
+{% block title %}{% if request.GET.report %}Тайлан{% else %}Хүүхдийн жагсаалт{% endif %}{% endblock %}
+{% block heading %}{% if request.GET.report %}Тайлан{% else %}Хүүхдүүд{% endif %}{% endblock %}
 {% block lede %}
-  <p class="lede">Хариуцсан бүлгийн хүүхдүүд.</p>
+  <p class="lede">{% if request.GET.report %}Багшийн нэгдсэн тайлан, график, хэвлэх хувилбар.{% else %}Хариуцсан бүлгийн хүүхдүүд.{% endif %}</p>
 {% endblock %}
 
 {% block content %}
+  {% if not request.GET.report %}
   <div class="btn-row" style="margin-top:0">
     <a class="btn" href="{% url 'children:create' %}">
       <svg class="ic ic--sm" aria-hidden="true"><use href="#i-plus"></use></svg>
@@ -265,4 +266,71 @@
       </nav>
     {% endwith %}
   {% endif %}
+  {% endif %}
+
+  <section class="teacher-report-ui" id="teacher-report-dashboard" aria-labelledby="teacher-report-title">
+    <div class="teacher-report-ui__head">
+      <div>
+        <span>БАГШИЙН НЭГДСЭН ТАЙЛАН</span>
+        <h2 id="teacher-report-title">Тайлангийн dashboard</h2>
+        <p>Ажиглалт, бүтээл, тэмдэглэл, судалгааны үзүүлэлтийг нэг дор харна.</p>
+      </div>
+      <div class="teacher-report-ui__actions">
+        <a class="btn btn--ghost" href="{% url 'children:list' %}">← Хүүхдийн нэрс</a>
+        <button type="button" class="btn btn--ghost" onclick="window.print()">
+          <svg class="ic ic--sm" aria-hidden="true"><use href="#i-report"></use></svg> Хэвлэх
+        </button>
+      </div>
+    </div>
+
+    <div class="teacher-report-ui__filters" aria-label="Тайлангийн шүүлт">
+      <label>Хичээлийн жил<select disabled><option>Backend холбохоор сонгоно</option></select></label>
+      <label>Улирал<select disabled><option>Бүх улирал</option></select></label>
+      <label>Сар<input type="month" disabled aria-label="Сар сонгох"></label>
+    </div>
+
+    <div class="teacher-report-ui__kpis">
+      <div><span>ХҮҮХЭД</span><strong>{{ page.paginator.count }}</strong><small>одоогийн жагсаалт</small></div>
+      <div><span>АЖИГЛАЛТ</span><strong>—</strong><small>өгөгдөл холбогдоогүй</small></div>
+      <div><span>БҮТЭЭЛ</span><strong>—</strong><small>өгөгдөл холбогдоогүй</small></div>
+      <div><span>ЭЦЭГ ЭХИЙН ТЭМДЭГЛЭЛ</span><strong>—</strong><small>өгөгдөл холбогдоогүй</small></div>
+    </div>
+
+    <div class="teacher-report-ui__grid">
+      <section class="teacher-report-card">
+        <h3>Сар, улирлын явц</h3>
+        <div class="teacher-report-chart teacher-report-chart--empty" aria-label="Сар бүрийн ажиглалтын график">
+          <span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <p>Ажиглалт, бүтээлийн тоог backend холбогдоход сараар графикаар харуулна.</p>
+      </section>
+      <section class="teacher-report-card">
+        <h3>Хүүхдийн судалгаа</h3>
+        <div class="teacher-report-survey">
+          <svg class="ic" aria-hidden="true"><use href="#i-survey"></use></svg>
+          <strong>Судалгаа холбогдоогүй</strong>
+          <span>Асуулга, хариултын үзүүлэлт энд харагдана.</span>
+        </div>
+      </section>
+    </div>
+    <section class="teacher-report-card">
+      <h3>Хөгжлийн чиглэлийн үзүүлэлт</h3>
+      <div class="teacher-report-lines">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <p>Түвшинтэй ажиглалт, үнэлгээний бодит өгөгдлөөр чиглэл бүрийн ахицыг харуулна.</p>
+    </section>
+  </section>
+  <script>
+    (function () {
+      function setReportMode() {
+        document.body.classList.toggle(
+          'showing-teacher-report',
+          window.location.hash === '#teacher-report-dashboard'
+        );
+      }
+      setReportMode();
+      window.addEventListener('hashchange', setReportMode);
+    }());
+  </script>
 {% endblock %}

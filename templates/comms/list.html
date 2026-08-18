@@ -1,134 +1,140 @@
 {% extends base_template %}
-{% comment %} RFP §8.1 — redesigned 2026-08-16. One screen, two audiences: a
-   teacher sees what they published and their own drafts, a family sees what
-   reaches their child. The view picks the queryset (`for_staff` vs
-   `for_guardian`); this template only presents what it is handed and never
-   filters.
-
-   **Targeting is shown to staff only, and that is not a style choice.**
-   `for_staff` prefetches `targets__group` and `targets__child`;
-   `for_guardian` does not, because a family has no use for the routing. So
-   rendering the audience on the parent list would be one query per row —
-   the N+1 CLAUDE.md §3.5 forbids — as well as telling a family which other
-   groups were written to.
-
-   **No attachment indicator here.** The list querysets do not prefetch
-   `attachments`, so a paperclip per row would be a query per row. Adding the
-   prefetch is a one-line selector change and out of scope for a
-   presentation task; the detail screen shows the files. {% endcomment %}
-
-{% block title %}Мэдэгдэл{% endblock %}
-{% block heading %}Мэдэгдэл{% endblock %}
-{% block lede %}
-  <p class="lede">
-    {% if is_staff %}
-      Нийтэлсэн мэдэгдэл, ноорог.
-    {% else %}
-      Цэцэрлэгээс ирсэн мэдээлэл.
-    {% endif %}
-  </p>
-{% endblock %}
+{% block title %}{% if is_staff %}Ангийн самбар{% else %}Мэдэгдэл{% endif %}{% endblock %}
+{% block heading %}{% if is_staff %}Ангийн самбар{% else %}Мэдэгдэл{% endif %}{% endblock %}
+{% block lede %}<p class="lede">{% if is_staff %}Эцэг эхчүүдэд мэдээлэл, зар хуваалцах хэсэг.{% else %}Цэцэрлэгээс ирсэн мэдээлэл.{% endif %}</p>{% endblock %}
 
 {% block content %}
-  {% if is_staff %}
-    <div class="btn-row" style="margin-top:0">
-      <a class="btn" href="{% url 'comms:create' %}">
+  <section class="classboard">
+    {% if is_staff %}
+      <div class="classboard__mobile-head">
+        <strong>Хүүхдийн хөгжлийн цахим хавтас</strong>
+        <span><a href="{% url 'dashboard:teacher' %}">Нүүр</a><a href="{% url 'accounts:logout' %}">Гарах</a></span>
+      </div>
+    {% endif %}
+
+    <div class="classboard__tools">
+      <form class="classboard__search" method="get">
+        <svg class="ic ic--sm" aria-hidden="true"><use href="#i-review"></use></svg>
+        <label class="sr-only" for="id_board_search">Мэдээллээс хайх</label>
+        <input id="id_board_search" type="search" name="q" placeholder="Мэдээллээс хайх...">
+      </form>
+      <button class="classboard__filter" type="button" aria-expanded="false" aria-controls="classboard-filters" data-board-filter>
+        <svg class="ic ic--sm" aria-hidden="true"><use href="#i-review"></use></svg> Шүүлтүүр
+      </button>
+    </div>
+    <div class="classboard__filters" id="classboard-filters" hidden>
+      <label>
+        <span>Төрөл</span>
+        <select data-board-category>
+          <option value="">Бүх төрөл</option>
+          <option value="Зарлал">Зарлал</option>
+          <option value="Мэдээлэл">Мэдээлэл</option>
+          <option value="Сургалт">Сургалт</option>
+          <option value="Зугаалга">Зугаалга</option>
+          <option value="Өдөрлөг">Өдөрлөг</option>
+          <option value="Төрсөн өдөр">Төрсөн өдөр</option>
+          <option value="Бусад">Бусад</option>
+        </select>
+      </label>
+      <label>
+        <span>Он</span>
+        <select data-board-year>
+          <option value="">Бүх он</option>
+          {% for announcement in page %}
+            {% if announcement.published_at %}<option value="{{ announcement.published_at|date:'Y' }}">{{ announcement.published_at|date:"Y" }} он</option>{% endif %}
+          {% endfor %}
+        </select>
+      </label>
+      <button type="button" class="is-active" data-board-kind="all">Бүгд</button>
+      <button type="button" data-board-kind="important">Чухал</button>
+    </div>
+
+    {% if is_staff %}
+      <a class="classboard__composer" href="{% url 'comms:create' %}">
+        <span class="avatar avatar--sm" aria-hidden="true">{{ request.user.first_name|first|default:"·" }}</span>
+        <span>Эцэг эхэд юу хуваалцах вэ?</span>
         <svg class="ic ic--sm" aria-hidden="true"><use href="#i-plus"></use></svg>
-        Шинэ мэдэгдэл
       </a>
-    </div>
-  {% endif %}
+    {% endif %}
 
-  {% if page.paginator.count %}
-    <div class="listmeta">
-      <span>Нийт {{ page.paginator.count }} мэдэгдэл</span>
-      {% if unread %}
-        <span class="badge badge--brand">{{ unread }} шинэ</span>
-      {% endif %}
-    </div>
-  {% endif %}
+    {% if page.paginator.count %}
+      <div class="classboard__meta"><span>Нийт {{ page.paginator.count }} мэдээлэл</span>{% if unread %}<span class="badge badge--brand">{{ unread }} шинэ</span>{% endif %}</div>
+      <div class="classboard__feed">
+        {% for announcement in page %}
+          <a class="classboard-post{% if not is_staff and not announcement.is_read %} classboard-post--new{% endif %}" href="{% url 'comms:detail' announcement.pk %}" data-board-post data-board-important="{% if announcement.is_important %}true{% else %}false{% endif %}" data-board-year="{% if announcement.published_at %}{{ announcement.published_at|date:'Y' }}{% endif %}" data-board-text="{{ announcement.title }} {{ announcement.body }}">
+            <span class="classboard-post__mark"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-bell"></use></svg></span>
+            <span><strong>{{ announcement.title }}{% if announcement.is_important %}<em class="classboard-post__important">Чухал</em>{% endif %}</strong><small>{% if announcement.published_at %}{{ announcement.published_at|date:"Y.m.d" }}{% else %}Нийтлээгүй{% endif %}{% if announcement.author %} · {{ announcement.author }}{% endif %}</small><p>{{ announcement.body|truncatewords:22 }}</p></span>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="classboard-empty">
+        <span class="classboard-empty__icon"><svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg></span>
+        <h2>Одоогоор мэдээлэл алга</h2>
+        <p>Дээрх хэсгээс шинэ мэдээлэл нийтэлнэ үү.</p>
+      </div>
+    {% endif %}
+  </section>
 
-  <div class="notes">
-    {% for announcement in page %}
-      {% comment %} `is_read` is annotated by `with_read_flag` and exists only
-         on the guardian queryset — a staff row has no read state of its own,
-         so it is never drawn as unread. {% endcomment %}
-      <a class="note{% if not is_staff and not announcement.is_read %} note--new{% endif %}"
-         href="{% url 'comms:detail' announcement.pk %}">
-        {% if is_staff %}
-          <span class="note__dot note__dot--read" aria-hidden="true"></span>
-        {% else %}
-          <span class="note__dot{% if announcement.is_read %} note__dot--read{% endif %}"
-                aria-hidden="true"></span>
-        {% endif %}
-
-        <span class="note__body">
-          <span class="note__title">{{ announcement.title }}</span>
-
-          <span class="note__meta">
-            {% if not is_staff and not announcement.is_read %}
-              {% comment %} The unread state in words, so it is not carried
-                 by weight and a dot alone (§13). {% endcomment %}
-              <span class="badge badge--brand">Шинэ</span>
-            {% endif %}
-
-            {% if announcement.is_important %}
-              <span class="badge badge--warn">Чухал</span>
-            {% endif %}
-
-            {% if is_staff %}
-              <span class="badge {% if announcement.status == 'published' %}badge--ok{% else %}badge--muted{% endif %}">
-                {{ announcement.get_status_display }}
-              </span>
-            {% endif %}
-
-            <span>
-              {% if announcement.published_at %}
-                {{ announcement.published_at|date:"Y.m.d" }}
-              {% else %}
-                Нийтлээгүй
-              {% endif %}
-            </span>
-
-            {% if announcement.author %}
-              <span>{{ announcement.author }}</span>
-            {% endif %}
-
-            {% comment %} §8.1 — who it was written to. Staff only; see the
-               note at the top of this file. {% endcomment %}
-            {% if is_staff %}
-              {% for target in announcement.targets.all %}
-                <span class="badge badge--muted">{{ target }}</span>
-              {% empty %}
-                <span class="badge badge--muted">Бүх эцэг эх</span>
-              {% endfor %}
-            {% endif %}
-          </span>
-
-          <span class="note__preview">{{ announcement.body|truncatewords:22 }}</span>
-        </span>
-      </a>
-    {% empty %}
-      {% if is_staff %}
-        {% url 'comms:create' as create_url %}
-        {% include "components/empty.html" with icon="bell" message="Мэдэгдэл хараахан үүсгээгүй байна. Эцэг эхэд хүргэх мэдээллээ эндээс нийтэлнэ." action=create_url action_label="Шинэ мэдэгдэл" %}
-      {% else %}
-        {% include "components/empty.html" with icon="bell" message="Одоогоор мэдэгдэл алга байна. Цэцэрлэгээс мэдээлэл ирэхэд энд харагдана." %}
-      {% endif %}
-    {% endfor %}
-  </div>
-
-  {% if page.has_other_pages %}
-    <nav class="pager" aria-label="Хуудаслалт">
-      {% if page.has_previous %}
-        <a href="?page={{ page.previous_page_number }}" rel="prev">← Өмнөх</a>
-      {% endif %}
-      <span class="pager__now" aria-current="page">
-        {{ page.number }} / {{ page.paginator.num_pages }}
-      </span>
-      {% if page.has_next %}
-        <a href="?page={{ page.next_page_number }}" rel="next">Дараах →</a>
-      {% endif %}
+  {% if is_staff %}
+    <nav class="classboard-nav" aria-label="Гар утасны цэс">
+      <a href="{% url 'dashboard:teacher' %}"><svg class="ic" aria-hidden="true"><use href="#i-dashboard"></use></svg>Самбар</a>
+      <a href="{% url 'comms:list' %}" aria-current="page"><svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg>Мэдээ</a>
+      {% if nav_group %}<a href="{% url 'assessment:group_grid' nav_group.pk %}"><svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg>Явцын үнэлгээ</a>{% endif %}
+      <a href="{% url 'accounts:profile' %}"><svg class="ic" aria-hidden="true"><use href="#i-more"></use></svg>Цэс</a>
     </nav>
   {% endif %}
+  <script>
+    (function () {
+      var search = document.getElementById('id_board_search');
+      var filterToggle = document.querySelector('[data-board-filter]');
+      var filters = document.getElementById('classboard-filters');
+      var category = document.querySelector('[data-board-category]');
+      var year = document.querySelector('[data-board-year]');
+      var selectedKind = 'all';
+      var posts = document.querySelectorAll('[data-board-post]');
+      if (year) {
+        var seenYears = {};
+        Array.prototype.slice.call(year.options).forEach(function (option) {
+          if (!option.value || seenYears[option.value]) option.remove();
+          else seenYears[option.value] = true;
+        });
+      }
+      function filterPosts() {
+        var query = (search && search.value || '').toLowerCase().trim();
+        var selectedCategory = category && category.value || '';
+        var selectedYear = year && year.value || '';
+        posts.forEach(function (post) {
+          var postText = post.getAttribute('data-board-text') || '';
+          var textMatch = postText.toLowerCase().indexOf(query) !== -1;
+          var categoryMatch = !selectedCategory || postText.indexOf(selectedCategory + ':') === 0;
+          var yearMatch = !selectedYear || post.getAttribute('data-board-year') === selectedYear;
+          var kindMatch = selectedKind === 'all' || post.getAttribute('data-board-important') === 'true';
+          post.hidden = !(textMatch && categoryMatch && yearMatch && kindMatch);
+        });
+      }
+      if (search) {
+        search.addEventListener('input', filterPosts);
+        search.form.addEventListener('submit', function (event) { event.preventDefault(); filterPosts(); });
+      }
+      if (filterToggle && filters) {
+        filterToggle.addEventListener('click', function () {
+          var expanded = filterToggle.getAttribute('aria-expanded') === 'true';
+          filterToggle.setAttribute('aria-expanded', String(!expanded));
+          filters.hidden = expanded;
+        });
+        [category, year].forEach(function (select) {
+          if (select) select.addEventListener('change', filterPosts);
+        });
+        filters.querySelectorAll('[data-board-kind]').forEach(function (button) {
+          button.addEventListener('click', function () {
+            selectedKind = button.getAttribute('data-board-kind');
+            filters.querySelectorAll('[data-board-kind]').forEach(function (item) { item.classList.remove('is-active'); });
+            button.classList.add('is-active');
+            filterPosts();
+          });
+        });
+      }
+    }());
+  </script>
 {% endblock %}
