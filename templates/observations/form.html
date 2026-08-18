@@ -60,6 +60,7 @@
     {% comment %} ------------------------------------------- 1. Ажиглалт {% endcomment %}
     <section class="formsec">
       <div class="formsec__head">
+        <span class="formsec__num" aria-hidden="true">1</span>
         <h2>Ажиглалт</h2>
       </div>
 
@@ -95,6 +96,7 @@
     {% comment %} ------------------------------------ 2. Нөхцөл байдал {% endcomment %}
     <section class="formsec">
       <div class="formsec__head">
+        <span class="formsec__num" aria-hidden="true">2</span>
         <h2>Нөхцөл байдал</h2>
       </div>
 
@@ -106,6 +108,18 @@
       <div class="field">
         <label for="id_child_did">Хүүхдийн хийсэн үйлдэл</label>
         <textarea name="child_did" id="id_child_did">{{ form.child_did|default:'' }}</textarea>
+        {% comment %} Quick-insert phrases — clicking one appends it to the
+           textarea above. Nothing is stored separately and no field is added:
+           this is the same `child_did` the view already reads, typed faster.
+           A teacher writing eighteen notes a day types these words every
+           time. {% endcomment %}
+        <div class="chiprow">
+          <button type="button" class="chip" data-append-to="id_child_did">Бие дааж</button>
+          <button type="button" class="chip" data-append-to="id_child_did">Бусадтай хамтран</button>
+          <button type="button" class="chip" data-append-to="id_child_did">Багшийн дэмжлэгтэй</button>
+          <button type="button" class="chip" data-append-to="id_child_did">Өмнөхөөс ахицтай</button>
+          <button type="button" class="chip" data-append-to="id_child_did">Давтаж бататгах</button>
+        </div>
       </div>
 
       <div class="field">
@@ -117,6 +131,7 @@
     {% comment %} ---------------------------------- 3. Багшийн дүгнэлт {% endcomment %}
     <section class="formsec">
       <div class="formsec__head">
+        <span class="formsec__num" aria-hidden="true">3</span>
         <h2>Багшийн дүгнэлт</h2>
       </div>
 
@@ -160,7 +175,16 @@
         <label for="id_next_steps">
           Дараагийн дэмжлэг, төлөвлөгөө <span class="field__opt">— заавал биш</span>
         </label>
-        <textarea name="next_steps" id="id_next_steps">{{ form.next_steps|default:'' }}</textarea>
+        <textarea name="next_steps" id="id_next_steps"
+                  placeholder="Дараагийн удаа юуг, хэрхэн дэмжих вэ?">{{ form.next_steps|default:'' }}</textarea>
+        <div class="chiprow">
+          <button type="button" class="chip" data-append-to="id_next_steps">Бие даан хийлгэнэ</button>
+          <button type="button" class="chip" data-append-to="id_next_steps">Давтан бататгана</button>
+          <button type="button" class="chip" data-append-to="id_next_steps">Хамтран ажиллуулна</button>
+          <button type="button" class="chip" data-append-to="id_next_steps">Хэрэгсэл, дүрсээр дэмжинэ</button>
+          <button type="button" class="chip" data-append-to="id_next_steps">Чиглүүлж дэмжинэ</button>
+          <button type="button" class="chip" data-append-to="id_next_steps">Дэмжлэгийг багасгана</button>
+        </div>
       </div>
     </section>
 
@@ -172,6 +196,7 @@
        approved (`observations.selectors._readable`). {% endcomment %}
     <section class="formsec">
       <div class="formsec__head">
+        <span class="formsec__num" aria-hidden="true">4</span>
         <h2>Эцэг эхэд харагдах байдал</h2>
       </div>
 
@@ -207,6 +232,7 @@
     {% comment %} ----------------------------------------------- 5. Зураг {% endcomment %}
     <section class="formsec">
       <div class="formsec__head">
+        <span class="formsec__num" aria-hidden="true">5</span>
         <h2>Зураг</h2>
       </div>
 
@@ -251,5 +277,23 @@
       <a class="btn btn--ghost" href="{% url 'observations:list' child.pk %}">Болих</a>
     </div>
   </form>
+
+  {% comment %} Appends a chip's own label to the textarea it names —
+     comma-joined when the field already has text. No framework and no state
+     beyond the field itself; the result is exactly what typing the phrase by
+     hand would produce, so a browser with JavaScript off simply sees six
+     buttons that do nothing and the textarea still works. {% endcomment %}
+  <script>
+    document.querySelectorAll(".chip[data-append-to]").forEach(function (chip) {
+      chip.addEventListener("click", function () {
+        var field = document.getElementById(chip.dataset.appendTo);
+        if (!field) return;
+        var phrase = chip.textContent.trim();
+        var current = field.value.trim();
+        field.value = current ? current + ", " + phrase : phrase;
+        field.focus();
+      });
+    });
+  </script>
 </div>
 {% endblock %}

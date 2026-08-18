@@ -39,6 +39,7 @@
      them into two forms would silently drop the other's values. {% endcomment %}
   <form method="get">
     <div class="searchbar">
+      <svg class="ic searchbar__ic" aria-hidden="true"><use href="#i-search"></use></svg>
       <label class="sr-only" for="id_q">Хүүхэд хайх</label>
       <input type="search" name="q" id="id_q" value="{{ filters.q }}"
              placeholder="Нэр эсвэл бүртгэлийн дугаараар хайх">
@@ -199,9 +200,36 @@
           {% endif %}
         </div>
 
-        <a class="kidrow__edit" href="{% url 'children:edit' child.pk %}">
-          Засах<span class="sr-only"> — {{ child.full_name }}</span>
-        </a>
+        {% comment %} The client's mockup puts every per-child action behind
+           one "⋮" on the row rather than a single "Засах" link — a teacher
+           who wants the portfolio or a PDF had to open the child first.
+
+           A native `<details>`, so it opens with no JavaScript and closes on
+           Esc. It replaces `.kidrow__edit` rather than sitting beside it:
+           Засах is the second item in the menu, so nothing is lost.
+
+           All three destinations are routes that exist and that this
+           template already had permission to name — the child page links the
+           same three. Reversing them costs no query. {% endcomment %}
+        <details class="rowmenu">
+          <summary aria-label="{{ child.full_name }} — үйлдэл">
+            <svg class="ic ic--sm" aria-hidden="true"><use href="#i-more"></use></svg>
+          </summary>
+          <div class="rowmenu__list">
+            <a href="{% url 'portfolio:overview' child.pk %}">
+              <svg class="ic ic--sm" aria-hidden="true"><use href="#i-portfolio"></use></svg>
+              Хувийн хавтас
+            </a>
+            <a href="{% url 'children:edit' child.pk %}">
+              <svg class="ic ic--sm" aria-hidden="true"><use href="#i-children"></use></svg>
+              Засах
+            </a>
+            <a href="{% url 'reports:request' child.pk %}">
+              <svg class="ic ic--sm" aria-hidden="true"><use href="#i-report"></use></svg>
+              PDF тайлан
+            </a>
+          </div>
+        </details>
       </div>
     {% empty %}
       {% comment %} Two states that must not read alike: nothing matched a

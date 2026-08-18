@@ -34,6 +34,17 @@ def types_for(kindergarten):
     ).order_by("order", "name")
 
 
+def teacher_observation_types(kindergarten):
+    """The types a teacher may file a note under — RFP §5.2.
+
+    `types_for` returns all four starting types, including the one a
+    guardian's own submission is filed under. That row is not a choice a
+    teacher makes: a teacher writing a note is not "an observation the parent
+    entered", and offering it as an entry point would misfile the record.
+    """
+    return types_for(kindergarten).exclude(code="parent")
+
+
 def parent_observation_type(kindergarten) -> ObservationType | None:
     """The type a guardian's own submission is filed under — RFP §5.2.
 

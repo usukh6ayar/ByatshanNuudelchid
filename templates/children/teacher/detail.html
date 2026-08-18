@@ -75,12 +75,6 @@
      teacher opens this screen to do, so it leads and it is the only solid
      one. {% endcomment %}
   <div class="workbar">
-    {% if can_record %}
-      <a class="btn" href="{% url 'observations:create' child.pk %}">
-        <svg class="ic ic--sm" aria-hidden="true"><use href="#i-plus"></use></svg>
-        Ажиглалт нэмэх
-      </a>
-    {% endif %}
     <a class="btn btn--ghost" href="{% url 'assessment:child' child.pk %}">
       <svg class="ic ic--sm" aria-hidden="true"><use href="#i-assessment"></use></svg>
       Үнэлгээ
@@ -100,6 +94,36 @@
       <a class="btn btn--ghost" href="{% url 'children:edit' child.pk %}">Засах</a>
     {% endif %}
   </div>
+
+  {% comment %} ------------------------------------- record a note
+     The client's mockup opens this action as one card per kind of note
+     rather than the single "Ажиглалт нэмэх" button that used to lead the
+     workbar above. It replaces that button; both would be two ways to do the
+     same thing side by side.
+
+     The cards are §5.2's real `ObservationType` rows, minus the one a
+     guardian's submission is filed under — not a list written into this
+     template (CLAUDE.md §2.3), so a kindergarten that defines its own type
+     gets a card for it without a template change. `?type=` preselects it on
+     the form, which is the only thing that makes three cards to one form
+     honest rather than three doors into the same room. {% endcomment %}
+  {% if can_record and observation_types %}
+    <section class="section">
+      {% include "components/section_head.html" with title="Тэмдэглэл бүртгэх" %}
+      <div class="notetypes">
+        {% for type in observation_types %}
+          <a class="notetype" href="{% url 'observations:create' child.pk %}?type={{ type.pk }}">
+            <span class="notetype__icon" aria-hidden="true">
+              <svg class="ic ic--sm"><use href="#i-plus"></use></svg>
+            </span>
+            <span class="notetype__body">
+              <span class="notetype__title">{{ type.name }}</span>
+            </span>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
 
   <div class="work" style="margin-top:var(--s5)">
     {% comment %} ============================================ the record {% endcomment %}
