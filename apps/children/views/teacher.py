@@ -139,6 +139,10 @@ def child_detail(request, child_id):
         )[:RECENT_ASSESSMENTS],
         "about": portfolio_selectors.about_me(child),
         "age_profiles": portfolio_selectors.age_profiles(child),
+        # `observation_types` was passed here for PR #2's per-type cards. The
+        # front-v2 redesign moved those entry points to the assessment
+        # screens, so the read is gone rather than left costing a query on
+        # every child page for a variable no template uses.
     })
 
 
