@@ -1,0 +1,136 @@
+{% extends "base_teacher.html" %}
+{% comment %} нэмэлт.md §1 — one group, one day, every child at once.
+
+   The dashboard drew this as a JavaScript panel that would fetch a roster
+   once a backend existed. It is a plain form instead: CLAUDE.md §2.2 rules
+   out the web layer calling its own API, and a register that stops working
+   when a classroom tablet's script fails is the wrong trade for a screen a
+   teacher has to complete every morning.
+
+   Radio buttons rather than a select per child, the same reasoning as the
+   assessment grid: six states, one tap, all of them visible without opening
+   anything. The field names are `status_<enrollment_id>` and
+   `note_<enrollment_id>`, which is what the view reads back.
+
+   Children with no mark are listed too, and counted at the top. An unmarked
+   child raises no error and writes no row — the day is simply gone by the
+   time anyone reconciles the month (`selectors.unmarked_children`). {% endcomment %}
+
+{% block title %}Ирц бүртгэх{% endblock %}
+{% block heading %}Ирц бүртгэх{% endblock %}
+{% block lede %}
+  <p class="lede">Бүлгийн бүх хүүхдийн өдрийн ирцийг нэг дор бүртгэнэ.</p>
+{% endblock %}
+
+{% block content %}
+  <div class="idbar">
+    <div class="idbar__body">
+      <h2 class="idbar__name">{{ group.name }}</h2>
+      <div class="idbar__meta">
+        <span class="badge badge--muted">{{ group.school_year.name }}</span>
+        <span class="badge badge--brand">{{ date|date:"Y.m.d" }}</span>
+        {% if unmarked %}
+          <span class="badge badge--warn">{{ unmarked }} бүртгэгдээгүй</span>
+        {% else %}
+          <span class="badge badge--ok">Бүгд бүртгэгдсэн</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% comment %} Group and date in one GET form. `max` is today because the
+     service refuses a future day — recording the future is how a month's
+     funding gets claimed before the children have attended it. {% endcomment %}
+  <form method="get" class="filterbar" style="margin-top:var(--s4)">
+    {% if groups|length > 1 %}
+      <div>
+        <label for="id_group">Бүлэг</label>
+        <select name="group" id="id_group"
+                onchange="this.form.action=this.value; this.form.submit()">
+          {% for item in groups %}
+            <option value="{% url 'attendance:group_register' item.pk %}"
+              {% if item.pk == group.pk %}selected{% endif %}>
+              {{ item.name }} ({{ item.school_year.name }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    {% endif %}
+    <div>
+      <label for="id_date">Огноо</label>
+      <input type="date" name="date" id="id_date"
+             value="{{ date|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}">
+    </div>
+    <div class="filterbar__go">
+      <button type="submit" class="btn btn--ghost">Харах</button>
+    </div>
+  </form>
+
+  {% if not rows %}
+    {% include "components/empty.html" with icon="children" message="Энэ бүлэгт идэвхтэй хүүхэд бүртгэлгүй байна." %}
+  {% else %}
+    <div class="listmeta" style="margin-top:var(--s5)">
+      <span>Нийт {{ rows|length }} хүүхэд</span>
+    </div>
+
+    <form method="post" class="gridform">
+      {% csrf_token %}
+      {% comment %} The date travels with the marks. A teacher who changes it
+         in the form above and saves without pressing "Харах" must record the
+         day they are looking at. {% endcomment %}
+      <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+
+      <div class="obslist attsheet" style="margin-top:var(--s3)">
+        {% for row in rows %}
+          <div class="gridrow{% if not row.attendance %} gridrow--todo{% endif %}">
+            <div class="gridrow__who">
+              {% include "components/avatar.html" with person=row.child size="sm" %}
+              <a class="gridrow__name" href="{% url 'children:detail' row.child.pk %}">
+                {{ row.child.full_name }}
+              </a>
+            </div>
+
+            {% comment %} Not `.levelchip`: that control is the assessment
+               grid's, where the visible token is the numeral 1–4 and the long
+               label is hidden for screen readers. Attendance has no numeral,
+               so reusing it renders six identical blank circles. These carry
+               the word — "Ирсэн", "Өвчтэй" — which is short enough to read
+               across a row. {% endcomment %}
+            <fieldset class="attset">
+              <legend class="sr-only">{{ row.child.full_name }} — ирц</legend>
+              {% for value, label in statuses %}
+                <label class="attchip attchip--{{ value }}">
+                  <input type="radio" name="status_{{ row.enrollment.pk }}"
+                         value="{{ value }}"
+                         {% if row.attendance.status == value %}checked{% endif %}>
+                  <span>{{ label }}</span>
+                </label>
+              {% endfor %}
+            </fieldset>
+
+            {% comment %} §1's "тайлбар" — why a child was away. Optional, and
+               kept beside the mark it explains rather than on a second
+               screen. {% endcomment %}
+            <div class="gridrow__prev">
+              <label class="sr-only" for="id_note_{{ row.enrollment.pk }}">
+                {{ row.child.full_name }} — тайлбар
+              </label>
+              <input type="text" name="note_{{ row.enrollment.pk }}"
+                     id="id_note_{{ row.enrollment.pk }}"
+                     value="{{ row.attendance.note|default:'' }}"
+                     placeholder="Тайлбар (заавал биш)">
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="gridsave">
+        <button type="submit" class="btn">Ирц хадгалах</button>
+        <span class="gridsave__note">
+          Бүх өөрчлөлт нэг дор хадгалагдана. Дахин хадгалахад тухайн өдрийн
+          бүртгэл засагдана, давхардахгүй.
+        </span>
+      </div>
+    </form>
+  {% endif %}
+{% endblock %}

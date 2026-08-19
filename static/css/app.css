@@ -3556,3 +3556,78 @@ body:has(#teacher-report-dashboard:target) .teacher-report-ui { margin-top: 0; }
   .main { padding: 0; }
   body { background: #fff; }
 }
+
+/* ================================================== attendance register
+   нэмэлт.md §1. Deliberately not `.levelchip`: that control belongs to the
+   assessment grid, where the visible token is the numeral 1–4 and the long
+   label rides hidden for screen readers. Attendance has no numeral, so
+   reusing it renders six identical blank circles.
+
+   Radio buttons styled as chips, same reasoning as the grid next door: six
+   states, one tap, all of them readable without opening anything. */
+.attset {
+  display: flex; flex-wrap: wrap; gap: var(--s2);
+  border: 0; padding: 0; margin: 0; min-width: 0;
+}
+.attchip { position: relative; }
+.attchip input {
+  position: absolute; opacity: 0; pointer-events: none;
+}
+.attchip span {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 36px; padding: 0 var(--s3);
+  border: 1px solid var(--line); border-radius: 999px;
+  background: var(--card); color: var(--muted);
+  font-size: var(--t-label); font-weight: 600; white-space: nowrap;
+  cursor: pointer;
+}
+.attchip input:hover + span { border-color: var(--brand); color: var(--ink); }
+.attchip input:focus-visible + span {
+  outline: 2px solid var(--brand); outline-offset: 2px;
+}
+
+/* The tints carry meaning the word already carries — §14 keeps colour as
+   reinforcement, never as the only signal. Present is the ordinary day and
+   reads calm; absent is the one that costs a funding day. */
+.attchip input:checked + span {
+  background: var(--ink); border-color: var(--ink); color: #fff;
+}
+.attchip--present input:checked + span {
+  background: var(--ok); border-color: var(--ok);
+}
+.attchip--absent input:checked + span {
+  background: var(--danger); border-color: var(--danger);
+}
+.attchip--sick input:checked + span,
+.attchip--half_day input:checked + span {
+  background: var(--warn); border-color: var(--warn);
+}
+
+/* The note sits beside the mark it explains. It is optional and must not
+   compete with the chips for width. */
+.gridrow__prev input[type=text] { min-height: 36px; font-size: var(--t-label); }
+
+@media (max-width: 700px) {
+  .attchip span { min-height: 40px; padding: 0 var(--s2); }
+}
+
+/* The register's own row proportions. `.gridrow` is one column by default and
+   the assessment grid widens it at 900px for three chips; six named chips
+   plus a note need more room and a different split, so the sheet states its
+   own rather than overloading the grid's.
+
+   The name column is `minmax` rather than `1fr`: with `1fr` a long Mongolian
+   compound pushed the chips off the row entirely at 1100px. */
+@media (min-width: 900px) {
+  .attsheet .gridrow {
+    grid-template-columns: minmax(150px, 1fr) auto minmax(150px, 220px);
+    align-items: center;
+  }
+}
+/* `nowrap` only once there is genuinely room for six chips *and* the note.
+   At 1100px the row still fits on paper and the chips overflowed their track
+   straight across the note field — measured, not guessed. Below this the
+   chips wrap onto two lines, which is taller and legible. */
+@media (min-width: 1280px) {
+  .attsheet .attset { flex-wrap: nowrap; }
+}

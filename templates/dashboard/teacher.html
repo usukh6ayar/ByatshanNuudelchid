@@ -35,10 +35,17 @@
   <section class="section" data-dashboard-overview style="margin-top:0">
     {% include "components/section_head.html" with title="Түргэн үйлдэл" %}
     <div class="actions">
-      <a class="actions__button" href="?daily=attendance#daily-register">
-        <svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg>
-        Ирц авах
-      </a>
+      {% comment %} Was a link into the mock panel below. It now goes to the
+         real register — `apps/attendance/` had models, services, selectors
+         and 303 lines of tests and no screen at all. Rendered only when the
+         teacher has a group, because the register is group-scoped and a
+         button that lands on a 404 is worse than no button. {% endcomment %}
+      {% if nav_group %}
+        <a class="actions__button" href="{% url 'attendance:group_register' nav_group.pk %}">
+          <svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg>
+          Ирц авах
+        </a>
+      {% endif %}
       {% if nav_group %}<a class="actions__button" href="{% url 'assessment:group_grid' nav_group.pk %}">
         <svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg>
         Явцын үнэлгээ
@@ -208,25 +215,45 @@
     </article>
   </section>
 
-  <section class="daily-register" id="daily-register" hidden aria-labelledby="daily-register-title">
+  {% comment %} The attendance panel that stood here was a mock waiting for a
+     backend. The backend existed the whole time — `apps/attendance/` — so the
+     panel is a link to the real register rather than a second, JavaScript
+     copy of it. §2.2: one screen owns the write.
+
+     The meal panel below is still a mock and still says so; nothing under it
+     exists yet (no model), which is a different situation from this one. {% endcomment %}
+  <section class="daily-register" id="daily-register" aria-labelledby="daily-register-title">
     <div class="daily-register__head">
       <div>
         <span>ӨДӨР ТУТМЫН БҮРТГЭЛ</span>
         <h2 id="daily-register-title">Ирц бүртгэх</h2>
         <p>Бүлэг, өдрөө сонгоод хүүхэд бүрийн төлвийг нэг дор бүртгэнэ.</p>
       </div>
-      <button type="button" class="daily-register__close" data-daily-close aria-label="Хаах">×</button>
     </div>
-    <div class="daily-register__filters">
-      <label>Огноо<input type="date" data-daily-date></label>
-      <label>Бүлэг
-        <select data-daily-group>
-          <option value="">Бүлэг сонгох</option>
-          {% for group in groups %}<option value="{{ group.pk }}">{{ group.name }}</option>{% endfor %}
-        </select>
-      </label>
-    </div>
+    {% comment %} The real daily register — `attendance:group_register`,
+       shipped 2026-08-19 (apps/attendance/views.py). Marking a day now
+       genuinely saves; this replaces the old mock filters/empty-table
+       that used to sit here with nowhere to submit to. {% endcomment %}
+    {% if nav_group %}
+      <div class="btn-row">
+        <a class="btn" href="{% url 'attendance:group_register' nav_group.pk %}">
+          <svg class="ic ic--sm" aria-hidden="true"><use href="#i-children"></use></svg>
+          {{ nav_group.name }} — өнөөдрийн ирц
+        </a>
+      </div>
+      {% if attendance_unmarked %}
+        <p class="daily-register__note">
+          Өнөөдөр {{ attendance_unmarked }} хүүхдийн ирц бүртгэгдээгүй байна.
+        </p>
+      {% endif %}
+    {% else %}
+      {% include "components/empty.html" with icon="children" message="Танд хариуцсан бүлэг байхгүй тул ирц бүртгэх боломжгүй." %}
+    {% endif %}
 
+    {% comment %} The monthly/yearly attendance report — a different
+       concern from marking a single day above, and still a frontend
+       mock: no report/export backend exists yet (docs/superpowers/specs/
+       2026-08-19-priority-roadmap-backend-prompt.md §3). {% endcomment %}
     <section class="attendance-report" data-attendance-report aria-labelledby="attendance-report-title">
       <div class="attendance-report__head">
         <div>
@@ -317,13 +344,6 @@
       </section>
       <p class="attendance-report__status" data-attendance-report-status role="status"></p>
     </section>
-    <div class="daily-register__statuses" data-daily-statuses></div>
-    <div class="daily-register__empty" data-daily-empty>
-      <svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg>
-      <strong>Хүүхэд бүрийн бүртгэлийн хүснэгт энд гарна</strong>
-      <p>Backend холбогдоход сонгосон бүлгийн хүүхдүүд энд гарч, мөр тус бүр дээрх төлвийн товчоор бүртгэнэ.</p>
-    </div>
-    <p class="daily-register__note">Энэ нь frontend бэлтгэл дэлгэц. Одоогоор ирц, хоолны бүртгэл хадгалахгүй.</p>
   </section>
 
   <section class="daily-register meal-register" id="meal-register" hidden aria-labelledby="meal-register-title">
@@ -379,11 +399,15 @@
         Хоол
         <span class="quick__soon-tag">Бүртгэл нээх</span>
       </a>
-      <button type="button" class="quick__soon quick__soon--button" data-daily-open="finance" aria-controls="daily-register">
+      {% comment %} Was a button that repurposed the attendance panel below as
+         a finance mock-up. That panel is the real register now, so the tile
+         is inert like its neighbours until a finance backend exists — there
+         is no model under it (docs/FINANCE_SCOPE.md). {% endcomment %}
+      <span class="quick__soon" aria-disabled="true">
         <svg class="ic" aria-hidden="true"><use href="#i-money"></use></svg>
         Санхүү
         <span class="quick__soon-tag">Удахгүй</span>
-      </button>
+      </span>
       <span class="quick__soon" aria-disabled="true">
         <svg class="ic" aria-hidden="true"><use href="#i-survey"></use></svg>
         Судалгаа
@@ -588,6 +612,9 @@
         description.textContent = item.description;
         if (mealTypes) mealTypes.hidden = mode !== 'meals';
         if (kitchen) kitchen.hidden = mode !== 'meals';
+        // Same guard as the close button: the attendance panel no longer
+        // carries a mock status row, so there is nothing to fill.
+        if (!statusList) return;
         statusList.innerHTML = '';
         item.statuses.forEach(function (label) {
           var button = document.createElement('button');
@@ -621,7 +648,12 @@
         button.addEventListener('click', function () { panel.hidden = false; render(button.getAttribute('data-daily-open')); panel.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
       });
       panel.querySelectorAll('[data-daily-tab]').forEach(function (tab) { tab.addEventListener('click', function () { render(tab.getAttribute('data-daily-tab')); }); });
-      panel.querySelector('[data-daily-close]').addEventListener('click', function () { panel.hidden = true; });
+      {% comment %} Guarded: the attendance panel lost its close button when it
+         stopped being a mock, and an unguarded call here threw on load and
+         took every handler below it — chat, meal photo, the workspace
+         toggles — down with it. {% endcomment %}
+      var dailyClose = panel.querySelector('[data-daily-close]');
+      if (dailyClose) dailyClose.addEventListener('click', function () { panel.hidden = true; });
       document.querySelectorAll('[data-meal-photo]').forEach(function (input) {
         input.addEventListener('change', function () {
           var preview = input.closest('.daily-kitchen').querySelector('[data-meal-preview]');
