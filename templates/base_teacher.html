@@ -73,28 +73,34 @@
         <svg class="ic" aria-hidden="true"><use href="#i-dashboard"></use></svg>
         Хяналтын самбар
       </a>
-      <details class="nav-group"{% if nav == 'children' or nav == 'assessment' %} open{% endif %}>
+      <section class="nav-shortcuts" aria-label="Түргэн холбоос">
+        <span class="nav-shortcuts__title">ТҮРГЭН ХОЛБООС</span>
+        <a href="{% url 'children:list' %}"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-children"></use></svg>Хүүхдүүд</a>
+        <a href="{% url 'dashboard:teacher' %}?daily=attendance#daily-register"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-check"></use></svg>Ирц</a>
+        <a href="{% url 'comms:list' %}"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-bell"></use></svg>Ангийн самбар</a>
+      </section>
+      <details class="nav-group" open>
         <summary>Хүүхдийн хөгжил ба үнэлгээ</summary>
         <a href="{% url 'children:list' %}"{% if nav == 'children' %} aria-current="page"{% endif %}>Хүүхдүүд</a>
         {% if nav_group %}<a href="{% url 'assessment:group_grid' nav_group.pk %}"{% if nav == 'assessment' %} aria-current="page"{% endif %}>Явцын үнэлгээ</a>{% endif %}
         <a href="{% url 'children:list' %}?report=1#teacher-report-dashboard">Тайлан</a>
       </details>
-      <details class="nav-group">
+      <details class="nav-group" open>
         <summary>Өдөр тутмын бүртгэл</summary>
         <a href="{% url 'dashboard:teacher' %}?daily=attendance#daily-register">Ирц</a>
         <a href="{% url 'dashboard:teacher' %}?daily=meals#meal-register">Хоол</a>
       </details>
-      <details class="nav-group"{% if nav == 'announcements' or nav == 'review' %} open{% endif %}>
+      <details class="nav-group" open>
         <summary>Харилцаа холбоо</summary>
         <a href="{% url 'comms:list' %}"{% if nav == 'announcements' %} aria-current="page"{% endif %}>Ангийн самбар / Мэдээ</a>
         <a href="{% url 'dashboard:teacher' %}?survey=1#teacher-surveys">Судалгаа</a>
         <a href="{% url 'comms:list' %}?chat=1">Чат</a>
       </details>
-      <details class="nav-group">
+      <details class="nav-group" open>
         <summary>Санхүү ба баримт бичиг</summary>
         <span>Санхүү <small>удахгүй</small></span><span>Баримт бичиг <small>удахгүй</small></span>
       </details>
-      <details class="nav-group"{% if nav == 'profile' %} open{% endif %}>
+      <details class="nav-group" open>
         <summary>Багш ба байгууллага</summary>
         <a href="{% url 'accounts:profile' %}"{% if nav == 'profile' %} aria-current="page"{% endif %}>Багшийн мэдээлэл</a>
         <a href="{% url 'dashboard:teacher' %}?organization=1#teacher-organization">Бүлэг, цэцэрлэгийн мэдээлэл</a>

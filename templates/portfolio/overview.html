@@ -35,106 +35,92 @@
 {% endblock %}
 
 {% block content %}
-  {% comment %} ------------------------------------------- the cover
-     RFP §3.4, §4.4 — the photograph is served through the permission check
-     at /media/<uuid>/full/. There is no direct link to a child's image.
-     {% endcomment %}
-  <div class="folio" id="child-information">
-    {% if child.photo %}
-      <img class="folio__photo"
-           src="{% url 'media:serve' child.photo.public_id 'full' %}"
-           alt="{{ child.full_name }}-ийн зураг">
-    {% else %}
-      <span class="avatar folio__photo" aria-hidden="true"
-        >{{ child.first_name|slice:":1" }}</span>
-    {% endif %}
-
-    <div class="folio__body">
-      <h2 class="folio__name">{{ child.full_name }}</h2>
-
-      {% comment %} §4.2's keepsake facts as a quiet line. The zodiac sign
-         and the year animal are computed from the date of birth, never
-         stored (§206). {% endcomment %}
-      <p class="folio__facts">
-        <span><b>{{ birth.age }} нас</b></span>
-        <span>Төрсөн: <b>{{ birth.date_of_birth|date:"Y.m.d" }}</b></span>
-        {% if birth.zodiac_sign %}
-          <span>Өрнийн орд: <b>{{ birth.zodiac_sign }}</b></span>
-        {% endif %}
-        {% if birth.year_animal %}
-          <span>Жил: <b>{{ birth.year_animal }}</b></span>
-        {% endif %}
-        {% for enrollment in child.active_enrollments %}
-          <span>Бүлэг: <b>{{ enrollment.group.name }}</b></span>
-        {% endfor %}
-      </p>
-
-      <div class="folio__actions">
-        <a class="btn btn--ghost btn--sm" href="{% url 'media:child_photo' child.pk %}">
-          <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
-          {% if child.photo %}Зураг солих{% else %}Зураг нэмэх{% endif %}
-        </a>
-        <a class="btn btn--ghost btn--sm" href="{% url 'reports:request' child.pk %}">
-          <svg class="ic ic--sm" aria-hidden="true"><use href="#i-report"></use></svg>
-          PDF тайлан
-        </a>
-      </div>
+  {% if request.GET.gallery %}
+  <section class="parent-gallery" aria-label="Зургийн цомог">
+    <header class="parent-gallery__head">
+      {% if child.photo %}<img src="{% url 'media:serve' child.photo.public_id 'full' %}" alt="">{% else %}<span>{{ child.first_name|slice:':1' }}</span>{% endif %}
+      <div><small>Нас насны хөгжил</small><h2>{{ child.first_name }}-ийн өсөлт</h2><p>Насаа сонгоод тухайн үеийн мэдээлэл, зураг, дурсамжаа нээнэ.</p></div>
+    </header>
+    <nav class="parent-gallery__timeline" aria-label="Нас сонгох"><button class="is-active" type="button" data-gallery-age="2">2 нас</button><button type="button" data-gallery-age="3">3 нас</button><button type="button" data-gallery-age="4">4 нас</button><button type="button" data-gallery-age="5">5 нас</button><button type="button" data-gallery-age="all">Бүх нас</button></nav>
+    <div class="parent-gallery__cards" data-gallery-cards>
+      <button class="parent-gallery__age parent-gallery__age--two" type="button" data-gallery-card="2"><span>2</span><strong>2 нас</strong><small>Мэдээлэлтэй</small></button><button class="parent-gallery__age parent-gallery__age--three" type="button" data-gallery-card="3"><span>3</span><strong>3 нас</strong><small>Нээх</small></button><button class="parent-gallery__age parent-gallery__age--four" type="button" data-gallery-card="4"><span>4</span><strong>4 нас</strong><small>Нээх</small></button><button class="parent-gallery__age parent-gallery__age--five" type="button" data-gallery-card="5"><span>5</span><strong>5 нас</strong><small>Нээх</small></button>
     </div>
-  </div>
-
+    <div class="parent-gallery__bottom"><button type="button" data-gallery-card="all"><strong>Бүх нас харьцуулах</strong><small>2–5 насны зураг, өндөр, жин, дурсамжийг зэрэгцүүлж харна.</small></button><span><strong>Чухал өдрүүд</strong><small>Анхны өдөр болон онцгой дурсамж</small></span></div>
+    <section class="parent-gallery__detail" data-gallery-detail hidden>
+      <header><div><small>Зургийн цомог</small><h2 data-gallery-title>Миний 2 нас</h2><p data-gallery-subtitle>Тухайн насны зураг, дурсамж.</p></div><button type="button" data-gallery-close>×</button></header>
+      <div class="parent-gallery__upload"><strong data-gallery-upload>2 насны зураг нэмэх…</strong><textarea placeholder="Энэ зургийн тухай товч бичнэ үү"></textarea><div><select><option>Ангилал сонгох</option><option>Гэр бүл</option><option>Баяр ёслол</option><option>Аялал</option><option>Тоглоом</option><option>Бусад</option></select><input type="date"><input type="file" accept="image/*"><button type="button">Зураг нэмэх</button></div></div>
+      <label class="parent-gallery__search">⌕ <input type="search" placeholder="Зургийн цомгоос хайх…"></label>
+      <article class="parent-gallery__album"><h3>Зургийн цомог</h3><p data-gallery-album>2 насанд нэмсэн дурсамжууд</p><div class="parent-gallery__empty">Зураг оруулаагүй байна</div></article>
+    </section>
+  </section>
+  <script>(function(){var detail=document.querySelector('[data-gallery-detail]'),title=document.querySelector('[data-gallery-title]'),sub=document.querySelector('[data-gallery-subtitle]'),upload=document.querySelector('[data-gallery-upload]'),album=document.querySelector('[data-gallery-album]');function open(age){detail.hidden=false;if(age==='all'){title.textContent='Миний бүх нас';sub.textContent='2–5 насны зургийг ангилал, нас бүрээр харна.';upload.textContent='Бүх насны зураг нэмэх…';album.textContent='Бүх насны дурсамжууд'}else{title.textContent='Миний '+age+' нас';sub.textContent='Одо-ын '+age+' насны зураг, дурсамж.';upload.textContent=age+' насны зураг нэмэх…';album.textContent=age+' насанд нэмсэн дурсамжууд'}detail.scrollIntoView({behavior:'smooth',block:'start'})}document.querySelectorAll('[data-gallery-card]').forEach(function(b){b.addEventListener('click',function(){open(b.dataset.galleryCard)})});document.querySelector('[data-gallery-close]').addEventListener('click',function(){detail.hidden=true})}());</script>
+  {% else %}
   {% comment %} ------------------------------------------- Миний тухай
-     §4.1 — the first story element, so it gets real prose at a readable
-     measure rather than a definition list squeezed into two columns.
-     {% endcomment %}
-  <section class="section" id="about">
-    {% url 'portfolio:about_me_edit' child.pk as about_url %}
-    {% include "components/section_head.html" with title="Миний тухай" link=about_url link_label=about|yesno:"Засах,Бөглөх" %}
+     RFP §3.4, §4.1, §4.4 — one card: identity photo, facts grid, prose.
+     The photograph is served through the permission check at
+     /media/<uuid>/full/. There is no direct link to a child's image.
 
-    {% if about %}
-      <div class="surface">
-        <dl class="about">
-          {% if about.introduction %}
-            <div class="about__entry about__entry--wide">
-              <dt>Танилцуулга</dt><dd>{{ about.introduction|linebreaksbr }}</dd>
-            </div>
-          {% endif %}
-          {% if about.name_meaning %}
-            <div class="about__entry about__entry--wide">
-              <dt>Нэрний утга</dt><dd>{{ about.name_meaning|linebreaksbr }}</dd>
-            </div>
-          {% endif %}
-          {% if about.memorable_sayings %}
-            <div class="about__entry about__entry--wide">
-              <dt>Сонирхолтой үг</dt><dd>{{ about.memorable_sayings|linebreaksbr }}</dd>
-            </div>
-          {% endif %}
-          {% if about.dream %}
-            <div class="about__entry about__entry--wide">
-              <dt>Миний мөрөөдөл</dt><dd>{{ about.dream|linebreaksbr }}</dd>
-            </div>
-          {% endif %}
-          {% if about.distinguishing_traits %}
-            <div class="about__entry about__entry--wide">
-              <dt>Миний онцлог</dt><dd>{{ about.distinguishing_traits|linebreaksbr }}</dd>
-            </div>
-          {% endif %}
-          {% if about.height_cm %}
-            <div class="about__entry"><dt>Миний өндөр</dt><dd>{{ about.height_cm }} см</dd></div>
-          {% endif %}
-          {% if about.weight_kg %}
-            <div class="about__entry"><dt>Миний жин</dt><dd>{{ about.weight_kg }} кг</dd></div>
-          {% endif %}
-          {% if about.recorded_on %}
-            <div class="about__entry">
-              <dt>Бүртгэсэн огноо</dt><dd>{{ about.recorded_on|date:"Y.m.d" }}</dd>
-            </div>
-          {% endif %}
-        </dl>
+     Ages, sex and zodiac facts are always known (computed from the child's
+     own record — see `portfolio_selectors.birth_facts`) so the grid shows
+     them even before a guardian has filled in `AboutMe`. Nickname, birth
+     place, blood type, hair and eye colour have no column on `AboutMe` yet
+     — 2026-08-20, client asked for the layout now and the schema change
+     later. Django's template lookup renders a missing attribute as empty
+     rather than raising, so `about.nickname` etc. safely show "—" today and
+     start working the day those columns exist — no template change needed
+     when that lands. {% endcomment %}
+  <div class="surface about-hero" id="child-information">
+    <div class="about-hero__top">
+      {% if child.photo %}
+        <img class="about-hero__photo"
+             src="{% url 'media:serve' child.photo.public_id 'full' %}"
+             alt="{{ child.full_name }}-ийн зураг">
+      {% else %}
+        <span class="avatar about-hero__photo" aria-hidden="true"
+          >{{ child.first_name|slice:":1" }}</span>
+      {% endif %}
+    </div>
+
+    {% url 'portfolio:about_me_edit' child.pk as about_url %}
+    <div id="about"></div>
+
+    {% if not is_guardian and about.introduction or not is_guardian and about.name_meaning or not is_guardian and about.memorable_sayings or not is_guardian and about.dream or not is_guardian and about.distinguishing_traits %}
+      <div class="about-story">
+        {% if about.introduction %}
+          <div class="about-story__item">
+            <span class="about-story__head"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-portfolio"></use></svg>Танилцуулга</span>
+            <p>{{ about.introduction|linebreaksbr }}</p>
+          </div>
+        {% endif %}
+        {% if about.name_meaning %}
+          <div class="about-story__item">
+            <span class="about-story__head"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-heart"></use></svg>Нэрний утга</span>
+            <p>{{ about.name_meaning|linebreaksbr }}</p>
+          </div>
+        {% endif %}
+        {% if about.memorable_sayings %}
+          <div class="about-story__item">
+            <span class="about-story__head"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-chat"></use></svg>Сонирхолтой үг</span>
+            <p>{{ about.memorable_sayings|linebreaksbr }}</p>
+          </div>
+        {% endif %}
+        {% if about.dream %}
+          <div class="about-story__item">
+            <span class="about-story__head"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-sun"></use></svg>Миний мөрөөдөл</span>
+            <p>{{ about.dream|linebreaksbr }}</p>
+          </div>
+        {% endif %}
+        {% if about.distinguishing_traits %}
+          <div class="about-story__item">
+            <span class="about-story__head"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-check"></use></svg>Миний онцлог</span>
+            <p>{{ about.distinguishing_traits|linebreaksbr }}</p>
+          </div>
+        {% endif %}
       </div>
-    {% else %}
+    {% elif not is_guardian %}
       {% include "components/empty.html" with icon="portfolio" message="«Миний тухай» хэсэг хараахан бөглөгдөөгүй байна. Хүүхдийн танилцуулга, нэрний утга, мөрөөдлийг эндээс бичнэ." action=about_url action_label="Бөглөж эхлэх" %}
     {% endif %}
-  </section>
+  </div>
 
   {% comment %} ------------------------------------------- Нас 2–5
      §4.3. `completeness.ages_filled` and `ages_total` are the selector's own
@@ -142,230 +128,42 @@
   <section class="section" id="age-profiles">
     {% include "components/section_head.html" with title="Насны хуудсууд" note="2–5 насны хөгжлийн тэмдэглэл" %}
 
-    <p style="margin:0 0 var(--s3)">
-      <span class="badge badge--muted">
-        {{ completeness.ages_filled }} / {{ completeness.ages_total }} бөглөсөн
-      </span>
-    </p>
+    {% if not is_guardian %}
+      <p style="margin:0 0 var(--s3)">
+        <span class="badge badge--muted">
+          {{ completeness.ages_filled }} / {{ completeness.ages_total }} бөглөсөн
+        </span>
+      </p>
+    {% endif %}
 
-    <div class="years">
+    {% comment %} 2026-08-20 — back to the four solid buttons (client liked
+       that look better than the arrow stepper), but colour now marks
+       progress, not position: a filled age keeps its cycle colour, an
+       empty one goes grey. {% endcomment %}
+    <div class="age-buttons">
       {% for age, profile in age_profiles.items %}
-        <a class="yearcard{% if not profile %} yearcard--empty{% endif %}"
-           href="{% url 'portfolio:age_profile_edit' child.pk age %}">
-          <span class="yearcard__head">
-            <span class="yearcard__age">{{ age }} нас</span>
-            {% if profile %}
-              <span class="badge badge--ok">Бөглөсөн</span>
-            {% else %}
-              <span class="badge badge--muted">Хоосон</span>
-            {% endif %}
-          </span>
-
-          {% if profile %}
-            <span class="yearcard__facts">
-              {% if profile.favorite_color %}
-                <span>Дуртай өнгө: <b>{{ profile.favorite_color }}</b></span>
-              {% endif %}
-              {% if profile.favorite_food %}
-                <span>Дуртай хоол: <b>{{ profile.favorite_food }}</b></span>
-              {% endif %}
-              {% if profile.favorite_toy %}
-                <span>Дуртай тоглоом: <b>{{ profile.favorite_toy }}</b></span>
-              {% endif %}
-              {% if profile.new_skills %}
-                <span>Шинэ чадвар: <b>{{ profile.new_skills|truncatechars:60 }}</b></span>
-              {% endif %}
-            </span>
-            <span class="yearcard__go">Засах →</span>
-          {% else %}
-            <span class="yearcard__facts">
-              Энэ насны мэдээлэл хараахан бичигдээгүй.
-            </span>
-            <span class="yearcard__go">Бөглөх →</span>
-          {% endif %}
+        {% cycle 'green' 'blue' 'orange' 'purple' as age_color silent %}
+        <a class="age-button{% if profile %} age-button--{{ age_color }}{% else %} age-button--empty{% endif %}"
+           href="{% url 'portfolio:age_profile_edit' child.pk age %}"
+           aria-label="{{ age }} нас — {% if profile %}бөглөсөн{% else %}хоосон{% endif %}">
+          <span>{{ age }} нас</span>
+          <i class="age-button__dot{% if profile %} is-filled{% endif %}" aria-hidden="true"></i>
         </a>
       {% endfor %}
     </div>
+    <a class="compare-promo" href="#age-profiles">
+      <span><strong>Бүх насыг харьцуулах</strong><small>2–5 насны өсөлт, зураг, дурсамжийг зэрэгцүүлж харна.</small></span>
+      <span class="compare-promo__btn">Харах</span>
+    </a>
   </section>
 
   {% comment %} ------------------------------------------- Насны харьцуулалт
-     2026-08-18 — ported from the reference's `teacher/comparison.html`
-     (its own side-by-side view of the four age pages, as opposed to the
-     "Насны хуудсууд" cards above, which only preview one age at a time).
-     Every field used here already sits on `age_profiles` — the same dict
-     the cards above loop over, just read across ages instead of down one —
-     so this is presentation only, no new selector or view. Height/weight
-     growth and the photo-comparison row from the reference are left out on
-     purpose: `AboutMe.height_cm`/`weight_kg` is a single current value with
-     no per-age history, and per-age photo albums are ROADMAP.md Phase 2
-     ("photo albums") — both need a schema change, not a template one.
-     Shown only once at least one age has something to compare. {% endcomment %}
-  <section class="section" id="memories">
-      {% include "components/section_head.html" with title="Насны харьцуулалт" note="2–5 насны мэдээллийг зэрэгцүүлж харах" %}
-      {% if completeness.ages_filled > 0 %}
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th></th>
-              {% for age, profile in age_profiles.items %}<th>{{ age }} нас</th>{% endfor %}
-            </tr>
-          </thead>
-          <tbody>
-            {% comment %} Nine explicit rows rather than a looped field list —
-               Django templates can't look up an attribute by a variable
-               name without a custom filter, and adding one means a new
-               apps/*/templatetags/*.py file, which is backend code this
-               developer does not touch. Repetitive but plain. {% endcomment %}
-            <tr>
-              <td class="name">Дуртай өнгө</td>
-              {% for age, profile in age_profiles.items %}
-                <td>{% if profile.favorite_color %}{{ profile.favorite_color }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
-              {% endfor %}
-            </tr>
-            <tr>
-              <td class="name">Дуртай хоол</td>
-              {% for age, profile in age_profiles.items %}
-                <td>{% if profile.favorite_food %}{{ profile.favorite_food }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
-              {% endfor %}
-            </tr>
-            <tr>
-              <td class="name">Дуртай тоглоом</td>
-              {% for age, profile in age_profiles.items %}
-                <td>{% if profile.favorite_toy %}{{ profile.favorite_toy }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
-              {% endfor %}
-            </tr>
-            <tr>
-              <td class="name">Дуртай ном</td>
-              {% for age, profile in age_profiles.items %}
-                <td>{% if profile.favorite_book %}{{ profile.favorite_book }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
-              {% endfor %}
-            </tr>
-            <tr>
-              <td class="name">Дуртай дуу</td>
-              {% for age, profile in age_profiles.items %}
-                <td>{% if profile.favorite_song %}{{ profile.favorite_song }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
-              {% endfor %}
-            </tr>
-            <tr>
-              <td class="name">Дуртай үлгэр</td>
-              {% for age, profile in age_profiles.items %}
-                <td>{% if profile.favorite_story %}{{ profile.favorite_story }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
-              {% endfor %}
-            </tr>
-            <tr>
-              <td class="name">Дуртай кино</td>
-              {% for age, profile in age_profiles.items %}
-                <td>{% if profile.favorite_movie %}{{ profile.favorite_movie }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
-              {% endfor %}
-            </tr>
-            <tr>
-              <td class="name">Дуртай хувцас</td>
-              {% for age, profile in age_profiles.items %}
-                <td>{% if profile.favorite_clothes %}{{ profile.favorite_clothes }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
-              {% endfor %}
-            </tr>
-            <tr>
-              <td class="name">Дуртай үйл ажиллагаа</td>
-              {% for age, profile in age_profiles.items %}
-                <td>{% if profile.favorite_activity %}{{ profile.favorite_activity }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
-              {% endfor %}
-            </tr>
-            <tr>
-              <td class="name">Зан чанар</td>
-              {% for age, profile in age_profiles.items %}
-                <td>{% if profile.personality %}{{ profile.personality|truncatechars:80 }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
-              {% endfor %}
-            </tr>
-            <tr>
-              <td class="name">Гэр бүлийн гишүүд</td>
-              {% for age, profile in age_profiles.items %}
-                <td>{% if profile.family_members %}{{ profile.family_members|truncatechars:80 }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
-              {% endfor %}
-            </tr>
-            <tr>
-              <td class="name">Шинээр эзэмшсэн чадвар</td>
-              {% for age, profile in age_profiles.items %}
-                <td>{% if profile.new_skills %}{{ profile.new_skills|truncatechars:80 }}{% else %}<span class="brand__sub">—</span>{% endif %}</td>
-              {% endfor %}
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      {% else %}
-        {% include "components/empty.html" with icon="portfolio" message="Нас насны мэдээлэл бөглөгдвөл энд зэрэгцүүлж харна." %}
-      {% endif %}
-
-      <div class="memory-gallery" id="gallery" aria-label="Нас насны зураг, дурсамж">
-        <div class="memory-gallery__head">
-          <div>
-            <h3>Өсөлт, зураг, дурсамж</h3>
-            <p>Нас бүрийн онцгой мөчийн зургийг сонгож урьдчилан харна.</p>
-          </div>
-          <span class="badge badge--muted">Зураг нэмэх</span>
-        </div>
-        <div class="memory-gallery__grid">
-          {% for age, profile in age_profiles.items %}
-            <article class="memory-card" data-memory-card>
-              <div class="memory-card__preview" data-memory-preview aria-live="polite">
-                <svg class="ic" aria-hidden="true"><use href="#i-photo"></use></svg>
-                <span>{{ age }} насны зураг</span>
-              </div>
-              <div class="memory-card__body">
-                <strong>{{ age }} нас</strong>
-                {% if profile and profile.new_skills %}
-                  <p>{{ profile.new_skills|truncatechars:72 }}</p>
-                {% else %}
-                  <p>Энэ насны онцгой мөчөө зурагтай нь хадгална.</p>
-                {% endif %}
-                <label class="memory-card__upload">
-                  <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
-                  Зураг сонгох
-                  <input type="file" accept="image/*" data-memory-input aria-label="{{ age }} насны зураг сонгох">
-                </label>
-              </div>
-            </article>
-          {% endfor %}
-        </div>
-        <p class="memory-gallery__hint">Сонгосон зураг энэ хуудсан дээр урьдчилан харагдана. Серверийн хадгалалтыг дараагийн backend холболтоор идэвхжүүлнэ.</p>
-      </div>
-    </section>
-
-  {% comment %} ------------------------------------- Төрсөн өдрийн тэмдэглэл
-     §4.2. One form per birthday, posting to a POST-only endpoint that
-     redirects back here — so they save independently and this page is the
-     only place they can be written. A single form wrapping all of them
-     would make one save overwrite every other note. {% endcomment %}
-  <section class="section" id="birthdays">
-    {% include "components/section_head.html" with title="Төрсөн өдрийн тэмдэглэл" %}
-
-    {% if birthdays %}
-      <div class="bday">
-        {% for entry in birthdays %}
-          <form class="bdayrow" method="post"
-                action="{% url 'portfolio:birthday_note_edit' child.pk entry.age %}">
-            {% csrf_token %}
-            <span class="bdayrow__when">
-              <span class="bdayrow__age">{{ entry.age }} нас</span>
-              <span class="bdayrow__date">{{ entry.date|date:"Y.m.d" }}</span>
-            </span>
-            <span class="bdayrow__edit">
-              <label class="sr-only" for="id_note_{{ entry.age }}">
-                {{ entry.age }} насны төрсөн өдрийн тэмдэглэл
-              </label>
-              <input type="text" name="note" id="id_note_{{ entry.age }}"
-                     value="{{ entry.note.note|default:'' }}"
-                     placeholder="Тэмдэглэл бичих">
-              <button type="submit" class="btn btn--ghost btn--sm">Хадгалах</button>
-            </span>
-          </form>
-        {% endfor %}
-      </div>
-    {% else %}
-      {% include "components/empty.html" with icon="cake" message="Төрсөн өдөр хараахан болоогүй байна." %}
-    {% endif %}
-  </section>
-
+     2026-08-20 — client asked to drop the inline comparison table, photo
+     gallery and birthday-note editor from this screen and keep only the
+     teaser card. Their data and forms are untouched (`age_profiles`,
+     `portfolio:birthday_note_edit`) — this is a display choice, not a
+     data change, so nothing here needs a schema or view edit. Client's own
+     words: do the layout now, wire the rest up later. {% endcomment %}
   <div class="btn-row">
     {% if is_guardian %}
       <a class="btn btn--ghost"
@@ -375,21 +173,5 @@
          href="{% url 'children:detail' child.pk %}">← Хүүхдийн хуудас</a>
     {% endif %}
   </div>
-
-  <script>
-    document.querySelectorAll('[data-memory-input]').forEach(function (input) {
-      input.addEventListener('change', function () {
-        var file = input.files && input.files[0];
-        var card = input.closest('[data-memory-card]');
-        var preview = card && card.querySelector('[data-memory-preview]');
-        if (!file || !preview) return;
-        var reader = new FileReader();
-        reader.addEventListener('load', function () {
-          preview.innerHTML = '<img alt="Сонгосон зураг" src="' + reader.result + '">';
-          preview.classList.add('has-image');
-        });
-        reader.readAsDataURL(file);
-      });
-    });
-  </script>
+  {% endif %}
 {% endblock %}

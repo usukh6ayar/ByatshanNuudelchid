@@ -32,20 +32,12 @@
 {% block heading %}Нүүр хуудас{% endblock %}
 
 {% block content %}
-  {% comment %} One warm block per screen — the 20% of the 80/20. The
-     mockup's mobile sheets open every parent variant this way. {% endcomment %}
-  <div class="greet">
-    <h2>Сайн байна уу, {{ request.user.first_name|default:request.user }}! 💜</h2>
-    <p>{{ child.first_name }}-ийн сүүлийн үеийн мэдээллийг эндээс харна уу.</p>
-  </div>
-
   {% include "components/child_switcher.html" %}
 
   <section class="parent-hub" aria-label="{{ child.full_name }}-ийн мэдээлэл">
     <a class="parent-hub__child" href="{% url 'children:parent_child_detail' child.pk %}">
       {% include "components/avatar.html" with person=child size="lg" %}
       <span>
-        <span class="parent-hub__child-name">{{ child.full_name }}</span>
         <span class="parent-hub__child-meta">
           {{ child.age }} нас{% if enrollment %} · {{ enrollment.group.name }}{% endif %}
         </span>
@@ -55,9 +47,12 @@
     </a>
 
     <div class="parent-hub__label">
-      <strong>Өнөөдрийн хэрэгтэй мэдээлэл</strong>
-      <span>{{ child.first_name }}-ийн өдөр тутмын мэдээлэл</span>
+      <strong>Ангийн самбар</strong>
+      <a href="{% url 'comms:list' %}">Бүгдийг харах →</a>
     </div>
+    <a class="parent-home-news" href="{% url 'comms:list' %}"><span class="parent-home-news__icon"><svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg></span><span><strong>{% if unread_announcements %}{{ unread_announcements }} шинэ мэдээ байна{% else %}Багшийн мэдээ, зарлал{% endif %}</strong><small>Ангийн сүүлийн мэдээллийг харах</small></span><b aria-hidden="true">→</b></a>
+
+    <div class="parent-hub__label parent-hub__label--compact"><strong>{{ child.first_name }}-ийн мэдээлэл</strong></div>
 
     <div class="parent-hub__grid">
       <a class="parent-action parent-action--attendance" href="{% url 'children:parent_child_detail' child.pk %}#parent-attendance">
@@ -68,21 +63,19 @@
         <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-meal"></use></svg></span>
         <span><strong>Өнөөдрийн хоол</strong><small>7 хоногийн цэс, илчлэг, бодит зураг</small></span><b aria-hidden="true">→</b>
       </a>
-      <a class="parent-action parent-action--news" href="{% url 'comms:list' %}">
-        <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg></span>
-        <span><strong>Мэдээ, мэдэгдэл</strong><small>{% if unread_announcements %}{{ unread_announcements }} шинэ мэдэгдэл{% else %}Багшийн мэдээлэл, зар{% endif %}</small></span>
-        <b aria-hidden="true">→</b>
+      <a class="parent-action parent-action--development" href="{% url 'observations:list' child.pk %}">
+        <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg></span>
+        <span><strong>Хөгжил ба цэцэрлэгтээ</strong><small>Ажиглалт, бүтээл, хөгжлийн ахиц</small></span><b aria-hidden="true">→</b>
       </a>
       <a class="parent-action parent-action--survey" href="{% url 'children:parent_child_detail' child.pk %}#parent-surveys">
         <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-survey"></use></svg></span>
         <span><strong>Бөглөх судалгаа</strong><small>Асуулга, санал хүсэлт</small></span>
         <b aria-hidden="true">→</b>
       </a>
+      <a class="parent-action parent-action--finance" href="{% url 'children:parent_child_detail' child.pk %}#parent-finance">
+        <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-money"></use></svg></span>
+        <span><strong>Санхүү</strong><small>Төлбөр, үлдэгдэл, баримт</small></span><b aria-hidden="true">→</b>
+      </a>
     </div>
-
-    <section class="parent-home-activity" aria-labelledby="parent-home-activity-title">
-      <div><h2 id="parent-home-activity-title">Сүүлийн үйл явдал</h2><a href="{% url 'children:parent_child_detail' child.pk %}">Бүх мэдээлэл харах →</a></div>
-      <p>Одоогоор шинэ үйл явдал бүртгэгдээгүй байна.</p>
-    </section>
   </section>
 {% endblock %}
