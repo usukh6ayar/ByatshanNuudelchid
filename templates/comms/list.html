@@ -4,6 +4,47 @@
 {% block lede %}<p class="lede">{% if is_staff %}Эцэг эхчүүдэд мэдээлэл, зар хуваалцах хэсэг.{% else %}Цэцэрлэгээс ирсэн мэдээлэл.{% endif %}</p>{% endblock %}
 
 {% block content %}
+  <section class="chat-workspace" data-chat-workspace hidden data-api="/api/v1/messages/" aria-labelledby="chat-title">
+    <div class="chat-workspace__head"><div><span>ХАРИЛЦАА ХОЛБОО</span><h2 id="chat-title">Чат</h2><p>Зураг, бичлэг, дуу хоолойн зурвас солилцох бэлэн интерфейс.</p></div><a class="btn btn--ghost btn--sm" href="{% url 'comms:list' %}">Ангийн самбар</a></div>
+    <div class="chat-workspace__tabs" role="tablist"><button class="is-active" type="button" data-chat-tab="parents">Эцэг эхийн чат</button>{% if is_staff %}<button type="button" data-chat-tab="teachers">Багш нарын чат</button>{% endif %}</div>
+    <div class="chat-workspace__body">
+      <aside data-chat-sidebar="parents">
+        <strong>Эцэг эхийн чат</strong>
+        <button class="is-active" type="button">Бүх эцэг эх<small>Бүлгийн чат</small></button>
+        <button type="button">Хүүхэд сонгох<small>Хувийн чат</small></button>
+      </aside>
+      {% if is_staff %}
+        {% comment %} §8's "Багш нарын дотоод чат" (client's flow, 2026-08-18) —
+           a second, fully separate thread list, not a relabeled parent chat.
+           It only renders inside `{% if is_staff %}` at all, so a guardian's
+           HTML never contains it — not css-hidden, genuinely absent from the
+           response. No other-teacher roster exists in this view's context
+           (adding one is a selectors.py change), so the entries stay generic
+           and real rather than naming people who may not exist. {% endcomment %}
+        <aside data-chat-sidebar="teachers" hidden>
+          <strong>Багш нарын чат</strong>
+          <button class="is-active" type="button">Бүх багш нар<small>Ерөнхий чат</small></button>
+          <button type="button">Удирдлага руу бичих<small>Хувийн чат</small></button>
+          <p class="chat-workspace__isolation">🔒 Энэ чатыг эцэг эх харах боломжгүй</p>
+        </aside>
+      {% endif %}
+      <div class="chat-workspace__thread">
+        <div class="chat-workspace__empty"><b>💬</b><strong>Одоогоор зурвас алга</strong><span>Backend холбогдоход энэ харилцан ярианы түүх энд гарна.</span></div>
+        <div class="chat-workspace__messages" data-chat-messages aria-live="polite"></div>
+        <div class="chat-workspace__preview" data-chat-preview hidden></div>
+        <form data-chat-send>
+          <label class="chat-attach" title="Зураг эсвэл бичлэг хавсаргах">📎<input type="file" name="attachment" accept="image/*,video/*" data-chat-file hidden></label>
+          <span class="chat-voice-wrap">
+            <button type="button" class="chat-voice" data-chat-voice title="Дуу хоолойн зурвас бичих"><span data-chat-voice-icon>🎙</span></button>
+            <span class="chat-voice__timer" data-chat-timer hidden>0:00</span>
+          </span>
+          <input name="message" placeholder="Зурвас бичих…" aria-label="Зурвас">
+          <button class="btn" type="submit">Илгээх</button>
+        </form>
+        <p data-chat-status aria-live="polite">Зураг, бичлэг, voice болон текстийг API холбоход илгээнэ.</p>
+      </div>
+    </div>
+  </section>
   <section class="classboard">
     {% if is_staff %}
       <div class="classboard__mobile-head">
@@ -57,11 +98,22 @@
       </a>
     {% endif %}
 
+    {% if is_staff %}
+      <div class="classboard__groups" data-board-groups aria-label="Бүлгээр харах">
+        <strong>Бүлгийн самбар</strong>
+        <div>
+          <button type="button" class="is-active" data-board-group="">Бүх бүлэг</button>
+          {% for announcement in page %}{% for target in announcement.targets.all %}{% if target.group %}<button type="button" data-board-group="{{ target.group.pk }}" hidden>{{ target.group.name }}</button>{% endif %}{% endfor %}{% endfor %}
+        </div>
+        <p>Бүлэг сонгоход тухайн бүлэгт чиглэсэн багшийн постууд харагдана.</p>
+      </div>
+    {% endif %}
+
     {% if page.paginator.count %}
       <div class="classboard__meta"><span>Нийт {{ page.paginator.count }} мэдээлэл</span>{% if unread %}<span class="badge badge--brand">{{ unread }} шинэ</span>{% endif %}</div>
       <div class="classboard__feed">
         {% for announcement in page %}
-          <a class="classboard-post{% if not is_staff and not announcement.is_read %} classboard-post--new{% endif %}" href="{% url 'comms:detail' announcement.pk %}" data-board-post data-board-important="{% if announcement.is_important %}true{% else %}false{% endif %}" data-board-year="{% if announcement.published_at %}{{ announcement.published_at|date:'Y' }}{% endif %}" data-board-text="{{ announcement.title }} {{ announcement.body }}">
+          <a class="classboard-post{% if not is_staff and not announcement.is_read %} classboard-post--new{% endif %}" href="{% url 'comms:detail' announcement.pk %}" data-board-post data-board-groups="{% for target in announcement.targets.all %}{% if target.group %}{{ target.group.pk }} {% endif %}{% endfor %}" data-board-important="{% if announcement.is_important %}true{% else %}false{% endif %}" data-board-year="{% if announcement.published_at %}{{ announcement.published_at|date:'Y' }}{% endif %}" data-board-text="{{ announcement.title }} {{ announcement.body }}">
             <span class="classboard-post__mark"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-bell"></use></svg></span>
             <span><strong>{{ announcement.title }}{% if announcement.is_important %}<em class="classboard-post__important">Чухал</em>{% endif %}</strong><small>{% if announcement.published_at %}{{ announcement.published_at|date:"Y.m.d" }}{% else %}Нийтлээгүй{% endif %}{% if announcement.author %} · {{ announcement.author }}{% endif %}</small><p>{{ announcement.body|truncatewords:22 }}</p></span>
           </a>
@@ -86,13 +138,231 @@
   {% endif %}
   <script>
     (function () {
+      var chatWorkspace = document.querySelector('[data-chat-workspace]');
+      if (chatWorkspace && new URLSearchParams(window.location.search).get('chat') === '1') {
+        chatWorkspace.hidden = false;
+        document.querySelector('.classboard').hidden = true;
+        document.querySelectorAll('.classboard ~ .teacher-bottom-nav').forEach(function (item) { item.hidden = true; });
+      }
+      if (chatWorkspace) {
+        // Switching to "Багш нарын чат" swaps in a genuinely separate
+        // thread list (`data-chat-sidebar="teachers"`), not a relabeled
+        // copy of the parent one — see the comment on that markup.
+        chatWorkspace.querySelectorAll('[data-chat-tab]').forEach(function (button) {
+          button.addEventListener('click', function () {
+            chatWorkspace.querySelectorAll('[data-chat-tab]').forEach(function (item) { item.classList.remove('is-active'); });
+            button.classList.add('is-active');
+            var target = button.getAttribute('data-chat-tab');
+            chatWorkspace.querySelectorAll('[data-chat-sidebar]').forEach(function (aside) {
+              aside.hidden = aside.getAttribute('data-chat-sidebar') !== target;
+            });
+          });
+        });
+
+        // Voice — real capture via MediaRecorder (2026-08-19), not just the
+        // timer. The clip stays in-memory only (an object URL, never
+        // uploaded) and is played back with a plain <audio controls> —
+        // this is what a real backend integration only needs to add a
+        // fetch() upload to, the capture/preview/playback plumbing is done.
+        var voiceBtn = chatWorkspace.querySelector('[data-chat-voice]');
+        var voiceIcon = chatWorkspace.querySelector('[data-chat-voice-icon]');
+        var voiceTimer = chatWorkspace.querySelector('[data-chat-timer]');
+        var voiceInterval = null;
+        var voiceSeconds = 0;
+        var mediaRecorder = null;
+        var mediaChunks = [];
+        var mediaStream = null;
+        var pendingFile = null;
+        var pendingFileUrl = null;
+        var pendingVoice = null;
+
+        function formatTimer(total) {
+          var mins = Math.floor(total / 60);
+          var secs = total % 60;
+          return mins + ':' + (secs < 10 ? '0' : '') + secs;
+        }
+
+        var preview = chatWorkspace.querySelector('[data-chat-preview]');
+        function buildChip(mediaNode, label, onRemove) {
+          var chip = document.createElement('div');
+          chip.className = 'chat-chip';
+          if (mediaNode) chip.appendChild(mediaNode);
+          var span = document.createElement('span');
+          span.className = 'chat-chip__label';
+          span.textContent = label;
+          chip.appendChild(span);
+          var remove = document.createElement('button');
+          remove.type = 'button';
+          remove.className = 'chat-chip__remove';
+          remove.setAttribute('aria-label', 'Хасах');
+          remove.textContent = '✕';
+          remove.addEventListener('click', onRemove);
+          chip.appendChild(remove);
+          return chip;
+        }
+        function renderPreview() {
+          preview.innerHTML = '';
+          var any = false;
+          if (pendingFile) {
+            any = true;
+            var media;
+            if (pendingFile.type.indexOf('image') === 0) {
+              media = document.createElement('img');
+              media.className = 'chat-chip__thumb';
+              media.src = pendingFileUrl;
+              media.alt = '';
+            } else {
+              media = document.createElement('span');
+              media.className = 'chat-chip__icon';
+              media.textContent = '🎬';
+            }
+            preview.appendChild(buildChip(media, pendingFile.name, function () {
+              if (pendingFileUrl) URL.revokeObjectURL(pendingFileUrl);
+              pendingFile = null; pendingFileUrl = null; fileInput.value = '';
+              renderPreview();
+            }));
+          }
+          if (pendingVoice) {
+            any = true;
+            var audio = document.createElement('audio');
+            audio.controls = true;
+            audio.src = pendingVoice.url;
+            audio.className = 'chat-chip__audio';
+            preview.appendChild(buildChip(audio, formatTimer(pendingVoice.seconds) + ' дуут зурвас', function () {
+              URL.revokeObjectURL(pendingVoice.url);
+              pendingVoice = null;
+              renderPreview();
+            }));
+          }
+          preview.hidden = !any;
+        }
+
+        function startRecording() {
+          if (!navigator.mediaDevices || !window.MediaRecorder) {
+            if (typeof window.showToast === 'function') window.showToast('Энэ browser дуу хоолой бичихийг дэмжихгүй байна.', 'error');
+            return;
+          }
+          navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+            mediaStream = stream;
+            mediaChunks = [];
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.addEventListener('dataavailable', function (event) {
+              if (event.data && event.data.size) mediaChunks.push(event.data);
+            });
+            mediaRecorder.addEventListener('stop', function () {
+              var blob = new Blob(mediaChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+              if (blob.size > 0) {
+                if (pendingVoice) URL.revokeObjectURL(pendingVoice.url);
+                pendingVoice = { url: URL.createObjectURL(blob), seconds: voiceSeconds };
+                renderPreview();
+              }
+              mediaStream.getTracks().forEach(function (track) { track.stop(); });
+              mediaStream = null;
+            });
+            mediaRecorder.start();
+            voiceBtn.classList.add('is-recording');
+            voiceIcon.textContent = '■';
+            voiceSeconds = 0;
+            voiceTimer.hidden = false;
+            voiceTimer.textContent = formatTimer(0);
+            voiceInterval = window.setInterval(function () {
+              voiceSeconds += 1;
+              voiceTimer.textContent = formatTimer(voiceSeconds);
+            }, 1000);
+          }).catch(function () {
+            if (typeof window.showToast === 'function') window.showToast('Микрофоны зөвшөөрөл өгөгдөөгүй байна.', 'error');
+          });
+        }
+        function stopRecording() {
+          voiceBtn.classList.remove('is-recording');
+          voiceIcon.textContent = '🎙';
+          voiceTimer.hidden = true;
+          window.clearInterval(voiceInterval);
+          if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+        }
+        voiceBtn.addEventListener('click', function () {
+          if (voiceBtn.classList.contains('is-recording')) stopRecording();
+          else startRecording();
+        });
+
+        // Attachment — shows what was picked instead of silently accepting
+        // it, same as the meal-register photo preview elsewhere on site.
+        var fileInput = chatWorkspace.querySelector('[data-chat-file]');
+        fileInput.addEventListener('change', function () {
+          if (pendingFileUrl) URL.revokeObjectURL(pendingFileUrl);
+          var file = fileInput.files && fileInput.files[0];
+          pendingFile = file || null;
+          pendingFileUrl = file ? URL.createObjectURL(file) : null;
+          renderPreview();
+        });
+
+        chatWorkspace.querySelector('[data-chat-send]').addEventListener('submit', function (event) {
+          event.preventDefault();
+          var status = chatWorkspace.querySelector('[data-chat-status]');
+          var messageInput = event.target.querySelector('[name=message]');
+          var message = messageInput.value.trim();
+          if (voiceBtn.classList.contains('is-recording')) stopRecording();
+
+          if (message || pendingFile || pendingVoice) {
+            var messages = chatWorkspace.querySelector('[data-chat-messages]');
+            var bubble = document.createElement('div');
+            bubble.className = 'chat-workspace__bubble chat-workspace__bubble--mine';
+            if (message) {
+              var text = document.createElement('p');
+              text.className = 'chat-workspace__bubble-text';
+              text.textContent = message;
+              bubble.appendChild(text);
+            }
+            if (pendingFile) {
+              var media;
+              if (pendingFile.type.indexOf('image') === 0) {
+                media = document.createElement('img');
+                media.src = pendingFileUrl;
+                media.alt = pendingFile.name;
+              } else {
+                media = document.createElement('video');
+                media.src = pendingFileUrl;
+                media.controls = true;
+              }
+              media.className = 'chat-workspace__bubble-media';
+              bubble.appendChild(media);
+            }
+            if (pendingVoice) {
+              var audio = document.createElement('audio');
+              audio.controls = true;
+              audio.src = pendingVoice.url;
+              audio.className = 'chat-workspace__bubble-audio';
+              bubble.appendChild(audio);
+            }
+            messages.appendChild(bubble);
+            chatWorkspace.querySelector('.chat-workspace__empty').hidden = true;
+          }
+          status.textContent = 'Илгээхэд бэлэн. Backend холбогдсоны дараа зурвас, файл, voice хадгалагдана.';
+          if (typeof window.showToast === 'function') window.showToast('Зурвас илгээгдлээ.', 'ok');
+          fileInput.value = '';
+          pendingFile = null;
+          pendingFileUrl = null;
+          pendingVoice = null;
+          renderPreview();
+          messageInput.value = '';
+        });
+      }
       var search = document.getElementById('id_board_search');
       var filterToggle = document.querySelector('[data-board-filter]');
       var filters = document.getElementById('classboard-filters');
       var category = document.querySelector('[data-board-category]');
       var year = document.querySelector('[data-board-year]');
       var selectedKind = 'all';
+      var selectedGroup = '';
       var posts = document.querySelectorAll('[data-board-post]');
+      var groupButtons = document.querySelectorAll('[data-board-group]');
+      var seenGroups = {};
+      groupButtons.forEach(function (button) {
+        var group = button.getAttribute('data-board-group');
+        if (!group) return;
+        if (seenGroups[group]) button.remove();
+        else { seenGroups[group] = true; button.hidden = false; }
+      });
       if (year) {
         var seenYears = {};
         Array.prototype.slice.call(year.options).forEach(function (option) {
@@ -110,7 +380,8 @@
           var categoryMatch = !selectedCategory || postText.indexOf(selectedCategory + ':') === 0;
           var yearMatch = !selectedYear || post.getAttribute('data-board-year') === selectedYear;
           var kindMatch = selectedKind === 'all' || post.getAttribute('data-board-important') === 'true';
-          post.hidden = !(textMatch && categoryMatch && yearMatch && kindMatch);
+          var groupMatch = !selectedGroup || (post.getAttribute('data-board-groups') || '').split(' ').indexOf(selectedGroup) !== -1;
+          post.hidden = !(textMatch && categoryMatch && yearMatch && kindMatch && groupMatch);
         });
       }
       if (search) {
@@ -135,6 +406,13 @@
           });
         });
       }
+      groupButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+          selectedGroup = button.getAttribute('data-board-group') || '';
+          document.querySelectorAll('[data-board-group]').forEach(function (item) { item.classList.remove('is-active'); });
+          button.classList.add('is-active'); filterPosts();
+        });
+      });
     }());
   </script>
 {% endblock %}

@@ -28,6 +28,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Эцэг эхийн хэсэг{% endblock %} · Хүүхдийн хөгжлийн хавтас</title>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chat.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chat-messages.css' %}">
+  <link rel="stylesheet" href="{% static 'css/parent-survey.css' %}">
   {% include "_theme_head.html" %}
 </head>
 <body>
@@ -60,6 +63,24 @@
           <span class="count">{{ unread_announcements }}</span>
         {% endif %}
       </a>
+      <a href="{% url 'comms:list' %}?chat=1">
+        <svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg>
+        Чат
+      </a>
+      {% if child %}
+        <a href="{% url 'children:parent_child_detail' child.pk %}#parent-attendance">
+          <svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg>
+          Ирц
+        </a>
+        <a href="{% url 'children:parent_child_detail' child.pk %}#parent-meals">
+          <svg class="ic" aria-hidden="true"><use href="#i-meal"></use></svg>
+          Хоол ба цэс
+        </a>
+        <a href="{% url 'children:parent_child_detail' child.pk %}#parent-finance">
+          <svg class="ic" aria-hidden="true"><use href="#i-money"></use></svg>
+          Санхүү
+        </a>
+      {% endif %}
       <a href="{% url 'accounts:profile' %}"
          {% if nav == 'profile' %}aria-current="page"{% endif %}>
         <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
@@ -122,5 +143,6 @@
 
   {% include "components/bottom_nav.html" %}
 </div>
+<script src="{% static 'js/ui-states.js' %}"></script>
 </body>
 </html>

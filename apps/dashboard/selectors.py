@@ -23,6 +23,7 @@ from django.utils import timezone
 from apps.accounts.models import Role, User
 from apps.assessment.models import Assessment, AssessmentLevel
 from apps.assessment.selectors import current_term, domains_for
+from apps.attendance import selectors as attendance_selectors
 from apps.children.models import Child, Enrollment
 from apps.comms.models import Announcement
 from apps.core.models import AuditAction, AuditLog
@@ -72,7 +73,24 @@ def teacher_dashboard(user, *, today: dt.date | None = None) -> dict:
             children, child_ids, term
         ),
         "domain_averages": _domain_averages(child_ids, term),
+        # нэмэлт.md §1 — how many of today's children have no mark yet. It is
+        # on the dashboard because a missing mark is the one failure here that
+        # is completely silent: no error, no row, and the funding day is gone
+        # by the time anyone reconciles the month.
+        "attendance_unmarked": _attendance_unmarked(groups, today),
     }
+
+
+def _attendance_unmarked(groups, today) -> int:
+    """Today's unrecorded children across the teacher's own groups.
+
+    Scoped to the first group, matching the dashboard's own link: the panel
+    offers one register and `nav_group` decides which. Counting every group
+    would report a number the button beside it does not act on.
+    """
+    if not groups:
+        return 0
+    return len(attendance_selectors.unmarked_children(groups[0], today))
 
 
 def _current_term_for(groups, today):

@@ -72,6 +72,21 @@
         {% endfor %}
       </div>
     {% endif %}
+
+    {% comment %} §8.1 — "зурган харан, зүрх дарна" (client's flow,
+       2026-08-18): a reaction, deliberately not a comment thread — the
+       client explicitly does not want families able to leave a comment
+       here, only react. No `AnnouncementReaction` model exists yet, so the
+       press is remembered client-side (localStorage, keyed by this
+       announcement's id) rather than lost on refresh; nothing is sent to
+       the server. {% endcomment %}
+    {% if not is_staff %}
+      <button type="button" class="notice-heart" data-notice-heart
+              data-notice-id="{{ announcement.pk }}" aria-pressed="false">
+        <svg class="ic ic--sm" aria-hidden="true"><use href="#i-heart"></use></svg>
+        <span data-notice-heart-label>Таалагдсан гэж тэмдэглэх</span>
+      </button>
+    {% endif %}
   </article>
 
   {% comment %} §8.1 — "уншсан хэрэглэгчдийн тоог харах", "хэн уншсаныг
@@ -124,5 +139,27 @@
       <a class="btn btn--ghost" href="{% url 'comms:edit' announcement.pk %}">Засах</a>
       <a class="btn btn--ghost" href="{% url 'comms:delete' announcement.pk %}">Архивлах</a>
     </div>
+  {% endif %}
+
+  {% if not is_staff %}
+    <script>
+      (function () {
+        var button = document.querySelector('[data-notice-heart]');
+        if (!button) return;
+        var key = 'notice-heart-' + button.getAttribute('data-notice-id');
+        var label = button.querySelector('[data-notice-heart-label]');
+        function paint(on) {
+          button.classList.toggle('is-active', on);
+          button.setAttribute('aria-pressed', String(on));
+          label.textContent = on ? 'Таалагдсан' : 'Таалагдсан гэж тэмдэглэх';
+        }
+        paint(window.localStorage.getItem(key) === '1');
+        button.addEventListener('click', function () {
+          var on = button.getAttribute('aria-pressed') !== 'true';
+          window.localStorage.setItem(key, on ? '1' : '0');
+          paint(on);
+        });
+      }());
+    </script>
   {% endif %}
 {% endblock %}

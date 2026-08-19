@@ -1,0 +1,2 @@
+/* Today's attendance is deliberately neutral until the attendance list API supplies a status. */
+.kidrow__main{position:relative}.attendance-dot{position:absolute;left:34px;top:34px;width:11px;height:11px;border:2px solid var(--card);border-radius:50%;box-shadow:0 1px 3px rgba(15,23,42,.18)}.attendance-dot--present{background:#2fa56e}.attendance-dot--absent{background:#df5656}.attendance-dot--pending{background:#94a3b8}@media(max-width:700px){.attendance-dot{left:30px;top:30px}}

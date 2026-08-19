@@ -94,6 +94,25 @@
             <div class="report-domain-chart__row">
               <span class="report-domain-chart__label">
                 <i style="background:{{ row.domain.color }}"></i>{{ row.domain.name }}
+                {% comment %} Progress arrow — the two most recently recorded
+                   terms for this domain. `matrix.rows[].cells` lines up with
+                   `terms` in school-year order, so the last two entries are
+                   the most recent; a term with no assessment yet leaves its
+                   cell falsy, so a row with fewer than two scored terms
+                   simply shows no arrow. Nothing invented. {% endcomment %}
+                {% with recent=row.cells|slice:"-2:" %}
+                  {% with prev_cell=recent.0 curr_cell=recent.1 %}
+                    {% if prev_cell and curr_cell and prev_cell != curr_cell %}
+                      {% if curr_cell.level.value > prev_cell.level.value %}
+                        <span class="report-trend report-trend--up" title="{{ prev_cell.term.name }} → {{ curr_cell.term.name }}">▲ Ахиц</span>
+                      {% elif curr_cell.level.value < prev_cell.level.value %}
+                        <span class="report-trend report-trend--down" title="{{ prev_cell.term.name }} → {{ curr_cell.term.name }}">▼ Буурсан</span>
+                      {% else %}
+                        <span class="report-trend report-trend--flat" title="{{ prev_cell.term.name }} → {{ curr_cell.term.name }}">Тогтвортой</span>
+                      {% endif %}
+                    {% endif %}
+                  {% endwith %}
+                {% endwith %}
               </span>
               <span class="report-domain-chart__bars" aria-label="{{ row.domain.name }}-ийн улирлын үнэлгээ">
                 {% for cell in row.cells %}
@@ -109,7 +128,26 @@
             </div>
           {% endfor %}
         </div>
-        <p class="report-chart-card__note">Багана бүр нь тухайн улирлын 1–4 түвшний үнэлгээг илэрхийлнэ.</p>
+        <p class="report-chart-card__note">Багана бүр нь тухайн улирлын 1–4 түвшний үнэлгээг илэрхийлнэ. Сумтай тэмдэг хамгийн сүүлийн хоёр бүртгэгдсэн улирлын хоорондох ахицыг харуулна.</p>
+      </div>
+
+      {% comment %} §6.4's "сар, улирлын хөгжлийн ахиц" (client's flow,
+         2026-08-18) — the quarter half is the chart above, straight from
+         `matrix`. A per-month breakdown has no backing selector yet
+         (assessments are recorded per `Term`, not per calendar month), so
+         this stays an honest, empty prep panel rather than a chart with
+         invented month labels. {% endcomment %}
+      <div class="report-chart-card">
+        <div class="report-chart-card__head">
+          <div>
+            <span>САРААР</span>
+            <h2>Сарын идэвхийн ахиц</h2>
+          </div>
+        </div>
+        <div class="admin-finance-empty">
+          <b>— %</b>
+          <span>Сар бүрийн ажиглалт, үнэлгээний давтамжийг нэгтгэсэн ахицын график backend холбогдоход энд харагдана.</span>
+        </div>
       </div>
     </section>
 

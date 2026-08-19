@@ -15,8 +15,15 @@
   <div class="card" style="max-width:720px">
     {% if error %}<p class="msg msg--error" role="alert">{{ error }}</p>{% endif %}
 
-    <form method="post" novalidate>
+    <form method="post" novalidate enctype="multipart/form-data">
       {% csrf_token %}
+
+      {% if is_teacher %}
+        <section class="teacher-profile-photo" aria-labelledby="teacher-profile-photo-title">
+          <div class="teacher-profile-photo__preview" data-teacher-photo-preview>{{ form.first_name|first|default:"Б" }}</div>
+          <div><h2 id="teacher-profile-photo-title">Багшийн зураг</h2><p>Профайл зураг сонгож урьдчилан харна.</p><label class="btn btn--ghost btn--sm">Зураг сонгох<input type="file" name="profile_photo" accept="image/*" data-teacher-photo data-api-field="profile_photo" hidden></label></div>
+        </section>
+      {% endif %}
 
       <div class="grid grid--2" style="gap:0 16px">
         <div>
@@ -75,4 +82,7 @@
       </div>
     </form>
   </div>
+  <script>
+    document.querySelectorAll('[data-teacher-photo]').forEach(function (input) { input.addEventListener('change', function () { var file = input.files && input.files[0]; var preview = document.querySelector('[data-teacher-photo-preview]'); if (!file || !preview) return; preview.innerHTML = '<img alt="Багшийн сонгосон зураг">'; preview.querySelector('img').src = URL.createObjectURL(file); }); });
+  </script>
 {% endblock %}

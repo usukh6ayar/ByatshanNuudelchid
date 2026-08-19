@@ -61,60 +61,50 @@
        on the unfiltered list rather than a route that does not
        exist. {% endcomment %}
     {% with focus_id=request.GET.focus_child|default:rows.0.child.pk|stringformat:"s" %}
-      <section class="section" style="margin-top:var(--s5)">
-        {% include "components/section_head.html" with title="Хүүхэд сонгох" %}
-        <form method="get">
+      {% comment %} One row — client feedback 2026-08-19. Three things this
+         replaces:
+         1. Two separate "Хүүхэд сонгох" `<select>` and "Хүүхэд хайх"
+            `<input>` merged into one searchable combobox (`.childpicker`)
+            — type to filter, click the ▾ or the field to see the full
+            roster, click a name to jump to them (still a real GET
+            `focus_child`, still a real page load — no new view).
+         2. "Бүлэг" was already static text here, not a second selector —
+            kept as-is.
+         3. The three note-type links are now a row of pill/segmented
+            buttons with the client's own icons, not a bare vertical list.
+         The whole bar is `display:flex` (see `.quick-filter-bar` in
+         app.css) so it reads as one row on a desktop and wraps, not
+         stacks fully, on a phone. {% endcomment %}
+      <section class="quick-filter-bar" aria-label="Хүүхэд ба тэмдэглэлийн шүүлтүүр">
+        <div class="quick-filter-bar__group"><small>Бүлэг</small><strong>{{ group.name }}</strong></div>
+
+        <form method="get" class="quick-filter-bar__child" data-focus-form>
           <input type="hidden" name="domain" value="{{ domain.pk }}">
           <input type="hidden" name="term" value="{{ term.pk }}">
-          <div class="searchbar" style="margin-top:0">
-            <label for="id_focus_child_search" class="sr-only">Хүүхэд хайх</label>
-            <input type="search" id="id_focus_child_search"
-                   placeholder="Хүүхэд хайх..." autocomplete="off"
-                   oninput="filterFocusChild(this.value)"
-                   onkeydown="if (event.key === 'Enter') { event.preventDefault(); pickFirstVisibleFocusChild(); }">
+          <input type="hidden" name="focus_child" id="id_focus_child_value" value="{{ focus_id }}">
+          <label for="id_focus_child_search" class="sr-only">Хүүхэд сонгох, хайх</label>
+          <div class="childpicker">
+            <input type="text" id="id_focus_child_search" class="childpicker__input"
+                   role="combobox" aria-expanded="false" aria-autocomplete="list"
+                   aria-controls="id_focus_child_listbox" autocomplete="off"
+                   placeholder="Хүүхэд хайх, эсвэл сонгох...">
+            <button type="button" class="childpicker__toggle" data-childpicker-toggle aria-label="Жагсаалт нээх">▾</button>
+            <ul id="id_focus_child_listbox" class="childpicker__list" role="listbox" hidden>
+              {% for row in rows %}
+                <li role="option" tabindex="-1"
+                    data-child-id="{{ row.child.pk }}" data-child-name="{{ row.child.full_name }}"
+                    {% if row.child.pk|stringformat:"s" == focus_id %}aria-selected="true" class="is-selected"{% endif %}>
+                  {{ row.child.full_name }}
+                </li>
+              {% endfor %}
+            </ul>
           </div>
-          <label for="id_focus_child" class="sr-only">Хүүхэд</label>
-          <select name="focus_child" id="id_focus_child" onchange="this.form.submit()" style="margin-top:var(--s2)">
-            {% for row in rows %}
-              <option value="{{ row.child.pk }}"
-                {% if row.child.pk|stringformat:"s" == focus_id %}selected{% endif %}>
-                {{ row.child.full_name }}
-              </option>
-            {% endfor %}
-          </select>
         </form>
-      </section>
 
-      <section class="section">
-        {% include "components/section_head.html" with title="Тэмдэглэлийн төрөл" %}
-        <div class="note-types">
-          <a class="note-type note-type--green" href="{% url 'observations:list' focus_id %}?open=1">
-            <span class="note-type__icon" aria-hidden="true">
-              <svg class="ic ic--sm" aria-hidden="true"><use href="#i-observation"></use></svg>
-            </span>
-            <span>
-              <span class="note-type__title">Ажиглалт</span>
-              <span class="note-type__sub">Хүүхдийн хөгжлийн тэмдэглэл</span>
-            </span>
-          </a>
-          <a class="note-type note-type--blue" href="{% url 'observations:list' focus_id %}?open=1">
-            <span class="note-type__icon" aria-hidden="true">
-              <svg class="ic ic--sm" aria-hidden="true"><use href="#i-chat"></use></svg>
-            </span>
-            <span>
-              <span class="note-type__title">Ярилцлага</span>
-              <span class="note-type__sub">Асуулт, хариултын тэмдэглэл</span>
-            </span>
-          </a>
-          <a class="note-type note-type--amber" href="{% url 'observations:list' focus_id %}?open=1">
-            <span class="note-type__icon" aria-hidden="true">
-              <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
-            </span>
-            <span>
-              <span class="note-type__title">Бүтээл</span>
-              <span class="note-type__sub">Бүтээл, зураг, ахицын тэмдэглэл</span>
-            </span>
-          </a>
+        <div class="quick-filter-bar__types" aria-label="Тэмдэглэлийн төрөл">
+          <a class="notetab notetab--green" href="{% url 'observations:list' focus_id %}?open=1"><span aria-hidden="true">👁️</span>Ажиглалт</a>
+          <a class="notetab notetab--blue" href="{% url 'observations:list' focus_id %}?open=1"><span aria-hidden="true">💬</span>Ярилцлага</a>
+          <a class="notetab notetab--amber" href="{% url 'observations:list' focus_id %}?open=1"><span aria-hidden="true">🎨</span>Бүтээл</a>
         </div>
       </section>
 
@@ -169,32 +159,114 @@
          тохиргоо. `Observation`-д зорилтын тоо хадгалах багана алга, зорилтыг
          тохируулж, биелэлтийг тоолох selector ч алга (backend хайлт баталгаажсан
          — apps/dashboard/selectors.py, apps/observations/selectors.py-д
-         байхгүй). Тиймээс энд зөвхөн хоосон төлөв үзүүлж, backend бэлэн
-         болмогц бодит тоогоор солино. {% endcomment %}
-      {% include "components/empty.html" with icon="soon" message="Сарын тэмдэглэлийн зорилт (хүүхэд бүрт сард хэдэн тэмдэглэл) энд удахгүй нэмэгдэнэ." %}
+         байхгүй, дэлгэрэнгүйг docs/superpowers/specs/2026-08-18-progress-overview-backend.md-ээс).
+         Тохиргооны сонголт өөрөө бодит зүйл байж болно — зорилтыг backend
+         байхгүй үед ч `localStorage`-д (энэ төхөөрөмж дээр, зурвасын зүрх
+         шиг) хадгалж, доорх "Ахиц" хэсгийн картуудад бодит харьцуулалт
+         (0/нийт, зорилт N) хийхэд ашиглана. Зөвхөн бодит тоо
+         (`total`, `group.school_year`) ашигласан, юу ч зохиомжлоогүй.
+         {% endcomment %}
+      <div class="normset" data-norm-set data-norm-key="assessment-norm-{{ group.pk }}-{{ group.school_year.pk }}">
+        <div class="normset__year">
+          <span>ХИЧЭЭЛИЙН ЖИЛ</span>
+          <strong>{{ group.school_year.name }}</strong>
+        </div>
+        <label class="normset__field">
+          Сард нэг хүүхдэд орох тэмдэглэлийн тоо
+          <select data-norm-target>
+            <option value="">Сонгоогүй</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </label>
+        <p class="normset__status" data-norm-status role="status"></p>
+        <div class="target-kpi" data-target-kpi data-total-children="{{ total }}" hidden>
+          <div><small>Энэ сарын биелэлт</small><strong data-target-kpi-value>0%</strong><span data-target-kpi-count>0 / 0 тэмдэглэл</span></div>
+          <div class="target-kpi__track" aria-hidden="true"><i data-target-kpi-bar></i></div>
+          <p data-target-kpi-note>Тэмдэглэл бүртгэгдсэний дараа биелэлт автоматаар шинэчлэгдэнэ.</p>
+        </div>
+      </div>
     </section>
 
-    {% comment %} Санал болгох хүүхдийн карт — аль хүүхдэд энэ сард хамгийн бага
-       тэмдэглэл бичигдсэнийг харуулах зорилготой (7.24). Дээрх зорилтын тоо
-       байхгүй тул харьцуулах өгөгдөл алга — backend талд шийдэгдэх хүртэл
-       хоосон төлвөөр үлдээв. {% endcomment %}
+    <aside class="note-reminder" data-note-reminder hidden aria-live="polite">
+      <span aria-hidden="true">🔔</span><p data-note-reminder-text></p>
+    </aside>
+
+    {% comment %} Санал болгох хүүхдийн жагсаалт — аль хүүхдэд энэ сард
+       хамгийн бага тэмдэглэл бичигдсэнийг харуулах зорилготой (7.24).
+       Харьцуулах өгөгдөл (хүүхэд бүрийн тэмдэглэлийн тоо) гаргах selector
+       алга тул жагсаалтын мөрийг зохиомжлохгүй — гагцхүү бэлэн эцсийн
+       хэлбэрийг (тоолуур бүхий disclosure) харуулж, backend бэлэн болмогц
+       мөрүүдийг л нэмнэ. {% endcomment %}
     <section class="section" style="margin-top:var(--s5)">
       {% include "components/section_head.html" with title="Санал болгох хүүхэд" %}
-      {% include "components/empty.html" with icon="soon" message="Хамгийн бага тэмдэглэлтэй хүүхдийг санал болгох боломж энд удахгүй нэмэгдэнэ." %}
+      <details class="recommend">
+        <summary>Санал болгох хүүхдийн жагсаалт <span class="badge badge--muted">—</span></summary>
+        <div class="recommend__body">
+          {% include "components/empty.html" with icon="soon" message="Хамгийн бага тэмдэглэлтэй хүүхдийг тэмдэглэлийн тоогоор эрэмбэлсэн жагсаалт backend холбогдоход энд харагдана." %}
+        </div>
+      </details>
     </section>
 
     {% comment %} Сар/улирал/жил/сүүлийн үеийн ахиц — 7.24-ийн quick_assess
        харагдана. Хүүхэд бүрийн тэмдэглэлийг сараар бүлэглэх selector алга
-       (TruncMonth ашигласан aggregation хаана ч алга), тиймээс энд ч мөн
-       backend хүлээгдэж буй хоосон төлөв. "Тайлан харах" холбоос нь ганц
-       өөрөө бодит зүйл — 7.24-д группын жилийн тайлан руу орсон ч энд ийм
-       тайлан алга, харин одоо анхаарч буй хүүхдийн улирлын тайлан
-       (reports:request, RFP §549) бодитоор байгаа тул "Хүүхэд сонгох"-оор
-       сонгосон хүүхэд рүү холбов. {% endcomment %}
+       (TruncMonth ашигласан aggregation хаана ч алга), тиймээс тэмдэглэлийн
+       бодит тоо хаа сайгүй "0" харагдана — гэхдээ сар/улирлын нэрс, нийт
+       хүүхдийн тоо, дээрх зорилт бүгд бодит өгөгдөл: сар нь
+       `group.school_year`-ийн эхлэх/дуусах огнооноос тооцоолсон, улирал нь
+       жинхэнэ `terms`, нийт хүүхэд нь `total`. Юу ч санамсаргүй
+       зохиомжлоогүй. "Тайлан харах" холбоос нь "Хүүхэд сонгох"-оор
+       сонгосон хүүхдийн бодит улирлын тайлан руу (reports:request, §549)
+       ордог тул өөрчлөлтгүй үлдэв. {% endcomment %}
     <section class="section" style="margin-top:var(--s5)">
       {% url 'reports:request' focus_id as focus_report_url %}
       {% include "components/section_head.html" with title="Ахиц" link=focus_report_url link_label="Тайлан харах" %}
-      {% include "components/empty.html" with icon="soon" message="Сар, улирал, жилээр бүлэглэсэн ахицын харагдац энд удахгүй нэмэгдэнэ." %}
+
+      <div class="progresstabs" data-progress-tabs
+           data-year-start="{{ group.school_year.starts_on|date:'Y-m-d' }}"
+           data-year-end="{{ group.school_year.ends_on|date:'Y-m-d' }}"
+           data-total-children="{{ total }}"
+           data-norm-key="assessment-norm-{{ group.pk }}-{{ group.school_year.pk }}">
+        <div class="progresstabs__tabs" role="tablist">
+          <button type="button" class="is-active" data-progress-tab="month">Сараар</button>
+          <button type="button" data-progress-tab="quarter">Улирлаар</button>
+          <button type="button" data-progress-tab="year">Жилээр</button>
+          <button type="button" data-progress-tab="recent">Сүүлд хийсэн</button>
+        </div>
+
+        <div class="progresstabs__panel" data-progress-panel="month"></div>
+
+        <div class="progresstabs__panel" data-progress-panel="quarter" hidden>
+          {% for t in terms %}
+            <div class="progresscard">
+              <div class="progresscard__head">
+                <strong>{{ t.name }}</strong>
+                <span data-progress-figure data-progress-total="{{ total }}">0/{{ total }} хүүхэд · {{ total }} үлдсэн · зорилт <span data-norm-value>—</span></span>
+              </div>
+              <p class="progresscard__empty">Энэ улиралд тэмдэглэл ороогүй байна.</p>
+            </div>
+          {% empty %}
+            {% include "components/empty.html" with icon="assessment" message="Энэ хичээлийн жилд улирал тохируулаагүй байна." %}
+          {% endfor %}
+        </div>
+
+        <div class="progresstabs__panel" data-progress-panel="year" hidden>
+          <div class="progresscard">
+            <div class="progresscard__head">
+              <strong>{{ group.school_year.name }}</strong>
+              <span data-progress-figure data-progress-total="{{ total }}">0/{{ total }} хүүхэд · {{ total }} үлдсэн · зорилт <span data-norm-value>—</span></span>
+            </div>
+            <p class="progresscard__empty">Жилийн эцсийн дундаж тэмдэглэлийн тоо, биелэлтийн хувь энд харагдана.</p>
+          </div>
+        </div>
+
+        <div class="progresstabs__panel" data-progress-panel="recent" hidden>
+          {% include "components/empty.html" with icon="observation" message="Бүлгийн сүүлд хийгдсэн тэмдэглэлийн жагсаалт энд харагдана." %}
+        </div>
+      </div>
     </section>
     {% endwith %}
 
@@ -249,7 +321,7 @@
                levels and a screen reader announces the position without any
                ARIA. The legend carries the child's name because the column
                header alone does not say whose row this is. {% endcomment %}
-            <fieldset class="levelset">
+            <fieldset class="levelset levelset--quick">
               <legend class="sr-only">{{ row.child.full_name }} — үнэлгээ</legend>
 
               {% for level in levels %}
@@ -257,9 +329,9 @@
                   <input type="radio" name="level_{{ row.enrollment.pk }}"
                          value="{{ level.pk }}"
                          {% if row.assessment.level_id == level.pk %}checked{% endif %}>
-                  <span style="{% if row.assessment.level_id == level.pk %}border-color:{{ level.color }}; background:{{ level.color }}14;{% endif %}">
+                  <span title="{{ level.value }}. {{ level.label }}" style="{% if row.assessment.level_id == level.pk %}border-color:{{ level.color }}; background:{{ level.color }}14;{% endif %}">
                     <b style="background:{{ level.color }}">{{ level.value }}</b>
-                    <span class="levelchip__text">{{ level.label }}</span>
+                    <span class="sr-only">{{ level.label }}</span>
                   </span>
                 </label>
               {% endfor %}
@@ -269,7 +341,7 @@
               <label class="levelchip levelchip--none">
                 <input type="radio" name="level_{{ row.enrollment.pk }}" value=""
                        {% if not row.assessment %}checked{% endif %}>
-                <span><b>—</b><span class="levelchip__text">Үнэлээгүй</span></span>
+                <span title="Үнэлээгүй"><b>—</b><span class="sr-only">Үнэлээгүй</span></span>
               </label>
             </fieldset>
           </div>
@@ -289,23 +361,187 @@
   {% endif %}
 
   <script>
-    function filterFocusChild(term) {
-      var needle = term.trim().toLowerCase();
-      var select = document.getElementById("id_focus_child");
-      if (!select) return;
-      Array.prototype.forEach.call(select.options, function (opt) {
-        opt.hidden = needle !== "" && opt.textContent.toLowerCase().indexOf(needle) === -1;
-      });
-    }
+    {% comment %} Хүүхэд сонгох — merged searchable combobox (client feedback
+       2026-08-19), replacing the separate `<select>` + search `<input>`
+       this screen had. Still posts the same real `focus_child` GET param
+       the view already reads — a click or Enter submits the (hidden)
+       form, exactly as the old `<select onchange>` did. {% endcomment %}
+    (function () {
+      var input = document.getElementById('id_focus_child_search');
+      var list = document.getElementById('id_focus_child_listbox');
+      var toggle = document.querySelector('[data-childpicker-toggle]');
+      var valueInput = document.getElementById('id_focus_child_value');
+      var form = document.querySelector('[data-focus-form]');
+      if (!input || !list || !form) return;
 
-    function pickFirstVisibleFocusChild() {
-      var select = document.getElementById("id_focus_child");
-      if (!select) return;
-      var match = Array.prototype.find.call(select.options, function (opt) { return !opt.hidden; });
-      if (match) {
-        select.value = match.value;
-        select.form.submit();
+      var items = Array.prototype.slice.call(list.querySelectorAll('[role="option"]'));
+      var selected = list.querySelector('.is-selected');
+      if (selected) input.value = selected.getAttribute('data-child-name');
+
+      function openList() { list.hidden = false; input.setAttribute('aria-expanded', 'true'); }
+      function closeList() { list.hidden = true; input.setAttribute('aria-expanded', 'false'); }
+      function filterList(query) {
+        var needle = query.trim().toLowerCase();
+        items.forEach(function (item) {
+          item.hidden = needle !== '' && item.getAttribute('data-child-name').toLowerCase().indexOf(needle) === -1;
+        });
       }
-    }
+      function selectChild(item) {
+        valueInput.value = item.getAttribute('data-child-id');
+        input.value = item.getAttribute('data-child-name');
+        closeList();
+        form.submit();
+      }
+
+      input.addEventListener('focus', function () { filterList(input.value); openList(); });
+      input.addEventListener('input', function () { filterList(input.value); openList(); });
+      input.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          var match = items.find(function (item) { return !item.hidden; });
+          if (match) selectChild(match);
+        } else if (event.key === 'Escape') {
+          closeList();
+          input.blur();
+        }
+      });
+      if (toggle) {
+        toggle.addEventListener('click', function () {
+          if (list.hidden) { filterList(''); openList(); input.focus(); }
+          else closeList();
+        });
+      }
+      list.addEventListener('click', function (event) {
+        var item = event.target.closest('[role="option"]');
+        if (item) selectChild(item);
+      });
+      document.addEventListener('click', function (event) {
+        if (!event.target.closest('.childpicker')) closeList();
+      });
+    }());
+
+    (function () {
+      document.querySelectorAll('.bandtrack').forEach(function (track) {
+        var panel = document.createElement('div');
+        panel.className = 'bandtrack__archive';
+        panel.hidden = true;
+        track.insertAdjacentElement('afterend', panel);
+        track.querySelectorAll('.bandtrack__item').forEach(function (card) {
+          card.tabIndex = 0;
+          card.setAttribute('role', 'button');
+          function openArchive() {
+            track.querySelectorAll('.bandtrack__item').forEach(function (item) { item.classList.remove('bandtrack__item--selected'); });
+            card.classList.add('bandtrack__item--selected');
+            var current = card.classList.contains('bandtrack__item--current');
+            panel.hidden = false;
+            panel.innerHTML = '<strong>' + card.querySelector('.bandtrack__label').textContent + ' · ' + card.querySelector('.bandtrack__years').textContent + '</strong><span>' + (current ? 'Одоогийн хичээлийн жил' : 'Зөвхөн харах архив') + '</span><p>Энэ жилийн төлөвлөгөө, биелэлт, нэгдсэн дүгнэлт энд харагдана.</p>';
+          }
+          card.addEventListener('click', openArchive);
+          card.addEventListener('keydown', function (event) { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openArchive(); } });
+        });
+      });
+    }());
+
+    (function () {
+      // Сарын норм — kept in localStorage (this device only, same pattern
+      // as the announcement heart reaction) until `ObservationNorm` exists
+      // server-side (docs/superpowers/specs/2026-08-18-progress-overview-backend.md).
+      // Read by the "Ахиц" panels below so their cards' "зорилт N" figure
+      // is real once a teacher sets it, not a placeholder.
+      var normSet = document.querySelector('[data-norm-set]');
+      if (normSet) {
+        var key = normSet.getAttribute('data-norm-key');
+        var select = normSet.querySelector('[data-norm-target]');
+        var status = normSet.querySelector('[data-norm-status]');
+        var kpi = normSet.querySelector('[data-target-kpi]');
+        var stored = window.localStorage.getItem(key);
+        if (stored) select.value = stored;
+        function updateTargetKpi() {
+          var target = Number(select.value) || 0;
+          var total = Number(kpi.getAttribute('data-total-children')) || 0;
+          var expected = target * total;
+          var reminder = document.querySelector('[data-note-reminder]');
+          kpi.hidden = !target;
+          if (!target) { if (reminder) reminder.hidden = true; return; }
+          kpi.querySelector('[data-target-kpi-value]').textContent = '0%';
+          kpi.querySelector('[data-target-kpi-count]').textContent = '0 / ' + expected + ' тэмдэглэл';
+          kpi.querySelector('[data-target-kpi-bar]').style.width = '0%';
+          var lastTenDays = new Date().getDate() >= 21;
+          if (reminder && lastTenDays) {
+            var month = new Intl.DateTimeFormat('mn-MN', { month: 'long' }).format(new Date());
+            reminder.hidden = false;
+            reminder.querySelector('[data-note-reminder-text]').textContent = 'Та энэ ' + month + ' ' + total + ' хүүхэд дээр тэмдэглэл бичиж амжаагүй байна. Гүйцэтгэл 0%-тай байна.';
+          }
+        }
+        select.addEventListener('change', function () {
+          if (select.value) {
+            window.localStorage.setItem(key, select.value);
+            status.textContent = 'Зорилт хадгалагдлаа. Backend холбогдоход бүлгийн тохиргоонд бичигдэнэ.';
+          } else {
+            window.localStorage.removeItem(key);
+            status.textContent = '';
+          }
+          if (typeof window.showToast === 'function' && select.value) {
+            window.showToast('Сарын зорилт ' + select.value + ' болж хадгалагдлаа.', 'ok');
+          }
+          document.querySelectorAll('[data-norm-value]').forEach(function (el) {
+            el.textContent = select.value || '—';
+          });
+          updateTargetKpi();
+        });
+        document.querySelectorAll('[data-norm-value]').forEach(function (el) {
+          el.textContent = stored || '—';
+        });
+        updateTargetKpi();
+      }
+    }());
+
+    (function () {
+      // Ахиц — Сараар/Улирлаар/Жилээр/Сүүлд хийсэн. Улирал/жилийн карт
+      // серверээс жинхэнэ өгөгдлөөр (terms, group.school_year, total)
+      // аль хэдийн зурагдсан; энд зөвхөн сарын жагсаалтыг клиент талд
+      // тооцоолж, tab-уудыг сольж харуулна. Тэмдэглэлийн бодит тоо байхгүй
+      // тул "0" үзүүлнэ — санамсаргүй тоо биш, зөвхөн одоогийн бодит байдал.
+      var wrap = document.querySelector('[data-progress-tabs]');
+      if (!wrap) return;
+      var monthNames = ['1-р сар', '2-р сар', '3-р сар', '4-р сар', '5-р сар', '6-р сар',
+                         '7-р сар', '8-р сар', '9-р сар', '10-р сар', '11-р сар', '12-р сар'];
+      var monthPanel = wrap.querySelector('[data-progress-panel="month"]');
+      var total = wrap.getAttribute('data-total-children') || '0';
+      var normKey = wrap.getAttribute('data-norm-key');
+      var target = (normKey && window.localStorage.getItem(normKey)) || '—';
+
+      function buildMonthPanel() {
+        var start = new Date(wrap.getAttribute('data-year-start'));
+        var end = new Date(wrap.getAttribute('data-year-end'));
+        if (isNaN(start) || isNaN(end)) {
+          monthPanel.innerHTML = '';
+          return;
+        }
+        var cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+        var last = new Date(end.getFullYear(), end.getMonth(), 1);
+        var html = '';
+        while (cursor <= last) {
+          html += '<div class="progresscard"><div class="progresscard__head">' +
+            '<strong>' + monthNames[cursor.getMonth()] + '</strong>' +
+            '<span>0/' + total + ' хүүхэд · ' + total + ' үлдсэн · зорилт <span data-norm-value>' + target + '</span></span>' +
+            '</div><p class="progresscard__empty">Энэ сард тэмдэглэл ороогүй байна.</p></div>';
+          cursor.setMonth(cursor.getMonth() + 1);
+        }
+        monthPanel.innerHTML = html || '<p class="progresscard__empty">Хичээлийн жилийн эхлэх, дуусах огноо тохируулаагүй байна.</p>';
+      }
+      buildMonthPanel();
+
+      wrap.querySelectorAll('[data-progress-tab]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var target = button.getAttribute('data-progress-tab');
+          wrap.querySelectorAll('[data-progress-tab]').forEach(function (item) { item.classList.remove('is-active'); });
+          button.classList.add('is-active');
+          wrap.querySelectorAll('[data-progress-panel]').forEach(function (panel) {
+            panel.hidden = panel.getAttribute('data-progress-panel') !== target;
+          });
+        });
+      });
+    }());
   </script>
 {% endblock %}

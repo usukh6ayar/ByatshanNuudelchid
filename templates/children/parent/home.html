@@ -84,6 +84,21 @@
         <span><strong>Мэдээ, мэдэгдэл</strong><small>{% if unread_announcements %}{{ unread_announcements }} шинэ мэдэгдэл{% else %}Багшийн мэдээлэл, зар{% endif %}</small></span>
         <b aria-hidden="true">→</b>
       </a>
+      <a class="parent-action parent-action--gallery" href="{% url 'portfolio:overview' child.pk %}#gallery">
+        <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-photo"></use></svg></span>
+        <span><strong>Зургийн цомог</strong><small>Нас бүрийн зураг, дурсамж</small></span>
+        <b aria-hidden="true">→</b>
+      </a>
+      <a class="parent-action parent-action--comparison" href="{% url 'portfolio:overview' child.pk %}#memories">
+        <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg></span>
+        <span><strong>Хөгжлийн харьцуулалт</strong><small>2–5 насны хөгжлийн мэдээлэл</small></span>
+        <b aria-hidden="true">→</b>
+      </a>
+      <a class="parent-action parent-action--survey" href="{% url 'children:parent_child_detail' child.pk %}#parent-surveys">
+        <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-survey"></use></svg></span>
+        <span><strong>Судалгаа</strong><small>Асуулга, санал хүсэлт</small></span>
+        <b aria-hidden="true">→</b>
+      </a>
     </div>
   </section>
 {% endblock %}

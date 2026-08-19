@@ -28,6 +28,7 @@ urlpatterns = [
     path("", include("apps.comms.urls")),
     path("", include("apps.reports.urls")),
     path("", include("apps.dashboard.urls")),
+    path("", include("apps.attendance.urls")),
 ]
 
 if settings.DEBUG:

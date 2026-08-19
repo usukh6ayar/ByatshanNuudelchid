@@ -20,6 +20,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Удирдлага{% endblock %} · Хүүхдийн хөгжлийн хавтас</title>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chat.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chat-messages.css' %}">
   {% include "_theme_head.html" %}
 </head>
 <body>
@@ -42,55 +44,32 @@
         <svg class="ic" aria-hidden="true"><use href="#i-dashboard"></use></svg>
         Хяналтын самбар
       </a>
-      <a href="{% url 'tenants:kindergarten_list' %}"
-         {% if nav == 'kindergartens' %}aria-current="page"{% endif %}>
-        <svg class="ic" aria-hidden="true"><use href="#i-home"></use></svg>
-        Цэцэрлэгийн удирдлага
-      </a>
-      <a href="{% url 'tenants:group_list' %}"
-         {% if nav == 'groups' %}aria-current="page"{% endif %}>
-        <svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg>
-        Бүлгийн удирдлага
-      </a>
-      <a href="{% url 'accounts:staff_list' %}"
-         {% if nav == 'staff' %}aria-current="page"{% endif %}>
-        <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
-        Багшийн удирдлага
-      </a>
-      <a href="{% url 'children:list' %}"
-         {% if nav == 'children' %}aria-current="page"{% endif %}>
-        <svg class="ic" aria-hidden="true"><use href="#i-portfolio"></use></svg>
-        Хүүхдийн удирдлага
-      </a>
-      <a href="{% url 'accounts:user_list' %}"
-         {% if nav == 'users' %}aria-current="page"{% endif %}>
-        <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
-        Хэрэглэгч ба эрх
-      </a>
-      <a href="{% url 'assessment:admin_domain_list' %}"
-         {% if nav == 'domains' %}aria-current="page"{% endif %}>
-        <svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg>
-        Хөгжлийн шалгуур
-      </a>
-      <a href="{% url 'assessment:admin_term_list' %}"
-         {% if nav == 'terms' %}aria-current="page"{% endif %}>
-        <svg class="ic" aria-hidden="true"><use href="#i-cake"></use></svg>
-        Улирал, хичээлийн жил
-      </a>
-      <a href="{% url 'comms:list' %}"
-         {% if nav == 'announcements' %}aria-current="page"{% endif %}>
-        <svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg>
-        Мэдэгдэл
-      </a>
-      <a href="{% url 'accounts:profile' %}"
-         {% if nav == 'profile' %}aria-current="page"{% endif %}>
-        <svg class="ic" aria-hidden="true"><use href="#i-user"></use></svg>
-        Миний бүртгэл
-      </a>
-      <a href="{% url 'accounts:logout' %}">
-        <svg class="ic" aria-hidden="true"><use href="#i-logout"></use></svg>
-        Гарах
-      </a>
+      <details class="nav-group" open>
+        <summary>🏫 Сургалт ба сурагчид</summary>
+        <a href="{% url 'children:list' %}"{% if nav == 'children' %} aria-current="page"{% endif %}>👦 Хүүхдийн удирдлага</a>
+        <a href="{% url 'accounts:staff_list' %}"{% if nav == 'staff' %} aria-current="page"{% endif %}>👩‍🏫 Багшийн удирдлага</a>
+        <a href="{% url 'tenants:group_list' %}"{% if nav == 'groups' %} aria-current="page"{% endif %}>🏫 Бүлгийн удирдлага</a>
+        <a href="{% url 'dashboard:admin' %}#finance-ready">📅 Ирц</a>
+        <a href="{% url 'assessment:admin_domain_list' %}"{% if nav == 'domains' %} aria-current="page"{% endif %}>📈 Хөгжлийн шалгуур</a>
+      </details>
+      <details class="nav-group" open>
+        <summary>🍲 Үйл ажиллагаа ба санхүү</summary>
+        <a href="{% url 'dashboard:admin' %}#kitchen-ready">🍲 Гал тогоо</a>
+        <a href="{% url 'dashboard:admin' %}#finance-ready">💳 Санхүү</a>
+        <a href="{% url 'comms:list' %}"{% if nav == 'announcements' %} aria-current="page"{% endif %}>📢 Мэдээ / Ангийн самбар</a>
+        <a href="{% url 'comms:list' %}?chat=1">💬 Чат</a>
+      </details>
+      <details class="nav-group" open>
+        <summary>⚙️ Систем ба тохиргоо</summary>
+        <a href="{% url 'tenants:kindergarten_list' %}"{% if nav == 'kindergartens' %} aria-current="page"{% endif %}>🏫 Цэцэрлэгийн удирдлага</a>
+        <a href="{% url 'accounts:user_list' %}"{% if nav == 'users' %} aria-current="page"{% endif %}>👥 Хэрэглэгч ба эрх</a>
+        <a href="{% url 'assessment:admin_term_list' %}"{% if nav == 'terms' %} aria-current="page"{% endif %}>🗓️ Улирал, хичээлийн жил</a>
+      </details>
+      <details class="nav-group nav-group--user" open>
+        <summary>👤 Хэрэглэгч</summary>
+        <a href="{% url 'accounts:profile' %}"{% if nav == 'profile' %} aria-current="page"{% endif %}>⚙️ Миний бүртгэл</a>
+        <a href="{% url 'accounts:logout' %}">🚪 Гарах</a>
+      </details>
     </nav>
 
     {% include "_theme.html" %}
@@ -124,5 +103,6 @@
     {% block content %}{% endblock %}
   </main>
 </div>
+<script src="{% static 'js/ui-states.js' %}"></script>
 </body>
 </html>
