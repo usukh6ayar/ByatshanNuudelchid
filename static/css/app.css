@@ -3113,3 +3113,78 @@ body:has(#teacher-report-dashboard:target) .teacher-report-ui { margin-top: 0; }
 @media(max-width:800px){.teacher-summary,.teacher-charts{grid-template-columns:1fr}.teacher-charts{gap:var(--s3)}}@media(max-width:520px){.method-chart{grid-template-columns:1fr}.method-chart__donut{margin:auto}.teacher-summary__card strong{font-size:1.5rem}}
 
 .teacher-surveys{margin-bottom:var(--s5);padding:20px;border:1px solid #ddd5fa;border-radius:var(--radius);background:linear-gradient(135deg,#f7f5ff,#fff)}.teacher-surveys[hidden]{display:none}.teacher-surveys__head{display:flex;justify-content:space-between;gap:var(--s3)}.teacher-surveys__head span{display:block;color:#7056dc;font-size:var(--t-label);font-weight:800;letter-spacing:.06em}.teacher-surveys__head h2{margin:4px 0;font-size:1.25rem}.teacher-surveys__head p{margin:0;color:var(--muted);font-size:var(--t-meta)}.teacher-surveys__head button{width:34px;height:34px;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--muted);font-size:1.2rem;cursor:pointer}.teacher-surveys__types{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:var(--s4)}.teacher-surveys__types button{padding:13px;border:1px solid #d8d1f5;border-radius:11px;background:#fff;color:var(--ink);font:inherit;font-weight:750;text-align:left;cursor:pointer}.teacher-surveys__types button.is-active{background:#7056dc;border-color:#7056dc;color:#fff}.teacher-surveys__types small{display:block;margin-top:3px;font-weight:400;font-size:var(--t-label)}.teacher-surveys__builder{display:grid;gap:11px;margin-top:var(--s4);padding:15px;border-radius:12px;background:rgba(255,255,255,.75)}.teacher-surveys__builder label{display:grid;gap:4px;color:var(--muted);font-size:var(--t-label);font-weight:700}.teacher-surveys__builder textarea{min-height:75px}.teacher-surveys__options{display:grid;gap:8px}.teacher-surveys__answer-type{display:flex;flex-wrap:wrap;gap:14px;color:var(--muted);font-size:var(--t-meta)}.teacher-surveys__answer-type label{display:block}.teacher-surveys__answer-type input{width:auto}.teacher-surveys__actions{display:flex;gap:8px;flex-wrap:wrap}.teacher-surveys__results{margin-top:var(--s4);padding-top:var(--s4);border-top:1px solid var(--line)}.teacher-surveys__results h3{margin:0;font-size:var(--t-title)}.teacher-surveys__result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:10px}.teacher-surveys__result-grid article{padding:12px;border-radius:10px;background:#fff}.teacher-surveys__result-grid strong,.teacher-surveys__result-grid b,.teacher-surveys__result-grid small{display:block}.teacher-surveys__result-grid strong,.teacher-surveys__result-grid small{color:var(--muted);font-size:var(--t-label)}.teacher-surveys__result-grid b{margin:4px 0;font-size:1.4rem}.teacher-surveys__bars{height:35px;display:flex;align-items:end;gap:4px}.teacher-surveys__bars span{flex:1;min-height:6px;border-radius:5px 5px 0 0;background:var(--line)}.teacher-surveys__results>p{margin:10px 0 0;color:var(--muted);font-size:var(--t-label)}.teacher-surveys__question{display:grid;gap:11px;padding:12px;border:1px solid #e5e0fb;border-radius:10px;background:#fff}.teacher-surveys__question+.teacher-surveys__question{margin-top:11px}.teacher-surveys__question-label textarea{margin-top:4px}.teacher-surveys__list{margin-top:var(--s4);padding-top:var(--s4);border-top:1px solid var(--line)}.teacher-surveys__list-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--s3)}.teacher-surveys__list-head h3{margin:0;font-size:var(--t-title)}.teacher-surveys__list-head input[type=search]{max-width:220px}.survey-list-card{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-top:10px}.survey-list-card__actions{position:relative}.survey-list-card__actions summary{list-style:none;width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;cursor:pointer;color:var(--muted)}.survey-list-card__actions summary::-webkit-details-marker{display:none}.survey-list-card__actions[open] .survey-list-card__menu{display:grid}.survey-list-card__menu{display:none;position:absolute;right:0;top:40px;z-index:2;min-width:160px;padding:6px;border:1px solid var(--line);border-radius:10px;background:#fff;box-shadow:var(--shadow);gap:2px}.survey-list-card__menu a,.survey-list-card__menu button{display:block;width:100%;padding:8px 10px;border:0;border-radius:8px;background:none;text-align:left;font:inherit;color:var(--ink);cursor:pointer}.survey-list-card__menu a:hover,.survey-list-card__menu button:hover{background:var(--bg)}@media(max-width:620px){.teacher-surveys__types,.teacher-surveys__result-grid{grid-template-columns:1fr}.teacher-surveys__list-head input[type=search]{max-width:none;width:100%}}
+
+/* ================================================== attendance register
+   нэмэлт.md §1. Deliberately not `.levelchip`: that control belongs to the
+   assessment grid, where the visible token is the numeral 1–4 and the long
+   label rides hidden for screen readers. Attendance has no numeral, so
+   reusing it renders six identical blank circles.
+
+   Radio buttons styled as chips, same reasoning as the grid next door: six
+   states, one tap, all of them readable without opening anything. */
+.attset {
+  display: flex; flex-wrap: wrap; gap: var(--s2);
+  border: 0; padding: 0; margin: 0; min-width: 0;
+}
+.attchip { position: relative; }
+.attchip input {
+  position: absolute; opacity: 0; pointer-events: none;
+}
+.attchip span {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 36px; padding: 0 var(--s3);
+  border: 1px solid var(--line); border-radius: 999px;
+  background: var(--card); color: var(--muted);
+  font-size: var(--t-label); font-weight: 600; white-space: nowrap;
+  cursor: pointer;
+}
+.attchip input:hover + span { border-color: var(--brand); color: var(--ink); }
+.attchip input:focus-visible + span {
+  outline: 2px solid var(--brand); outline-offset: 2px;
+}
+
+/* The tints carry meaning the word already carries — §14 keeps colour as
+   reinforcement, never as the only signal. Present is the ordinary day and
+   reads calm; absent is the one that costs a funding day. */
+.attchip input:checked + span {
+  background: var(--ink); border-color: var(--ink); color: #fff;
+}
+.attchip--present input:checked + span {
+  background: var(--ok); border-color: var(--ok);
+}
+.attchip--absent input:checked + span {
+  background: var(--danger); border-color: var(--danger);
+}
+.attchip--sick input:checked + span,
+.attchip--half_day input:checked + span {
+  background: var(--warn); border-color: var(--warn);
+}
+
+/* The note sits beside the mark it explains. It is optional and must not
+   compete with the chips for width. */
+.gridrow__prev input[type=text] { min-height: 36px; font-size: var(--t-label); }
+
+@media (max-width: 700px) {
+  .attchip span { min-height: 40px; padding: 0 var(--s2); }
+}
+
+/* The register's own row proportions. `.gridrow` is one column by default and
+   the assessment grid widens it at 900px for three chips; six named chips
+   plus a note need more room and a different split, so the sheet states its
+   own rather than overloading the grid's.
+
+   The name column is `minmax` rather than `1fr`: with `1fr` a long Mongolian
+   compound pushed the chips off the row entirely at 1100px. */
+@media (min-width: 900px) {
+  .attsheet .gridrow {
+    grid-template-columns: minmax(150px, 1fr) auto minmax(150px, 220px);
+    align-items: center;
+  }
+}
+/* `nowrap` only once there is genuinely room for six chips *and* the note.
+   At 1100px the row still fits on paper and the chips overflowed their track
+   straight across the note field — measured, not guessed. Below this the
+   chips wrap onto two lines, which is taller and legible. */
+@media (min-width: 1280px) {
+  .attsheet .attset { flex-wrap: nowrap; }
+}
