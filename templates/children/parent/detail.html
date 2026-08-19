@@ -97,15 +97,62 @@
         <span><strong>Зургийн цомог</strong><small>Сонгосон зураг, дурсамжийг үзэх</small></span>
       </a>
       </div>
+      {% comment %} Ирцийн урсгал — "Багш бүртгэнэ → эцэг эх мэдэгдэл авна,
+         чөлөө/өвчний акт илгээж болно" (client's flow, 2026-08-18). Real
+         attendance backend already exists (apps/attendance/) but has no
+         web-reachable view yet — this stays the same "frontend prep,
+         nothing saved" pattern as the rest of this section, consistent
+         with parent-meals/parent-finance right above it. {% endcomment %}
       <section class="parent-attendance" id="parent-attendance" aria-labelledby="parent-attendance-title">
         <div><span>ИРЦИЙН МЭДЭЭЛЭЛ</span><h3 id="parent-attendance-title">{{ child.first_name }}-ийн ирц</h3></div>
+
+        <div class="parent-attendance__notice" data-attendance-notice hidden>
+          <svg class="ic ic--sm" aria-hidden="true"><use href="#i-bell"></use></svg>
+          <span><b>{{ child.first_name }}</b> <span data-attendance-notice-text>ирлээ</span></span>
+        </div>
+
         <p>Ирсэн, чөлөөтэй, өвчтэй, тасалсан, хагас өдөр болон бусад төлөвийн түүх энд харагдана.</p>
-        <small>Ирцийн бодит бүртгэл backend-ээр холбогдоход автоматаар шинэчлэгдэнэ.</small>
+
+        <div class="parent-attendance__actions">
+          <button type="button" class="btn btn--ghost btn--sm" data-attendance-open="leave">Чөлөө хүсэх</button>
+          <button type="button" class="btn btn--ghost btn--sm" data-attendance-open="sick">Өвчний акт хавсаргах</button>
+        </div>
+
+        <form class="parent-attendance__form" data-attendance-form="leave" hidden novalidate>
+          <label>Эхлэх огноо<input type="date" name="leave_from" required></label>
+          <label>Дуусах огноо<input type="date" name="leave_to" required></label>
+          <label class="wide">Шалтгаан<textarea name="leave_reason" placeholder="Жишээ: Гэр бүлийн аялал"></textarea></label>
+          <div class="btn-row">
+            <button type="submit" class="btn btn--sm">Илгээх</button>
+            <button type="button" class="btn btn--ghost btn--sm" data-attendance-cancel>Болих</button>
+          </div>
+        </form>
+
+        <form class="parent-attendance__form" data-attendance-form="sick" enctype="multipart/form-data" hidden novalidate>
+          <label class="wide">Өвчний акт<span class="field__opt">— зураг эсвэл PDF</span>
+            <input type="file" name="sick_note" accept="image/*,application/pdf">
+          </label>
+          <label class="wide">Тэмдэглэл<span class="field__opt">— заавал биш</span>
+            <textarea name="sick_note_text" placeholder="Эмчийн заавар, өвчний нэр гэх мэт"></textarea>
+          </label>
+          <div class="btn-row">
+            <button type="submit" class="btn btn--sm">Илгээх</button>
+            <button type="button" class="btn btn--ghost btn--sm" data-attendance-cancel>Болих</button>
+          </div>
+        </form>
+
+        <p class="parent-attendance__status" data-attendance-status aria-live="polite"></p>
+        <small>Ирцийн бодит бүртгэл, мэдэгдэл, чөлөө болон өвчний акт backend-ээр холбогдоход автоматаар хадгалагдана.</small>
       </section>
       <section class="parent-surveys" id="parent-surveys" aria-labelledby="parent-surveys-title">
         <div><span>СУДАЛГАА</span><h3 id="parent-surveys-title">Эцэг эхийн судалгаа</h3></div>
-        <p>Багшаас ирсэн асуулга, санал хүсэлт болон баталгаажуулах судалгаанууд энд харагдана.</p>
-        <button type="button" disabled>Одоогоор шинэ судалгаа алга</button>
+        <p>Багшаас ирсэн асуулга, санал хүсэлт болон баталгаажуулах судалгааг бөглөж илгээнэ.</p>
+        <article class="parent-survey-card" data-parent-survey data-api="/api/v1/surveys/responses/">
+          <strong>Ангийн аялалд оролцох эсэх</strong><small>Багшийн судалгаа · Хаагдах огноо backend-ээс ирнэ</small>
+          <form data-parent-survey-form><fieldset><legend>Та хүүхдээ аялалд оролцуулах уу?</legend><label><input type="radio" name="trip_response" value="yes" required> Тийм, оролцуулна</label><label><input type="radio" name="trip_response" value="no"> Үгүй, оролцуулахгүй</label></fieldset><label>Нэмэлт тайлбар <span class="field__opt">— заавал биш</span><textarea name="comment" placeholder="Санал, тайлбараа бичнэ үү"></textarea></label><button class="btn btn--sm" type="submit">Хариултаа илгээх</button></form>
+          <p data-parent-survey-status aria-live="polite"></p>
+        </article>
+        <p class="parent-surveys__note">Шинэ судалгаанууд backend холбогдоход энд жагсаагдана.</p>
       </section>
       <section class="parent-meals" id="parent-meals" aria-labelledby="parent-meals-title">
         <div class="parent-meals__head">
@@ -139,6 +186,51 @@
     (function () {
       var date = document.querySelector('[data-parent-today]');
       if (date) date.textContent = new Intl.DateTimeFormat('mn-MN', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date());
+    }());
+
+    (function () {
+      var attendance = document.getElementById('parent-attendance');
+      if (!attendance) return;
+      var status = attendance.querySelector('[data-attendance-status]');
+      var forms = attendance.querySelectorAll('[data-attendance-form]');
+
+      attendance.querySelectorAll('[data-attendance-open]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var kind = button.getAttribute('data-attendance-open');
+          forms.forEach(function (form) {
+            form.hidden = form.getAttribute('data-attendance-form') !== kind;
+          });
+          if (status) status.textContent = '';
+        });
+      });
+      attendance.querySelectorAll('[data-attendance-cancel]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          forms.forEach(function (form) { form.hidden = true; });
+        });
+      });
+      forms.forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+          event.preventDefault();
+          var kind = form.getAttribute('data-attendance-form');
+          var message = kind === 'leave'
+            ? 'Хүсэлт бэлэн. Backend холбогдоход багшид шууд очно.'
+            : 'Акт бэлэн. Backend холбогдоход багшид зураг, тэмдэглэлийн хамт очно.';
+          if (status) status.textContent = message;
+          if (typeof window.showToast === 'function') window.showToast(message, 'ok');
+          form.hidden = true;
+        });
+      });
+    }());
+
+    (function () {
+      var survey = document.querySelector('[data-parent-survey]');
+      if (!survey) return;
+      survey.querySelector('[data-parent-survey-form]').addEventListener('submit', function (event) {
+        event.preventDefault();
+        var message = 'Хариулт бэлэн. Backend холбогдоход багшид шууд илгээгдэнэ.';
+        survey.querySelector('[data-parent-survey-status]').textContent = message;
+        if (typeof window.showToast === 'function') window.showToast(message, 'ok');
+      });
     }());
   </script>
 {% endblock %}

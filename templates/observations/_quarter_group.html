@@ -2,10 +2,22 @@
    observations/list.html, once per fixed Sept–Aug month range (q_months is
    a comma-padded string like ",9,10,11," so membership can be tested with
    the `in` operator's substring match without a custom filter). Included
-   templates share the parent's context, so `page`, `child` and
-   `can_record` are already here. {% endcomment %}
+   templates share the parent's context, so `page`, `child`, `can_record`
+   and `filters`/`buteel_pk` are already here.
+
+   Client feedback 2026-08-19: the quarter a teacher is actually in right
+   now should already be open, not one more click away — `is_current`
+   compares today's real month (`{% now "n" %}`) against this quarter's
+   own month range, the same substring trick the card loop below already
+   uses for `observed_on`. Nothing here is a guess at "the current term";
+   there is no Term on this view's context (see the comment on the four
+   `{% include %}`s in list.html), so this stays the same fixed calendar
+   table the rest of the grouping already commits to. {% endcomment %}
 {% with q_months=","|add:q_months|add:"," %}
-  <details class="quarter-section" data-quarter="{{ q_label }}" open>
+  {% now "n" as today_month %}
+  {% with today_month_pad=","|add:today_month|add:"," %}
+  <details class="quarter-section" data-quarter="{{ q_label }}"
+            {% if today_month_pad in q_months %}open{% endif %}>
     <summary>
       <svg class="ic ic--sm quarter-section__chevron" aria-hidden="true"><use href="#i-review"></use></svg>
       {{ q_label }}
@@ -16,31 +28,60 @@
       <span class="quarter-section__count"></span>
     </summary>
     <div class="memo-grid">
+      {% comment %} The gallery's own "add" tile — Бүтээл tab only, and
+         only in the quarter today actually falls in (the drawer's own
+         date field still lets a teacher back-date into another quarter;
+         this is just where a *new* entry naturally belongs). Replaces the
+         standalone amber trigger row above the list on this tab — see the
+         comment there. Shares `data-addnote-open` with that row's button,
+         so the same drawer-opening script wires both. {% endcomment %}
+      {% if can_record and filters.type == buteel_pk and today_month_pad in q_months %}
+        <button type="button" class="memo-card memo-card--add" data-addnote-open>
+          <span class="memo-card--add__icon" aria-hidden="true">
+            <svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg>
+          </span>
+          <span class="memo-card--add__label">Зураг оруулах</span>
+        </button>
+      {% endif %}
       {% for observation in page.object_list %}
         {% with month_pad=","|add:observation.observed_on|date:"n"|add:"," %}
           {% if month_pad in q_months %}
-            <a class="memo-card"
-               href="{% url 'observations:detail' child.pk observation.pk %}"
-               style="{% with first_domain=observation.domain_links.all.0 %}{% if first_domain %}--accent:{{ first_domain.domain.color }};{% endif %}{% endwith %}"
-               data-domain="{% for link in observation.domain_links.all %}{{ link.domain.pk }} {% endfor %}"
-               data-month="{{ observation.observed_on|date:'n' }}"
-               data-search="{{ observation.summary|lower }} {{ observation.type.name|lower }}">
-              {% if observation.media_links.all.0 %}
-                <img class="memo-card__thumb"
-                     src="{% url 'media:serve' observation.media_links.all.0.media_file.public_id 'full' %}"
-                     alt="" loading="lazy">
+            {% with photo=observation.media_links.all.0 %}
+            <div class="memo-card"
+                 style="{% with first_domain=observation.domain_links.all.0 %}{% if first_domain %}--accent:{{ first_domain.domain.color }};{% endif %}{% endwith %}"
+                 data-domain="{% for link in observation.domain_links.all %}{{ link.domain.pk }} {% endfor %}"
+                 data-month="{{ observation.observed_on|date:'n' }}"
+                 data-search="{{ observation.summary|lower }} {{ observation.type.name|lower }}">
+              {% comment %} Lightbox trigger for the photo only — a
+                 `<button>` here rather than nesting it inside the `<a>`
+                 below (interactive content can't nest in valid HTML).
+                 Card without a photo gets a plain, inert placeholder
+                 square instead, same as before. {% endcomment %}
+              {% if photo %}
+                <button type="button" class="memo-card__thumb-btn" data-lightbox-open
+                        data-lightbox-src="{% url 'media:serve' photo.media_file.public_id 'full' %}"
+                        data-lightbox-caption="{{ observation.summary }} · {{ observation.observed_on|date:'Y.m.d' }}"
+                        aria-label="Зургийг томруулж харах">
+                  <img class="memo-card__thumb"
+                       src="{% url 'media:serve' photo.media_file.public_id 'full' %}"
+                       alt="" loading="lazy">
+                  <span class="memo-card__zoom" aria-hidden="true">
+                    <svg class="ic ic--sm" aria-hidden="true"><use href="#i-search"></use></svg>
+                  </span>
+                </button>
               {% else %}
                 <span class="memo-card__placeholder" aria-hidden="true">
                   <svg class="ic" aria-hidden="true"><use href="#i-observation"></use></svg>
                 </span>
               {% endif %}
-              <span class="memo-card__body">
+              <a class="memo-card__body"
+                 href="{% url 'observations:detail' child.pk observation.pk %}">
                 <span class="memo-card__meta">
                   <span class="memo-card__date">{{ observation.observed_on|date:"Y.m.d" }}</span>
                   <span class="memo-card__type">{{ observation.type.name }}</span>
                 </span>
                 <span class="memo-card__content">
-                  {% if observation.summary %}{{ observation.summary }}{% else %}Тэмдэглэлгүй{% endif %}
+                  {{ observation.summary }}
                 </span>
                 <span class="memo-card__flags">
                   {% if observation.visible_to_parents %}
@@ -54,11 +95,13 @@
                     </span>
                   {% endif %}
                 </span>
-              </span>
-            </a>
+              </a>
+            </div>
+            {% endwith %}
           {% endif %}
         {% endwith %}
       {% endfor %}
     </div>
   </details>
+  {% endwith %}
 {% endwith %}

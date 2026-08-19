@@ -314,7 +314,7 @@ a { color: var(--brand); }
 .child-gateway__item--finance { --gateway: #54606e; --gateway-soft: #f2f5f8; }
 .child-gateway__item--comparison { --gateway: #7056dc; --gateway-soft: #f0edff; }
 .child-gateway__section{margin-top:var(--s5)}.child-gateway__section-head{margin:0 2px var(--s3)}.child-gateway__section-head h2{margin:0;font-size:var(--t-title)}.child-gateway__section-head p{margin:3px 0 0;color:var(--muted);font-size:var(--t-meta)}.child-gateway__section .child-gateway__menu{margin-top:0}.parent-meals,.parent-finance{margin-top:var(--s3);padding:16px;border:1px solid #d7e5f0;border-radius:var(--radius-sm);background:#f8fbfe}.parent-meals__head,.parent-finance__head{display:flex;align-items:start;justify-content:space-between;gap:var(--s3)}.parent-meals__head span{display:block;color:#25855a;font-size:var(--t-label);font-weight:800;letter-spacing:.06em}.parent-meals__head h3{margin:3px 0 0;font-size:var(--t-title)}.parent-meals__head time,.parent-finance__head span{color:var(--muted);font-size:var(--t-label);font-weight:700}.parent-meals__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:var(--s3)}.parent-meals__grid article{padding:12px;border-radius:10px;background:#fff}.parent-meals__grid strong{color:#305c47}.parent-meals__grid p,.parent-finance p{margin:4px 0 0;color:var(--muted);font-size:var(--t-meta)}.parent-meals__alert{margin:12px 0 0;padding:10px;border-radius:10px;background:#fff8e8;color:#8a6100;font-size:var(--t-meta)}.parent-finance__summary{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:var(--s3)}.parent-finance__summary span{padding:11px;border-radius:10px;background:#fff}.parent-finance__summary small,.parent-finance__summary b{display:block}.parent-finance__summary small{color:var(--muted);font-size:var(--t-label)}.parent-finance__summary b{margin-top:3px;color:#334155;font-size:1.05rem}@media(max-width:620px){.parent-meals__grid{grid-template-columns:1fr}.parent-finance__summary{grid-template-columns:1fr}.parent-meals__head{display:block}.parent-meals__head time{display:block;margin-top:5px}}
-.parent-attendance{margin-top:var(--s3);padding:16px;border:1px solid #dbe9f5;border-radius:var(--radius-sm);background:#f7fbff}.parent-attendance span,.finance-ready>div>span{display:block;color:#397cc5;font-size:var(--t-label);font-weight:800;letter-spacing:.06em}.parent-attendance h3{margin:3px 0;font-size:var(--t-title)}.parent-attendance p,.parent-attendance small{display:block;margin:4px 0 0;color:var(--muted);font-size:var(--t-meta)}.finance-ready{margin-bottom:var(--s5);padding:20px;border:1px solid #d7e5f0;border-radius:var(--radius);background:linear-gradient(135deg,#f6fbff,#fff)}.finance-ready h2{margin:4px 0;font-size:1.25rem}.finance-ready p{margin:0;color:var(--muted)}.finance-ready__grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:var(--s4)}.finance-ready__grid article{padding:14px;border-radius:12px;background:#fff}.finance-ready__grid strong,.finance-ready__grid small{display:block}.finance-ready__grid small{margin-top:4px;color:var(--muted);font-size:var(--t-meta)}@media(max-width:760px){.finance-ready__grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:460px){.finance-ready__grid{grid-template-columns:1fr}}
+.parent-attendance{margin-top:var(--s3);padding:16px;border:1px solid #dbe9f5;border-radius:var(--radius-sm);background:#f7fbff}.parent-attendance span,.finance-ready>div>span{display:block;color:#397cc5;font-size:var(--t-label);font-weight:800;letter-spacing:.06em}.parent-attendance h3{margin:3px 0;font-size:var(--t-title)}.parent-attendance p,.parent-attendance small{display:block;margin:4px 0 0;color:var(--muted);font-size:var(--t-meta)}.parent-attendance__notice{display:flex;align-items:center;gap:8px;margin-top:10px;padding:10px 12px;border-radius:10px;background:#e7f6ec;color:#1f6b3d;font-size:var(--t-meta);font-weight:600}.parent-attendance__actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.parent-attendance__form{display:grid;gap:10px;margin-top:10px;padding:12px;border-radius:10px;background:#fff}.parent-attendance__form[hidden]{display:none}.parent-attendance__form label{display:grid;gap:4px;color:var(--muted);font-size:var(--t-label);font-weight:700}.parent-attendance__form .wide{grid-column:1/-1}.parent-attendance__status:not(:empty){margin-top:8px;padding:8px 10px;border-radius:8px;background:#eef7ff;color:#286eaf;font-size:var(--t-meta);font-weight:600}.finance-ready{margin-bottom:var(--s5);padding:20px;border:1px solid #d7e5f0;border-radius:var(--radius);background:linear-gradient(135deg,#f6fbff,#fff)}.finance-ready h2{margin:4px 0;font-size:1.25rem}.finance-ready p{margin:0;color:var(--muted)}.finance-ready__grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:var(--s4)}.finance-ready__grid article{padding:14px;border-radius:12px;background:#fff}.finance-ready__grid strong,.finance-ready__grid small{display:block}.finance-ready__grid small{margin-top:4px;color:var(--muted);font-size:var(--t-meta)}@media(max-width:760px){.finance-ready__grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:460px){.finance-ready__grid{grid-template-columns:1fr}}
 .parent-surveys{margin-top:var(--s3);padding:16px;border:1px solid #eadcc4;border-radius:var(--radius-sm);background:#fffaf1}.parent-surveys span{display:block;color:#a66a14;font-size:var(--t-label);font-weight:800;letter-spacing:.06em}.parent-surveys h3{margin:3px 0;font-size:var(--t-title)}.parent-surveys p{margin:5px 0 10px;color:var(--muted);font-size:var(--t-meta)}.parent-surveys button{padding:8px 11px;border:0;border-radius:9px;background:#f0e6d4;color:#9a7d51;font:inherit;font-size:var(--t-label)}
 @media (max-width: 620px) {
   .child-gateway__hero { padding: 18px; gap: 12px; flex-wrap: wrap; }
@@ -418,8 +418,12 @@ a { color: var(--brand); }
 .report-chart-card__key span { padding: 4px 8px; border-radius: 999px; background: var(--bg); color: var(--muted); font-size: var(--t-label); }
 .report-domain-chart { display: grid; gap: 12px; }
 .report-domain-chart__row { display: grid; grid-template-columns: minmax(130px, .8fr) minmax(0, 2fr); gap: 14px; align-items: center; }
-.report-domain-chart__label { display: flex; align-items: center; gap: 7px; font-size: var(--t-meta); font-weight: 700; }
+.report-domain-chart__label { display: flex; align-items: center; flex-wrap: wrap; gap: 5px 7px; font-size: var(--t-meta); font-weight: 700; }
 .report-domain-chart__label i { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
+.report-trend { padding: 2px 7px; border-radius: 999px; font-size: .66rem; font-weight: 800; letter-spacing: .01em; }
+.report-trend--up { background: #e7f6ec; color: #1f6b3d; }
+.report-trend--down { background: #fdeceb; color: #b3412f; }
+.report-trend--flat { background: var(--bg); color: var(--muted); }
 .report-domain-chart__bars { display: flex; align-items: end; gap: 7px; height: 48px; padding: 5px 7px; border-bottom: 1px solid var(--line); background: repeating-linear-gradient(to top, transparent 0 11px, var(--bg) 11px 12px); }
 .report-bar { position: relative; flex: 1; min-width: 20px; height: calc(var(--level) * 25%); min-height: 11px; border-radius: 6px 6px 2px 2px; background: var(--bar-color); display: grid; place-items: start center; }
 .report-bar b { position: absolute; top: -16px; color: var(--muted); font-size: .68rem; line-height: 1; }
@@ -592,13 +596,32 @@ a { color: var(--brand); }
    `open=1` in the URL (the client's own ?tab=&open=1&from= scheme) starts
    it expanded, for a link that means "land here ready to write". */
 .addnote { border-radius: var(--radius); }
-.addnote > summary {
-  list-style: none; cursor: pointer;
+.addnote-trigger {
+  width: 100%; border: 1px solid transparent; font: inherit; text-align: left; cursor: pointer;
 }
-.addnote > summary::-webkit-details-marker { display: none; }
-.addnote__chevron { margin-left: auto; transition: transform .15s ease; flex-shrink: 0; }
-.addnote[open] .addnote__chevron { transform: rotate(180deg); }
-.addnote__body { padding: var(--s4) var(--s1) 0; }
+.addnote__chevron { margin-left: auto; flex-shrink: 0; transform: rotate(-90deg); }
+.addnote__body { padding: var(--s4) var(--s1); }
+
+/* The drawer itself — fixed overlay + backdrop + a panel sliding in from
+   the right. Under 720px the panel is full width, which is the "full
+   page" half of the two options the client offered; above it, a fixed
+   640px panel is the "drawer" half. One component, not two. */
+.addnote-drawer { position: fixed; inset: 0; z-index: 90; }
+.addnote-drawer[hidden] { display: none; }
+.addnote-drawer__backdrop {
+  position: absolute; inset: 0; background: rgba(20, 20, 30, .45);
+  opacity: 0; transition: opacity .2s ease;
+}
+.addnote-drawer.is-open .addnote-drawer__backdrop { opacity: 1; }
+.addnote-drawer__panel {
+  position: absolute; top: 0; right: 0; bottom: 0; width: min(640px, 100vw);
+  background: var(--bg); box-shadow: var(--shadow); overflow-y: auto;
+  transform: translateX(100%); transition: transform .25s ease;
+}
+.addnote-drawer.is-open .addnote-drawer__panel { transform: translateX(0); }
+@media (max-width: 720px) {
+  .addnote-drawer__panel { width: 100vw; }
+}
 
 /* The expanded form sits in its own titled, closable card below the
    trigger — client's mockup (`.card` + `<h3>Шинэ ажиглалт</h3>` + a `×`
@@ -640,28 +663,28 @@ a { color: var(--brand); }
    accent-coloured icon square, a dark accent-tinted title, and the chevron
    in a round badge — one visual step quieter than the tabs, one step
    louder than a plain link. */
-.addnote > summary.note-type {
+.addnote-trigger.note-type {
   border-width: 1px; border-style: solid;
   box-shadow: 0 10px 24px color-mix(in srgb, var(--ok) 16%, transparent);
 }
-.addnote > summary.note-type--amber {
+.addnote-trigger.note-type--amber {
   box-shadow: 0 10px 24px color-mix(in srgb, var(--c-amber) 16%, transparent);
 }
-.addnote > summary.note-type--blue {
+.addnote-trigger.note-type--blue {
   box-shadow: 0 10px 24px color-mix(in srgb, var(--c-blue) 16%, transparent);
 }
-.addnote > summary.note-type {
+.addnote-trigger.note-type {
   border-color: color-mix(in srgb, var(--ok) 30%, var(--line));
 }
-.addnote > summary.note-type--amber { border-color: color-mix(in srgb, var(--c-amber) 30%, var(--line)); }
-.addnote > summary.note-type--blue { border-color: color-mix(in srgb, var(--c-blue) 30%, var(--line)); }
-.addnote > summary.note-type .note-type__icon {
+.addnote-trigger.note-type--amber { border-color: color-mix(in srgb, var(--c-amber) 30%, var(--line)); }
+.addnote-trigger.note-type--blue { border-color: color-mix(in srgb, var(--c-blue) 30%, var(--line)); }
+.addnote-trigger.note-type .note-type__icon {
   box-shadow: 0 6px 14px color-mix(in srgb, currentColor 30%, transparent);
 }
-.addnote > summary.note-type .note-type__title { font-size: 1.02rem; font-weight: 800; color: color-mix(in srgb, var(--ok) 75%, black); }
-.addnote > summary.note-type--amber .note-type__title { color: color-mix(in srgb, var(--c-amber) 75%, black); }
-.addnote > summary.note-type--blue .note-type__title { color: color-mix(in srgb, var(--c-blue) 75%, black); }
-.addnote > summary.note-type .addnote__chevron {
+.addnote-trigger.note-type .note-type__title { font-size: 1.02rem; font-weight: 800; color: color-mix(in srgb, var(--ok) 75%, black); }
+.addnote-trigger.note-type--amber .note-type__title { color: color-mix(in srgb, var(--c-amber) 75%, black); }
+.addnote-trigger.note-type--blue .note-type__title { color: color-mix(in srgb, var(--c-blue) 75%, black); }
+.addnote-trigger.note-type .addnote__chevron {
   border-radius: 50%; padding: 6px; background: var(--card);
   box-shadow: 0 4px 11px rgba(0,0,0,.08);
 }
@@ -672,15 +695,14 @@ a { color: var(--brand); }
    colour (`domain_links.0.domain.color`) when it has one, brand otherwise —
    the reference tints by `direction`, which is this app's `domain`. */
 .memo-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: var(--s4); margin-top: var(--s4);
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--s3); margin-top: var(--s4);
 }
 .memo-card {
   --accent: var(--brand);
   position: relative; overflow: hidden; isolation: isolate;
   background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
   box-shadow: var(--shadow); display: flex; flex-direction: column;
-  text-decoration: none; color: inherit;
   transition: transform .15s ease, box-shadow .15s ease;
 }
 .memo-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(20,20,30,.09); }
@@ -689,17 +711,37 @@ a { color: var(--brand); }
   width: 80px; height: 80px; border-radius: 50%; background: var(--accent);
   opacity: .1;
 }
+/* Square, not 3:2 — an Instagram/Pinterest-style photo wall reads as a
+   grid of photos first, a list of notes second. `.memo-card__thumb-btn`
+   is a sibling of `.memo-card__body`, not a parent/child of the same
+   link — a `<button>` can't nest inside the `<a>` that opens the detail
+   page, so the photo (which opens the lightbox) and the rest of the card
+   (which navigates) are two separate controls sharing one visual card. */
+.memo-card__thumb-btn {
+  position: relative; display: block; width: 100%; padding: 0; border: 0;
+  aspect-ratio: 1; cursor: zoom-in; background: var(--bg);
+}
 .memo-card__thumb {
-  width: 100%; aspect-ratio: 1.5; object-fit: cover;
+  width: 100%; height: 100%; aspect-ratio: 1; object-fit: cover;
   border-radius: var(--radius) var(--radius) 0 0;
-  background: var(--bg);
+  background: var(--bg); display: block;
 }
 .memo-card__placeholder {
-  width: 100%; aspect-ratio: 1.5; display: grid; place-items: center;
+  width: 100%; aspect-ratio: 1; display: grid; place-items: center;
   background: var(--bg); color: var(--accent);
   border-radius: var(--radius) var(--radius) 0 0;
 }
-.memo-card__body { padding: var(--s3) var(--s4) var(--s4); display: flex; flex-direction: column; gap: var(--s2); }
+.memo-card__zoom {
+  position: absolute; right: 8px; bottom: 8px; width: 28px; height: 28px;
+  display: grid; place-items: center; border-radius: 50%;
+  background: rgba(20, 20, 30, .55); color: #fff;
+  opacity: 0; transition: opacity .15s ease;
+}
+.memo-card:hover .memo-card__zoom, .memo-card__thumb-btn:focus-visible .memo-card__zoom { opacity: 1; }
+.memo-card__body {
+  padding: var(--s3) var(--s4) var(--s4); display: flex; flex-direction: column; gap: var(--s2);
+  text-decoration: none; color: inherit; flex: 1;
+}
 .memo-card__meta { display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center; }
 .memo-card__date {
   padding: 3px 9px; border-radius: 999px; background: var(--bg); color: var(--muted);
@@ -711,9 +753,26 @@ a { color: var(--brand); }
 }
 .memo-card__content {
   color: var(--ink); font-size: var(--t-meta); font-weight: 600; line-height: 1.5;
-  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .memo-card__flags { display: flex; gap: var(--s2); margin-top: auto; padding-top: var(--s1); }
+
+/* The gallery's own add-tile (Бүтээл tab, current quarter only) — same
+   card footprint as a photo card so it sits in the grid rather than
+   sticking out, dashed border reading as "empty slot" the way Pinterest's
+   own "create" tile does. */
+.memo-card--add {
+  align-items: center; justify-content: center; gap: var(--s2);
+  aspect-ratio: .78; border: 2px dashed color-mix(in srgb, var(--c-amber) 45%, var(--line));
+  background: color-mix(in srgb, var(--c-amber) 6%, var(--card));
+  font: inherit; cursor: pointer; color: color-mix(in srgb, var(--c-amber) 75%, black);
+}
+.memo-card--add:hover { background: color-mix(in srgb, var(--c-amber) 12%, var(--card)); }
+.memo-card--add__icon {
+  width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%;
+  background: var(--c-amber); color: #fff;
+}
+.memo-card--add__label { font-weight: 700; font-size: var(--t-meta); }
 
 /* One <details> per quarter — grouping is computed from the observation's
    real `observed_on` month against the school year's Sept–Aug calendar
@@ -729,6 +788,34 @@ a { color: var(--brand); }
 .quarter-section__chevron { transition: transform .15s ease; }
 .quarter-section[open] .quarter-section__chevron { transform: rotate(180deg); }
 .quarter-section__count { margin-left: auto; color: var(--muted); font-weight: 600; font-size: var(--t-meta); }
+
+/* Lightbox — the photo, full-screen, opened from a `.memo-card__thumb-btn`
+   click. Same fixed-overlay + backdrop + Escape/backdrop-close pattern as
+   `.addnote-drawer` above, centered instead of docked to an edge. */
+.lightbox { position: fixed; inset: 0; z-index: 95; display: grid; place-items: center; }
+.lightbox[hidden] { display: none; }
+.lightbox__backdrop {
+  position: absolute; inset: 0; background: rgba(10, 10, 16, .82);
+  opacity: 0; transition: opacity .2s ease;
+}
+.lightbox.is-open .lightbox__backdrop { opacity: 1; }
+.lightbox__figure {
+  position: relative; z-index: 1; max-width: min(92vw, 900px); max-height: 90vh;
+  margin: 0; display: grid; gap: var(--s2); justify-items: center;
+  opacity: 0; transform: scale(.96); transition: opacity .2s ease, transform .2s ease;
+}
+.lightbox.is-open .lightbox__figure { opacity: 1; transform: scale(1); }
+.lightbox__img { max-width: 100%; max-height: 78vh; border-radius: var(--radius-sm); object-fit: contain; }
+.lightbox__caption { color: #fff; font-size: var(--t-meta); text-align: center; opacity: .9; }
+.lightbox__close {
+  position: absolute; top: -18px; right: -18px; z-index: 2;
+  width: 40px; height: 40px; border-radius: 50%; border: 0;
+  background: #fff; color: var(--ink); font-size: 1.3rem; line-height: 1;
+  display: grid; place-items: center; cursor: pointer; box-shadow: var(--shadow);
+}
+@media (max-width: 480px) {
+  .lightbox__close { top: 8px; right: 8px; }
+}
 
 /* Client-side filter bar over the memo cards — this is what the reference
    app's own Хайх/Хугацаа controls do (filter DOM nodes already on the
@@ -1344,6 +1431,65 @@ dl.facts--cols dd { margin: 2px 0 0; font-weight: 600; }
    The four-band planning overview on "Явцын үнэлгээ" (group_grid.html) —
    Бага/Дунд/Ахлах/Бэлтгэл бүлэг positioned around the group's current band. */
 
+/* Хүүхэд сонгох + Тэмдэглэлийн төрөл — one row, client feedback 2026-08-19
+   ("Inline Layout"): the group label, the searchable child combobox, and
+   the three note-type pills sit side by side on a desktop and wrap onto
+   their own lines on a phone, rather than three separately-labelled
+   blocks stacked the full page height. */
+.quick-filter-bar {
+  display: flex; flex-wrap: wrap; gap: var(--s3); align-items: flex-end;
+  margin-top: var(--s4); padding: var(--s3) var(--s4);
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--card);
+}
+.quick-filter-bar__group { display: grid; gap: 2px; flex: 0 0 auto; }
+.quick-filter-bar__group small { color: var(--muted); font-size: var(--t-label); font-weight: 700; }
+.quick-filter-bar__group strong { font-size: var(--t-body); }
+.quick-filter-bar__child { flex: 1 1 240px; min-width: 200px; margin: 0; }
+.quick-filter-bar__types { flex: 0 0 auto; display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* The searchable combobox — one field instead of a `<select>` beside a
+   search `<input>`. Typing filters the dropdown; the ▾ (or focusing the
+   field) opens the full roster; clicking a name submits the form, same
+   `focus_child` GET contract the old `<select onchange>` posted. */
+.childpicker { position: relative; }
+.childpicker__input { width: 100%; padding-right: 40px; margin: 0; }
+.childpicker__toggle {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent;
+  color: var(--muted); font-size: .8rem; cursor: pointer;
+}
+.childpicker__toggle:hover { background: var(--bg); }
+.childpicker__list {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 30;
+  max-height: 260px; overflow-y: auto; margin: 0; padding: 6px;
+  list-style: none; background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius-sm); box-shadow: var(--shadow);
+}
+.childpicker__list[hidden] { display: none; }
+.childpicker__list li { padding: 9px 12px; border-radius: 8px; cursor: pointer; font-size: var(--t-meta); }
+.childpicker__list li:hover, .childpicker__list li.is-selected { background: var(--brand-soft); color: var(--brand-ink); }
+.childpicker__list li[hidden] { display: none; }
+
+/* Тэмдэглэлийн төрөл — segmented pill buttons with the client's own icons,
+   in place of a plain vertical link list. */
+.notetab {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 14px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--bg); color: var(--ink); text-decoration: none;
+  font-size: var(--t-meta); font-weight: 700; white-space: nowrap;
+}
+.notetab:hover { border-color: var(--brand); color: var(--brand); background: var(--card); }
+.notetab--green:hover { border-color: var(--ok); color: var(--ok); }
+.notetab--blue:hover { border-color: var(--c-blue); color: var(--c-blue); }
+.notetab--amber:hover { border-color: var(--c-amber); color: var(--c-amber); }
+
+@media (max-width: 720px) {
+  .quick-filter-bar { flex-direction: column; align-items: stretch; }
+  .quick-filter-bar__child { flex: 1 1 auto; min-width: 0; }
+  .quick-filter-bar__types { justify-content: space-between; }
+  .notetab { flex: 1; justify-content: center; }
+}
+
 .bandtrack { display: flex; gap: var(--s2); flex-wrap: wrap; }
 .bandtrack__item {
   flex: 1 1 130px; display: flex; flex-direction: column; gap: 2px;
@@ -1359,6 +1505,48 @@ dl.facts--cols dd { margin: 2px 0 0; font-weight: 600; }
 .bandtrack__item--current .bandtrack__label { color: var(--brand-ink); }
 .bandtrack__item--done { opacity: .6; }
 .bandtrack__item--done .bandtrack__label::after { content: " ✓"; color: var(--ok); }
+
+/* ---------------------------------------------------- Норм / Ахиц (group_grid) */
+
+.normset {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s3);
+  margin-top: var(--s3); padding: var(--s3); border-radius: var(--radius-sm);
+  border: 1px solid var(--line); background: var(--card);
+}
+.normset__year { display: grid; gap: 2px; }
+.normset__year span { color: var(--muted); font-size: var(--t-label); font-weight: 700; letter-spacing: .04em; }
+.normset__year strong { font-size: var(--t-title); }
+.normset__field { display: grid; gap: 4px; min-width: 220px; color: var(--muted); font-size: var(--t-label); font-weight: 700; }
+.normset__status { flex-basis: 100%; margin: 0; min-height: 1.2em; color: var(--ok); font-size: var(--t-label); font-weight: 600; }
+
+.recommend { margin-top: var(--s3); }
+.recommend > summary {
+  display: flex; align-items: center; gap: var(--s2);
+  min-height: 44px; padding: 0 var(--s4);
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm);
+  font-size: var(--t-meta); font-weight: 700; color: var(--ink); cursor: pointer; list-style: none;
+}
+.recommend > summary::-webkit-details-marker { display: none; }
+.recommend__body { margin-top: var(--s2); }
+
+.progresstabs { margin-top: var(--s3); }
+.progresstabs__tabs { display: flex; gap: var(--s2); flex-wrap: wrap; }
+.progresstabs__tabs button {
+  padding: 9px 14px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--card); color: var(--muted); font: inherit; font-weight: 700; cursor: pointer;
+}
+.progresstabs__tabs button.is-active { background: var(--brand); border-color: var(--brand); color: #fff; }
+.progresstabs__panel { display: grid; gap: var(--s2); margin-top: var(--s3); }
+.progresstabs__panel[hidden] { display: none; }
+.progresscard { padding: var(--s3); border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--card); }
+.progresscard__head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s2); }
+.progresscard__head strong { font-size: var(--t-body); }
+.progresscard__head span { color: var(--muted); font-size: var(--t-label); }
+.progresscard__empty { margin: 6px 0 0; color: var(--muted); font-size: var(--t-label); }
+@media (max-width: 480px) {
+  .normset { flex-direction: column; align-items: stretch; }
+  .normset__field { min-width: 0; }
+}
 
 /* -------------------------------------------------------------- timeline
    Recent observations on the child profile, as the 360° mockup draws them:
@@ -2169,6 +2357,37 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
   border-top-left-radius: 0; border-top-right-radius: 0;
 }
 
+/* Inline filter bar — search input, Хайх, and Шүүлт ба эрэмбэ share one
+   row (children list, 2026-08-19). Plain flex-wrap, so a narrow screen
+   folds it to two lines on its own rather than a hand-picked breakpoint. */
+.searchrow { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: var(--s4); }
+.searchrow .searchbar { flex: 1 1 260px; margin-top: 0; }
+.searchrow .filterwrap { flex: 0 0 auto; margin-top: 0; position: relative; }
+
+/* The popover variant — same `<details>`/`.filterbar` markup as the
+   in-flow accordion elsewhere (observations list), just anchored instead
+   of displacing the page. `.filterwrap--popover` is additive: everything
+   under plain `.filterwrap` above still applies; this only repositions
+   `.filterbar` once open. */
+.filterwrap--popover[open] > summary {
+  border-radius: var(--radius-sm); border-bottom-color: var(--line);
+}
+.filterwrap--popover[open] .filterbar {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 40;
+  width: min(480px, calc(100vw - 32px));
+  box-shadow: var(--shadow); border-radius: var(--radius);
+}
+@media (max-width: 720px) {
+  .filterwrap--popover[open] .filterbar {
+    position: static; width: auto; box-shadow: none; margin-top: -1px;
+    border-top-left-radius: 0; border-top-right-radius: 0;
+  }
+  .filterwrap--popover[open] > summary {
+    border-bottom-left-radius: 0; border-bottom-right-radius: 0;
+    border-bottom-color: transparent;
+  }
+}
+
 /* A grid item fills its track by default, which made "Засах" a full-width
    button on a phone — as loud as the row it belongs to. It is the secondary
    action; it sizes to its own label and sits at the start of the line. */
@@ -2203,7 +2422,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
 @media (min-width: 900px) {
   .kidhead {
     display: grid; gap: var(--s3);
-    grid-template-columns: 1fr 72px 150px auto 84px;
+    grid-template-columns: 1fr 72px auto 84px;
     align-items: center;
     padding: 0 var(--s4) var(--s2);
     font-size: var(--t-label); font-weight: 600; color: var(--muted);
@@ -2244,7 +2463,92 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
 }
 @media (min-width: 900px) { .kidrow__cell b { display: none; } }
 
-.kidrow__flags { display: flex; gap: var(--s2); flex-wrap: wrap; }
+.kidrow__flags { display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center; }
+
+/* Guardian phone — a real `tel:` link, shown openly in the row rather than
+   behind the ⋮ menu (client request 2026-08-19: "ил харагдах"). */
+.kidrow__phone {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 999px;
+  background: var(--ok-soft); color: var(--ok);
+  font-size: var(--t-label); font-weight: 700; text-decoration: none;
+}
+.kidrow__phone:hover { text-decoration: underline; }
+
+/* Буцаан идэвхжүүлэх — next to the status badge for any non-active child. */
+.reactivate-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 999px; border: 1px solid var(--brand);
+  background: var(--brand-soft); color: var(--brand-ink);
+  font: inherit; font-size: var(--t-label); font-weight: 700; cursor: pointer;
+}
+.reactivate-btn:hover { background: var(--brand); color: #fff; }
+.reactivate-form__intro { margin: 0 0 var(--s3); color: var(--muted); font-size: var(--t-meta); }
+
+/* Class-wide summary stats — client request 2026-08-19. Real figures
+   (total, sex split, average age) sit beside honest "—" ones (attendance,
+   meal cost) that have no backend yet; both use the same tile so neither
+   reads as more or less finished than it is. */
+.classstats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--s3); margin-top: var(--s4);
+}
+.classstat {
+  padding: var(--s3) var(--s4); border-radius: var(--radius-sm);
+  border: 1px solid var(--line); background: var(--card);
+}
+.classstat__label { display: block; color: var(--muted); font-size: var(--t-label); font-weight: 700; }
+.classstat__value { display: block; margin: 4px 0 2px; font-size: 1.4rem; }
+.classstat small { display: block; color: var(--muted); font-size: var(--t-label); }
+.classstat--muted { background: var(--bg); }
+.classstat--muted .classstat__value { color: var(--muted); }
+
+/* Шилжилт хөдөлгөөн — tabs + table + summary bar, client spec 2026-08-19. */
+.migration {
+  padding: var(--s4); border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--card);
+}
+.migration__head {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start;
+  gap: var(--s3);
+}
+.migration__head span { display: block; color: var(--muted); font-size: var(--t-label); font-weight: 800; letter-spacing: .04em; }
+.migration__head h2 { margin: 4px 0; font-size: 1.15rem; }
+.migration__head p { margin: 0; color: var(--muted); font-size: var(--t-meta); }
+.migration__head-actions { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
+.migration__head-actions select { min-height: 44px; }
+
+.migration__summary {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--s2); margin-top: var(--s4);
+}
+.migration__stat {
+  display: flex; align-items: center; gap: var(--s2);
+  padding: var(--s3); border-radius: var(--radius-sm); background: var(--bg);
+}
+.migration__stat span { font-size: 1.3rem; }
+.migration__stat strong { display: block; font-size: 1.25rem; line-height: 1.1; }
+.migration__stat small { display: block; color: var(--muted); font-size: var(--t-label); }
+.migration__stat--in strong { color: var(--ok); }
+.migration__stat--transfer strong { color: var(--c-amber); }
+.migration__stat--out strong { color: var(--danger); }
+
+.migration__tabs { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s4); }
+.migration__tabs button {
+  padding: 9px 14px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--card); color: var(--muted); font: inherit; font-weight: 700; cursor: pointer;
+}
+.migration__tabs button.is-active { background: var(--brand); border-color: var(--brand); color: #fff; }
+
+.migration__panel { margin-top: var(--s3); }
+.migration__table { width: 100%; border-collapse: collapse; }
+.migration__table th, .migration__table td {
+  padding: var(--s2) var(--s3); text-align: left; font-size: var(--t-meta);
+  border-bottom: 1px solid var(--line);
+}
+.migration__table th { color: var(--muted); font-size: var(--t-label); font-weight: 700; }
+
+.migration-form__kind { display: grid; gap: var(--s2); margin: 0 0 var(--s3); }
 
 /* Per-row action menu — the client's mockup, added 2026-08-18. It replaces
    the "Засах" pill that used to sit here, so the row gained two destinations
@@ -2282,7 +2586,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
 .rowmenu__list a:hover .ic { color: var(--brand); }
 
 @media (min-width: 900px) {
-  .kidrow { grid-template-columns: 1fr 72px 150px auto 48px; }
+  .kidrow { grid-template-columns: 1fr 72px auto 48px; }
 }
 
 /* The row's main link wrapped a 40px avatar and inherited its height — four
@@ -2917,6 +3221,21 @@ body:has(#teacher-report-dashboard:target) .teacher-report-ui { margin-top: 0; }
   background: var(--bg);
 }
 
+/* The class board's reaction — a heart, not a comment thread (client's
+   own instruction: viewing is fine, replying is not offered at all). */
+.notice-heart {
+  display: inline-flex; align-items: center; gap: 7px;
+  margin-top: var(--s4); padding: 9px 14px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--card);
+  color: var(--muted); font: inherit; font-weight: 600; font-size: var(--t-meta);
+  cursor: pointer;
+}
+.notice-heart:hover { border-color: #f3b4c4; }
+.notice-heart.is-active {
+  border-color: #e894ac; background: #fdeef3; color: #c23662;
+}
+.notice-heart.is-active .ic { color: #c23662; }
+
 /* Who has read it — §8.1's "хэн уншсаныг харах". A list, not a table: it is
    two fields per row and a table made it scroll sideways on a phone. */
 .readers { display: flex; flex-direction: column; gap: var(--s1); }
@@ -3050,6 +3369,34 @@ body:has(#teacher-report-dashboard:target) .teacher-report-ui { margin-top: 0; }
 }
 .whoami__out:hover { color: var(--brand); background: var(--card); }
 
+/* Бүлгийн шатлал, shrunk into the sidebar right under .whoami — a compact
+   vertical rail instead of the wide horizontal .track it replaced there. */
+.bandmini { list-style: none; margin: var(--s2) 0 0; padding: var(--s2) var(--s3); }
+.bandmini__step { display: flex; align-items: center; gap: 8px; position: relative; padding: 3px 0; }
+.bandmini__step + .bandmini__step::before {
+  content: ""; position: absolute; left: 3px; bottom: 100%; width: 2px; height: 8px;
+  background: var(--line);
+}
+.bandmini__dot {
+  width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto;
+  background: var(--line);
+}
+.bandmini__body { min-width: 0; display: flex; align-items: baseline; gap: 5px; }
+.bandmini__name { font-size: .72rem; font-weight: 700; color: var(--faint); white-space: nowrap; }
+.bandmini__years { font-size: .68rem; color: var(--faint); white-space: nowrap; }
+.bandmini__step--done .bandmini__dot { background: #c7cbd6; }
+.bandmini__step--done .bandmini__name,
+.bandmini__step--done .bandmini__years { color: var(--faint); }
+.bandmini__step--current .bandmini__dot { background: var(--ok); }
+.bandmini__step--current .bandmini__name,
+.bandmini__step--current .bandmini__years { color: var(--ink); }
+
+@media (max-width: 900px) {
+  /* No room for a vertical rail in the folded horizontal strip — the same
+     trade already made for .whoami__body just below. */
+  .bandmini { display: none; }
+}
+
 @media (max-width: 900px) {
   /* The identity pill in the page header was the same fact as the sidebar
      footer, and on a phone it sat directly above the page title and crowded
@@ -3105,11 +3452,107 @@ body:has(#teacher-report-dashboard:target) .teacher-report-ui { margin-top: 0; }
 @media(max-width:620px){.daily-kitchen__grid,.kitchen-ready__form,.kitchen-ready__metrics{grid-template-columns:1fr}.kitchen-ready__form .wide{grid-column:auto}.parent-meals__nutrition{grid-template-columns:repeat(2,1fr)}}
 
 /* Administrator overview: the compact management-board hierarchy. */
-.admin-board{margin-bottom:var(--s5);padding:20px;border-radius:var(--radius);background:linear-gradient(135deg,#edf8f1,#f8fbff)}.admin-board__title{display:flex;justify-content:space-between;align-items:center;gap:var(--s3);margin-bottom:14px}.admin-board__title h2{margin:0;font-size:1.3rem}.admin-board__title span{color:var(--muted);font-size:var(--t-meta)}.admin-board__summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.admin-board__summary article{display:flex;gap:10px;padding:14px;border:1px solid #ddcfb7;border-radius:12px;background:var(--card);box-shadow:var(--shadow)}.admin-board__summary article>span{font-size:1.45rem}.admin-board__summary small,.admin-board__summary strong,.admin-board__summary b{display:block}.admin-board__summary small{color:var(--muted);font-size:var(--t-label)}.admin-board__summary strong{margin:3px 0;font-size:1.45rem;line-height:1}.admin-board__summary b{color:var(--muted);font-size:var(--t-label)}.admin-board__summary i{display:block;height:7px;margin-top:8px;border-radius:99px;background:var(--line)}.admin-board__summary i em{display:block;width:0;height:100%;border-radius:inherit;background:#39a97a}.admin-board__grid{display:grid;grid-template-columns:1.35fr 1fr;gap:12px;margin-top:14px}.admin-board__panel{min-height:190px;padding:16px;border:1px solid #ddcfb7;border-radius:12px;background:var(--card);box-shadow:var(--shadow)}.admin-board__panel h3{margin:0;font-size:var(--t-title)}.admin-board__panel p{margin:10px 0 0;color:var(--muted);font-size:var(--t-label)}.admin-placeholder-bars{height:118px;display:flex;align-items:end;justify-content:space-around;gap:16px;margin-top:10px;border-bottom:1px solid var(--line);background:repeating-linear-gradient(to top,transparent 0 28px,var(--bg) 28px 29px)}.admin-placeholder-bars>div{display:grid;grid-template-columns:repeat(3,11px);align-items:end;justify-items:center;gap:4px;height:100%}.admin-placeholder-bars i{display:block;width:11px;height:12px;border-radius:4px 4px 0 0;background:var(--line)}.admin-placeholder-bars small{grid-column:1/-1;margin-top:5px;color:var(--muted);font-size:var(--t-label);white-space:nowrap}.admin-radar-placeholder{position:relative;width:116px;height:116px;margin:10px auto 0;display:grid;place-items:center;border-radius:50%;background:repeating-radial-gradient(circle,transparent 0 18px,var(--line) 19px 20px)}.admin-radar-placeholder span{position:absolute;color:var(--muted);font-size:.62rem}.admin-radar-placeholder span:nth-child(1){top:-4px}.admin-radar-placeholder span:nth-child(2){right:-25px;top:48px}.admin-radar-placeholder span:nth-child(3){bottom:-4px}.admin-radar-placeholder span:nth-child(4){left:-27px;top:48px}.admin-radar-placeholder b{width:52px;height:52px;display:grid;place-items:center;border-radius:50%;background:var(--bg);color:var(--muted)}.admin-lines{display:grid;gap:17px;margin-top:24px}.admin-lines span{height:11px;border-radius:99px;background:linear-gradient(90deg,var(--line) 55%,transparent 55%)}.admin-finance-empty{display:grid;justify-items:center;gap:8px;min-height:115px;place-content:center;text-align:center}.admin-finance-empty b{font-size:1.8rem}.admin-finance-empty span{max-width:230px;color:var(--muted);font-size:var(--t-label)}@media(max-width:900px){.admin-board__summary{grid-template-columns:repeat(2,1fr)}.admin-board__grid{grid-template-columns:1fr}.admin-board__panel--wide{min-height:210px}}@media(max-width:480px){.admin-board{padding:14px}.admin-board__summary{grid-template-columns:1fr}.admin-board__title{display:block}.admin-board__title span{display:block;margin-top:3px}}
+.admin-board{margin-bottom:var(--s5);padding:20px;border-radius:var(--radius);background:linear-gradient(135deg,#edf8f1,#f8fbff)}.admin-board__title{display:flex;justify-content:space-between;align-items:center;gap:var(--s3);margin-bottom:14px}.admin-board__title h2{margin:0;font-size:1.3rem}.admin-board__title span{color:var(--muted);font-size:var(--t-meta)}.admin-board__summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.admin-board__summary article{display:flex;gap:10px;padding:14px;border:1px solid #ddcfb7;border-radius:12px;background:var(--card);box-shadow:var(--shadow)}.admin-board__summary article>span{font-size:1.45rem}.admin-board__summary small,.admin-board__summary strong,.admin-board__summary b{display:block}.admin-board__summary small{color:var(--muted);font-size:var(--t-label)}.admin-board__summary strong{margin:3px 0;font-size:1.45rem;line-height:1}.admin-board__summary b{color:var(--muted);font-size:var(--t-label)}.admin-board__summary i{display:block;height:7px;margin-top:8px;border-radius:99px;background:var(--line)}.admin-board__summary i em{display:block;width:0;height:100%;border-radius:inherit;background:#39a97a}.admin-board__grid{display:grid;grid-template-columns:1.35fr 1fr;gap:12px;margin-top:14px}.admin-board__panel{min-height:190px;padding:16px;border:1px solid #ddcfb7;border-radius:12px;background:var(--card);box-shadow:var(--shadow)}.admin-board__panel h3{margin:0;font-size:var(--t-title)}.admin-board__panel p{margin:10px 0 0;color:var(--muted);font-size:var(--t-label)}.admin-board__panel--full{grid-column:1/-1;min-height:0}.admin-attendance-bars{display:grid;gap:10px;margin-top:12px}.admin-attendance-bars__row{display:grid;grid-template-columns:96px 1fr 42px;align-items:center;gap:10px}.admin-attendance-bars__row span{color:var(--muted);font-size:var(--t-label)}.admin-attendance-bars__row i{display:block;height:9px;border-radius:99px;background:var(--line)}.admin-attendance-bars__row i em{display:block;width:0;height:100%;border-radius:inherit;background:#39a97a}.admin-attendance-bars__row b{text-align:right;color:var(--muted);font-size:var(--t-label)}.admin-placeholder-bars{height:118px;display:flex;align-items:end;justify-content:space-around;gap:16px;margin-top:10px;border-bottom:1px solid var(--line);background:repeating-linear-gradient(to top,transparent 0 28px,var(--bg) 28px 29px)}.admin-placeholder-bars>div{display:grid;grid-template-columns:repeat(3,11px);align-items:end;justify-items:center;gap:4px;height:100%}.admin-placeholder-bars i{display:block;width:11px;height:12px;border-radius:4px 4px 0 0;background:var(--line)}.admin-placeholder-bars small{grid-column:1/-1;margin-top:5px;color:var(--muted);font-size:var(--t-label);white-space:nowrap}.admin-radar-placeholder{position:relative;width:116px;height:116px;margin:10px auto 0;display:grid;place-items:center;border-radius:50%;background:repeating-radial-gradient(circle,transparent 0 18px,var(--line) 19px 20px)}.admin-radar-placeholder span{position:absolute;color:var(--muted);font-size:.62rem}.admin-radar-placeholder span:nth-child(1){top:-4px}.admin-radar-placeholder span:nth-child(2){right:-25px;top:48px}.admin-radar-placeholder span:nth-child(3){bottom:-4px}.admin-radar-placeholder span:nth-child(4){left:-27px;top:48px}.admin-radar-placeholder b{width:52px;height:52px;display:grid;place-items:center;border-radius:50%;background:var(--bg);color:var(--muted)}.admin-lines{display:grid;gap:17px;margin-top:24px}.admin-lines span{height:11px;border-radius:99px;background:linear-gradient(90deg,var(--line) 55%,transparent 55%)}.admin-finance-empty{display:grid;justify-items:center;gap:8px;min-height:115px;place-content:center;text-align:center}.admin-finance-empty b{font-size:1.8rem}.admin-finance-empty span{max-width:230px;color:var(--muted);font-size:var(--t-label)}@media(max-width:900px){.admin-board__summary{grid-template-columns:repeat(2,1fr)}.admin-board__grid{grid-template-columns:1fr}.admin-board__panel--wide{min-height:210px}}@media(max-width:480px){.admin-board{padding:14px}.admin-board__summary{grid-template-columns:1fr}.admin-board__title{display:block}.admin-board__title span{display:block;margin-top:3px}}
 
 /* Teacher dashboard summary and graphs — populated by dashboard APIs later. */
 .teacher-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s3);margin:0 0 var(--s4)}.teacher-summary__card{display:flex;gap:12px;padding:16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);box-shadow:var(--shadow)}.teacher-summary__icon{font-size:1.55rem}.teacher-summary__card h2{margin:0;color:var(--ink);font-size:var(--t-meta)}.teacher-summary__card strong{display:inline-block;margin:6px 7px 0 0;font-size:1.85rem;line-height:1}.teacher-summary__card b{font-size:var(--t-meta)}.teacher-summary__card p,.teacher-summary__card ul{margin:7px 0 0;color:var(--muted);font-size:var(--t-label)}.teacher-summary__card ul{padding-left:16px}.teacher-summary__track{height:8px;margin-top:9px;border-radius:99px;background:var(--line);overflow:hidden}.teacher-summary__track span{display:block;width:0;height:100%;background:#39a97a}
 .teacher-charts{display:grid;grid-template-columns:1fr 1.25fr;gap:var(--s3);margin-bottom:var(--s5)}.teacher-chart-card{padding:17px;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);box-shadow:var(--shadow)}.teacher-chart-card h2{margin:0 0 var(--s3);font-size:var(--t-title)}.teacher-chart-card>p{margin:12px 0 0;color:var(--muted);font-size:var(--t-label)}.method-chart{display:grid;grid-template-columns:120px 1fr;align-items:center;gap:16px}.method-chart__donut{position:relative;width:116px;height:116px;display:grid;place-content:center;justify-items:center;border-radius:50%;background:conic-gradient(var(--line) 0 100%);color:var(--muted);text-align:center}.method-chart__donut::before{content:'';position:absolute;width:78px;height:78px;border-radius:50%;background:var(--card)}.method-chart__donut span,.method-chart__donut small{z-index:1}.method-chart__donut span{font-size:1.25rem;font-weight:800}.method-chart__donut small{font-size:.66rem;line-height:1.2}.method-chart__rows{display:grid;gap:10px}.method-chart__rows>div{display:grid;grid-template-columns:84px 1fr 20px;gap:7px;align-items:center;font-size:var(--t-label)}.method-chart__rows i{height:8px;border-radius:99px;background:var(--line);overflow:hidden}.method-chart__rows b{display:block;height:100%;border-radius:inherit;background:var(--brand)}.method-chart__rows small{color:var(--muted);text-align:right}.progress-columns{height:180px;display:flex;align-items:end;gap:12px;padding:8px;border-bottom:1px solid var(--line);background:repeating-linear-gradient(to top,transparent 0 35px,var(--bg) 35px 36px)}.progress-columns>div{display:grid;flex:1;align-items:end;justify-items:center;height:100%;gap:7px}.progress-columns span{position:relative;display:block;width:min(42px,100%);min-height:8px;border-radius:8px 8px 0 0;background:var(--brand)}.progress-columns span b{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:.68rem;color:var(--muted);white-space:nowrap}.progress-columns small{font-size:var(--t-label);text-align:center;overflow-wrap:anywhere}.progress-columns--empty span{height:8px;background:var(--line)}
 @media(max-width:800px){.teacher-summary,.teacher-charts{grid-template-columns:1fr}.teacher-charts{gap:var(--s3)}}@media(max-width:520px){.method-chart{grid-template-columns:1fr}.method-chart__donut{margin:auto}.teacher-summary__card strong{font-size:1.5rem}}
 
-.teacher-surveys{margin-bottom:var(--s5);padding:20px;border:1px solid #ddd5fa;border-radius:var(--radius);background:linear-gradient(135deg,#f7f5ff,#fff)}.teacher-surveys[hidden]{display:none}.teacher-surveys__head{display:flex;justify-content:space-between;gap:var(--s3)}.teacher-surveys__head span{display:block;color:#7056dc;font-size:var(--t-label);font-weight:800;letter-spacing:.06em}.teacher-surveys__head h2{margin:4px 0;font-size:1.25rem}.teacher-surveys__head p{margin:0;color:var(--muted);font-size:var(--t-meta)}.teacher-surveys__head button{width:34px;height:34px;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--muted);font-size:1.2rem;cursor:pointer}.teacher-surveys__types{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:var(--s4)}.teacher-surveys__types button{padding:13px;border:1px solid #d8d1f5;border-radius:11px;background:#fff;color:var(--ink);font:inherit;font-weight:750;text-align:left;cursor:pointer}.teacher-surveys__types button.is-active{background:#7056dc;border-color:#7056dc;color:#fff}.teacher-surveys__types small{display:block;margin-top:3px;font-weight:400;font-size:var(--t-label)}.teacher-surveys__builder{display:grid;gap:11px;margin-top:var(--s4);padding:15px;border-radius:12px;background:rgba(255,255,255,.75)}.teacher-surveys__builder label{display:grid;gap:4px;color:var(--muted);font-size:var(--t-label);font-weight:700}.teacher-surveys__builder textarea{min-height:75px}.teacher-surveys__options{display:grid;gap:8px}.teacher-surveys__answer-type{display:flex;flex-wrap:wrap;gap:14px;color:var(--muted);font-size:var(--t-meta)}.teacher-surveys__answer-type label{display:block}.teacher-surveys__answer-type input{width:auto}.teacher-surveys__actions{display:flex;gap:8px;flex-wrap:wrap}.teacher-surveys__results{margin-top:var(--s4);padding-top:var(--s4);border-top:1px solid var(--line)}.teacher-surveys__results h3{margin:0;font-size:var(--t-title)}.teacher-surveys__result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:10px}.teacher-surveys__result-grid article{padding:12px;border-radius:10px;background:#fff}.teacher-surveys__result-grid strong,.teacher-surveys__result-grid b,.teacher-surveys__result-grid small{display:block}.teacher-surveys__result-grid strong,.teacher-surveys__result-grid small{color:var(--muted);font-size:var(--t-label)}.teacher-surveys__result-grid b{margin:4px 0;font-size:1.4rem}.teacher-surveys__bars{height:35px;display:flex;align-items:end;gap:4px}.teacher-surveys__bars span{flex:1;min-height:6px;border-radius:5px 5px 0 0;background:var(--line)}.teacher-surveys__results>p{margin:10px 0 0;color:var(--muted);font-size:var(--t-label)}.teacher-surveys__question{display:grid;gap:11px;padding:12px;border:1px solid #e5e0fb;border-radius:10px;background:#fff}.teacher-surveys__question+.teacher-surveys__question{margin-top:11px}.teacher-surveys__question-label textarea{margin-top:4px}.teacher-surveys__list{margin-top:var(--s4);padding-top:var(--s4);border-top:1px solid var(--line)}.teacher-surveys__list-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--s3)}.teacher-surveys__list-head h3{margin:0;font-size:var(--t-title)}.teacher-surveys__list-head input[type=search]{max-width:220px}.survey-list-card{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-top:10px}.survey-list-card__actions{position:relative}.survey-list-card__actions summary{list-style:none;width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;cursor:pointer;color:var(--muted)}.survey-list-card__actions summary::-webkit-details-marker{display:none}.survey-list-card__actions[open] .survey-list-card__menu{display:grid}.survey-list-card__menu{display:none;position:absolute;right:0;top:40px;z-index:2;min-width:160px;padding:6px;border:1px solid var(--line);border-radius:10px;background:#fff;box-shadow:var(--shadow);gap:2px}.survey-list-card__menu a,.survey-list-card__menu button{display:block;width:100%;padding:8px 10px;border:0;border-radius:8px;background:none;text-align:left;font:inherit;color:var(--ink);cursor:pointer}.survey-list-card__menu a:hover,.survey-list-card__menu button:hover{background:var(--bg)}@media(max-width:620px){.teacher-surveys__types,.teacher-surveys__result-grid{grid-template-columns:1fr}.teacher-surveys__list-head input[type=search]{max-width:none;width:100%}}
+.teacher-surveys{margin-bottom:var(--s5);padding:20px;border:1px solid #ddd5fa;border-radius:var(--radius);background:linear-gradient(135deg,#f7f5ff,#fff)}.teacher-surveys[hidden]{display:none}.teacher-surveys__head{display:flex;justify-content:space-between;gap:var(--s3)}.teacher-surveys__head span{display:block;color:#7056dc;font-size:var(--t-label);font-weight:800;letter-spacing:.06em}.teacher-surveys__head h2{margin:4px 0;font-size:1.25rem}.teacher-surveys__head p{margin:0;color:var(--muted);font-size:var(--t-meta)}.teacher-surveys__head button{width:34px;height:34px;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--muted);font-size:1.2rem;cursor:pointer}.teacher-surveys__types{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:var(--s4)}.teacher-surveys__types button{padding:13px;border:1px solid #d8d1f5;border-radius:11px;background:#fff;color:var(--ink);font:inherit;font-weight:750;text-align:left;cursor:pointer}.teacher-surveys__types button.is-active{background:#7056dc;border-color:#7056dc;color:#fff}.teacher-surveys__types small{display:block;margin-top:3px;font-weight:400;font-size:var(--t-label)}.teacher-surveys__builder{display:grid;gap:11px;margin-top:var(--s4);padding:15px;border-radius:12px;background:rgba(255,255,255,.75)}.teacher-surveys__builder label{display:grid;gap:4px;color:var(--muted);font-size:var(--t-label);font-weight:700}.teacher-surveys__builder textarea{min-height:75px}.teacher-surveys__options{display:grid;gap:8px}.teacher-surveys__answer-type{display:flex;flex-wrap:wrap;gap:14px;color:var(--muted);font-size:var(--t-meta)}.teacher-surveys__answer-type label{display:block}.teacher-surveys__answer-type input{width:auto}.teacher-surveys__actions{display:flex;gap:8px;flex-wrap:wrap}.teacher-surveys__results{margin-top:var(--s4);padding-top:var(--s4);border-top:1px solid var(--line)}.teacher-surveys__results h3{margin:0;font-size:var(--t-title)}.teacher-surveys__result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:10px}.teacher-surveys__result-grid article{padding:12px;border-radius:10px;background:#fff}.teacher-surveys__result-grid strong,.teacher-surveys__result-grid b,.teacher-surveys__result-grid small{display:block}.teacher-surveys__result-grid strong,.teacher-surveys__result-grid small{color:var(--muted);font-size:var(--t-label)}.teacher-surveys__result-grid b{margin:4px 0;font-size:1.4rem}.teacher-surveys__bars{height:35px;display:flex;align-items:end;gap:4px}.teacher-surveys__bars span{flex:1;min-height:6px;border-radius:5px 5px 0 0;background:var(--line)}.teacher-surveys__results>p{margin:10px 0 0;color:var(--muted);font-size:var(--t-label)}.teacher-surveys__question{display:grid;gap:11px;padding:12px;border:1px solid #e5e0fb;border-radius:10px;background:#fff}.teacher-surveys__question+.teacher-surveys__question{margin-top:11px}.teacher-surveys__question-label textarea{margin-top:4px}.teacher-surveys__list{margin-top:var(--s4);padding-top:var(--s4);border-top:1px solid var(--line)}.teacher-surveys__list-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--s3)}.teacher-surveys__list-head h3{margin:0;font-size:var(--t-title)}.teacher-surveys__list-head input[type=search]{max-width:220px}.teacher-surveys__status{margin:0;min-height:1.2em;color:#25855a;font-size:var(--t-label);font-weight:700}.survey-list-card{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-top:10px}.survey-list-card__body{display:grid;gap:4px}.survey-list-card__body strong{font-size:var(--t-body)}.survey-list-card__body small{color:var(--muted);font-size:var(--t-label)}.survey-list-card__actions{position:relative}.survey-list-card__actions summary{list-style:none;width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;cursor:pointer;color:var(--muted)}.survey-list-card__actions summary::-webkit-details-marker{display:none}.survey-list-card__actions[open] .survey-list-card__menu{display:grid}.survey-list-card__menu{display:none;position:absolute;right:0;top:40px;z-index:2;min-width:160px;padding:6px;border:1px solid var(--line);border-radius:10px;background:#fff;box-shadow:var(--shadow);gap:2px}.survey-list-card__menu a,.survey-list-card__menu button{display:block;width:100%;padding:8px 10px;border:0;border-radius:8px;background:none;text-align:left;font:inherit;color:var(--ink);cursor:pointer}.survey-list-card__menu a:hover,.survey-list-card__menu button:hover{background:var(--bg)}@media(max-width:620px){.teacher-surveys__types,.teacher-surveys__result-grid{grid-template-columns:1fr}.teacher-surveys__list-head input[type=search]{max-width:none;width:100%}}
+
+/* ================================================================
+   UI STATES — shared standard for every new screen/form (2026-08-19).
+   Loading, empty, success/error toast, field validation, mobile card
+   tables, and print. Built once here so a future screen only adds
+   markup/classes — it never needs its own spinner, toast, or print
+   rule. `static/js/ui-states.js` is the JS half (window.showToast,
+   window.setButtonLoading); it is loaded in all three base templates.
+   ================================================================ */
+
+/* 1. Loading — a button mid-request keeps its size, hides its label,
+   spins, and stops accepting clicks. `<button class="btn is-loading"
+   disabled>` (JS: `setButtonLoading(btn, true)`). */
+.btn.is-loading { position: relative; color: transparent !important; pointer-events: none; }
+.btn.is-loading::after {
+  content: ''; position: absolute; top: 50%; left: 50%; width: 16px; height: 16px;
+  margin: -8px 0 0 -8px; border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, .45); border-top-color: #fff;
+  animation: ui-spin .6s linear infinite;
+}
+.btn--ghost.is-loading::after { border-color: var(--line); border-top-color: var(--brand); }
+@keyframes ui-spin { to { transform: rotate(360deg); } }
+
+/* Skeleton loader — a list/card/table still finding out what it has.
+   `<div class="skeleton skeleton-line"></div>`, or a full
+   `.skeleton-row` for a table row placeholder. */
+.skeleton { position: relative; overflow: hidden; background: var(--line); border-radius: 8px; }
+.skeleton::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .6), transparent);
+  animation: ui-sweep 1.3s infinite;
+}
+.skeleton-line { height: 14px; margin: 7px 0; }
+.skeleton-line--short { width: 45%; }
+.skeleton-row { display: flex; gap: 12px; align-items: center; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); margin-top: 8px; }
+.skeleton-row .skeleton { flex: 1; height: 16px; }
+@keyframes ui-sweep { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .skeleton::after, .btn.is-loading::after { animation: none; } }
+
+/* 2. Empty state — `components/empty.html` already gives every list an
+   icon, a message, and an optional [+ Нэмэх] action; nothing further
+   is needed per screen. */
+
+/* 3/4. Toast — floating, auto-dismissing, distinct from `.msg` (an
+   inline banner for a real server-rendered Django message on page
+   load). Created and timed by `window.showToast()`. */
+.toast-stack {
+  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+  z-index: 90; display: grid; gap: 8px; justify-items: center;
+  width: min(92vw, 420px); pointer-events: none;
+}
+.toast {
+  padding: 12px 18px; border-radius: 999px; box-shadow: var(--shadow);
+  font-size: .9rem; font-weight: 700; text-align: center;
+  opacity: 0; transform: translateY(8px); transition: opacity .18s, transform .18s;
+}
+.toast.is-shown { opacity: 1; transform: translateY(0); }
+.toast--ok { background: var(--ok); color: #fff; }
+.toast--error { background: var(--danger); color: #fff; }
+@media (min-width: 900px) {
+  .toast-stack { left: auto; right: 24px; bottom: auto; top: 24px; transform: none; }
+  .toast { transform: translateX(12px); }
+  .toast.is-shown { transform: translateX(0); }
+}
+
+/* Field-level validation — put `.field-error` on the wrapping <label>
+   or <div> around one input; drop `.field-error-text` right after
+   the control for the specific reason. */
+.field-error input, .field-error select, .field-error textarea {
+  border-color: var(--danger); background: var(--danger-soft);
+}
+.field-error-text { margin: 4px 0 0; color: var(--danger); font-size: var(--t-label); font-weight: 600; }
+
+/* 5. Mobile card table — opt in per table with `.table-cards` on the
+   `<table>` and `data-label="Column name"` on each `<td>` (the `<th>`
+   row stays for screen readers and desktop; CSS hides it under
+   720px). Existing tables keep the horizontal-scroll `.table-wrap`
+   behaviour unless they adopt this. */
+@media (max-width: 720px) {
+  table.table-cards thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  table.table-cards, table.table-cards tbody, table.table-cards tr, table.table-cards td { display: block; width: 100%; }
+  table.table-cards tr { margin-bottom: 12px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--card); }
+  table.table-cards td { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border: 0; text-align: right; }
+  table.table-cards td::before { content: attr(data-label); flex: 0 0 auto; color: var(--muted); font-weight: 700; text-align: left; }
+}
+
+/* 6. Print — opt any extra element out with `data-print-hide` on top
+   of the elements already hidden by default. Page-specific print
+   rules (the two `teacher-report-ui`/`report-page` blocks elsewhere in
+   this file) can stay; this is the default for everything else. */
+@media print {
+  .sidebar, .topbar .who, .classboard-nav, .btn-row, .toast-stack,
+  [data-print-hide] { display: none !important; }
+  .main { padding: 0; }
+  body { background: #fff; }
+}

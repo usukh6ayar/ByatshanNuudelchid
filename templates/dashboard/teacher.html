@@ -90,7 +90,7 @@
     </div>
 
     <div class="teacher-surveys__builder">
-      <label>Судалгааны гарчиг<input placeholder="Жишээ: Аялалд оролцох эсэх"></label>
+      <label>Судалгааны гарчиг<input id="id_survey_title" data-survey-title placeholder="Жишээ: Аялалд оролцох эсэх"><span class="field-error-text" data-survey-title-error hidden>Судалгааны гарчиг заавал бөглөнө үү.</span></label>
 
       <div class="teacher-surveys__questions" data-survey-questions>
         <div class="teacher-surveys__question">
@@ -117,9 +117,13 @@
 
       <label>Хаагдах огноо <span class="field__opt">— заавал биш</span><input type="date" data-survey-closes></label>
 
+      <p class="teacher-surveys__status" data-survey-status role="status"></p>
+
       <div class="teacher-surveys__actions">
         <button type="button" class="btn" data-survey-publish>Ангийн самбарт нийтлэх</button>
         <button type="button" class="btn btn--ghost" onclick="window.print()">Хэвлэх</button>
+        <button type="button" class="btn btn--ghost" data-survey-excel>Excel татах</button>
+        <button type="button" class="btn btn--ghost" data-survey-cancel-edit hidden>Засвар цуцлах</button>
       </div>
     </div>
 
@@ -139,10 +143,19 @@
 
     {% comment %} Авсан судалгаанууд — reference's `surveys.html`
        "Авсан судалгаанууд" list, он цагийн дараалалтай, ••• цэсэнд
-       Засах/Тайлан/Татах/Дахин ашиглах/Устгах. No `Survey` model exists
-       (docs/superpowers/specs — search "Судалгаа" — Phase 3, RFP Модуль 1),
-       so this is always the empty state; the search row above it still
-       works client-side and costs nothing once real cards exist. {% endcomment %}
+       Засах/Тайлан/PDF/Excel/Дахин ашиглах/Устгах.
+
+       No `Survey` model exists yet (docs/superpowers/specs — search
+       "Судалгаа" — Phase 3, RFP Модуль 1), so there is nowhere real to save
+       a created survey. Rather than the "Ангийн самбарт нийтлэх" button
+       doing nothing at all, this list is backed by `localStorage` — the
+       same middle ground used for the announcement heart reaction: it
+       survives a reload on this device, is never sent anywhere, and is
+       replaced outright the day a real `Survey` model and API exist
+       (`renderTeacherSurveys` below is the only place that would need to
+       change). PDF/Excel export stays an honest "backend холбогдоход бэлэн"
+       message — CLAUDE.md §6 puts real file generation in Celery, which is
+       backend work by definition. {% endcomment %}
     <div class="teacher-surveys__list">
       <div class="teacher-surveys__list-head">
         <h3>Авсан судалгаанууд</h3>
@@ -150,8 +163,9 @@
         <input type="search" id="id_survey_search" placeholder="Гарчгаар хайх..."
                data-survey-search oninput="filterTeacherSurveys()">
       </div>
-      <div data-survey-list-body>
-        {% include "components/empty.html" with icon="survey" message="Одоогоор судалгаа байхгүй." %}
+      <div data-survey-cards hidden></div>
+      <div data-survey-list-empty>
+        {% include "components/empty.html" with icon="survey" message="Одоогоор судалгаа байхгүй. Дээрээс шинэ судалгаа үүсгээд нийтэлбэл энд жагсаана." %}
       </div>
     </div>
   </section>
@@ -212,6 +226,97 @@
         </select>
       </label>
     </div>
+
+    <section class="attendance-report" data-attendance-report aria-labelledby="attendance-report-title">
+      <div class="attendance-report__head">
+        <div>
+          <span>ИРЦИЙН ТАЙЛАН</span>
+          <h3 id="attendance-report-title">Сар, жилийн нэгтгэл</h3>
+          <p>Сонгосон хугацааны ирц, харьцаа болон хоолны зардлыг нэг дор харна.</p>
+        </div>
+        <div class="attendance-report__exports" aria-label="Тайлан экспортлох">
+          <button type="button" class="btn btn--ghost btn--sm" data-attendance-export="xlsx">Excel татах</button>
+          <button type="button" class="btn btn--ghost btn--sm" data-attendance-export="pdf">PDF хэвлэх</button>
+        </div>
+      </div>
+      <div class="attendance-report__filters">
+        <label>Хичээлийн жил
+          <select data-attendance-year>
+            <option value="2025-2026">2025–2026</option>
+            <option value="2026-2027" selected>2026–2027</option>
+          </select>
+        </label>
+        <label>Сар
+          <select data-attendance-month>
+            <option value="01">1-р сар</option><option value="02">2-р сар</option><option value="03">3-р сар</option>
+            <option value="04">4-р сар</option><option value="05">5-р сар</option><option value="06">6-р сар</option>
+            <option value="07">7-р сар</option><option value="08">8-р сар</option><option value="09">9-р сар</option>
+            <option value="10">10-р сар</option><option value="11">11-р сар</option><option value="12">12-р сар</option>
+          </select>
+        </label>
+        <label>Хүүхэд
+          <select data-attendance-child>
+            <option value="">Бүх хүүхэд</option>
+            <option value="selected">Хүүхэд сонгох…</option>
+          </select>
+        </label>
+        <button type="button" class="btn btn--primary btn--sm" data-attendance-report-apply>Тайлан харах</button>
+      </div>
+
+      <div class="attendance-report__summary" aria-live="polite">
+        <article><small>Нийт хүүхэд</small><strong data-attendance-total>0</strong><span>сонгосон бүлэг</span></article>
+        <article><small>Ирцийн хувь</small><strong data-attendance-percent>0%</strong><span>сарын нэгтгэл</span></article>
+        <article><small>Ирсэн өдөр</small><strong data-attendance-present>0</strong><span>нийт бүртгэл</span></article>
+        <article><small>Хоолны дүн</small><strong data-attendance-meal-total>₮0</strong><span>ирцэд суурилсан</span></article>
+      </div>
+
+      <div class="attendance-report__charts">
+        <article class="attendance-chart-card">
+          <div><h4>Өдөр тутмын ирцийн тренд</h4><small data-attendance-trend-label>Бүртгэгдсэн ирцийн тренд энд гарна.</small></div>
+          <svg class="attendance-line-chart" viewBox="0 0 520 190" role="img" aria-label="Сарын өдөр тутмын ирцийн шугаман график" data-attendance-line-chart>
+            <path class="attendance-line-chart__grid" d="M25 30H500M25 80H500M25 130H500M25 170H500"></path>
+            <polyline class="attendance-line-chart__line" points="25,170 95,170 165,170 235,170 305,170 375,170 445,170 500,170"></polyline>
+            <g class="attendance-line-chart__labels"><text x="25" y="187">1</text><text x="155" y="187">7</text><text x="285" y="187">14</text><text x="415" y="187">21</text><text x="480" y="187">28</text></g>
+          </svg>
+        </article>
+        <article class="attendance-chart-card attendance-chart-card--donut">
+          <div><h4>Төлвийн харьцаа</h4><small>Ирсэн, чөлөөтэй, өвчтэй, тасалсан</small></div>
+          <div class="attendance-donut" data-attendance-donut aria-label="Ирцийн төлвийн харьцаа"><strong data-attendance-donut-value>0%</strong><span>ирсэн</span></div>
+          <ul class="attendance-chart-legend"><li><i class="is-present"></i>Ирсэн <b data-attendance-present-count>0</b></li><li><i class="is-leave"></i>Чөлөөтэй <b>0</b></li><li><i class="is-sick"></i>Өвчтэй <b>0</b></li><li><i class="is-absent"></i>Тасалсан <b>0</b></li></ul>
+        </article>
+      </div>
+
+      <section class="attendance-warning" data-attendance-warning aria-labelledby="attendance-warning-title">
+        <div class="attendance-warning__icon" aria-hidden="true">!</div>
+        <div>
+          <h4 id="attendance-warning-title">Анхаарах ирц</h4>
+          <p>Ангийн дундаж болон 70%-иас доогуур ирцтэй хүүхдүүд энд автоматаар сануулна.</p>
+          <ul data-attendance-warning-list><li>Одоогоор анхааруулах ирцийн мэдээлэл байхгүй байна.</li></ul>
+        </div>
+      </section>
+
+      <section class="attendance-calculator" data-attendance-calculator aria-labelledby="attendance-calculator-title">
+        <div>
+          <h4 id="attendance-calculator-title">Ирцэд суурилсан хоолны зардал</h4>
+          <p>Ирсэн өдрийн тоо × өдрийн хоолны үнэ. Бодит ирц холбогдоход хүүхэд бүр автоматаар бөглөгдөнө.</p>
+        </div>
+        <div class="attendance-calculator__rates">
+          <label class="attendance-calculator__rate">Өдрийн хоолны үнэ (₮)<input type="number" value="0" min="0" step="100" inputmode="numeric" data-attendance-meal-rate></label>
+          <label class="attendance-calculator__rate">Сарын урьдчилгаа (₮)<input type="number" value="0" min="0" step="100" inputmode="numeric" data-attendance-meal-advance></label>
+        </div>
+        <div class="attendance-calculator__table-wrap">
+          <table class="attendance-calculator__table">
+            <thead><tr><th>Хүүхэд</th><th>Ирсэн өдөр</th><th>Хоолны зардал</th><th>Тооцооны үлдэгдэл</th></tr></thead>
+            <tbody data-attendance-cost-list><tr class="attendance-calculator__empty"><td colspan="4">Сонгосон бүлгийн ирц баталгаажсаны дараа хүүхэд бүрийн тооцоо энд гарна.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="attendance-health-summary" aria-labelledby="attendance-health-title">
+        <div><span>ЖИЛИЙН НЭГТГЭЛ</span><h4 id="attendance-health-title">Өвчлөл, чөлөөний тооцоо</h4><p>Хүүхэд бүрийн өвчтэй, чөлөөтэй өдрүүд болон шалтгаан нь жилийн эцсийн эмчийн тайланд нэгтгэгдэнэ.</p></div>
+        <div class="attendance-health-summary__stats"><article><small>Өвчтэй өдөр</small><strong>0</strong></article><article><small>Чөлөөтэй өдөр</small><strong>0</strong></article><article><small>Ангийн сарын дундаж</small><strong data-attendance-class-average>0%</strong></article></div>
+      </section>
+      <p class="attendance-report__status" data-attendance-report-status role="status"></p>
+    </section>
     <div class="daily-register__statuses" data-daily-statuses></div>
     <div class="daily-register__empty" data-daily-empty>
       <svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg>
@@ -432,32 +537,9 @@
     </div>
   </section>
 
-  {% comment %} The four kindergarten bands — Бага, Дунд, Ахлах, Бэлтгэл —
-     and the year this cohort meets each one. A group moves up every
-     September, so its band this year fixes the rest by counting.
-     Hidden when the group has no band set: guessing it from the free-text
-     age category would be a guess shown as a fact. {% endcomment %}
-  {% if band_track %}
-    <section class="section">
-      {% include "components/section_head.html" with title="Бүлгийн шатлал" %}
-      <div class="card">
-        <ol class="track">
-          {% for step in band_track %}
-            <li class="track__step track__step--{{ step.state }}">
-              <span class="track__name">{{ step.label }}</span>
-              <span class="track__dot" aria-hidden="true"></span>
-              <span class="track__dates">{{ step.years }}</span>
-              <span class="sr-only">
-                {% if step.state == 'done' %}өнгөрсөн
-                {% elif step.state == 'current' %}одоогийн бүлэг
-                {% else %}хойшид{% endif %}
-              </span>
-            </li>
-          {% endfor %}
-        </ol>
-      </div>
-    </section>
-  {% endif %}
+  {% comment %} Бүлгийн шатлал — moved into the sidebar next to the
+     signed-in identity (base_teacher.html), shrunk down, per the client's
+     request 2026-08-18. Not duplicated here. {% endcomment %}
 
   {% comment %} §12.1 — "шинэ мэдэгдэл" {% endcomment %}
   <section class="section">
@@ -549,6 +631,65 @@
           preview.querySelector('img').src = URL.createObjectURL(file);
         });
       });
+      (function setupAttendanceReport() {
+        var report = panel.querySelector('[data-attendance-report]');
+        if (!report) return;
+        var month = report.querySelector('[data-attendance-month]');
+        var year = report.querySelector('[data-attendance-year]');
+        var rate = report.querySelector('[data-attendance-meal-rate]');
+        var advance = report.querySelector('[data-attendance-meal-advance]');
+        var total = report.querySelector('[data-attendance-meal-total]');
+        var status = report.querySelector('[data-attendance-report-status]');
+        var money = new Intl.NumberFormat('mn-MN');
+
+        function updateMealCosts() {
+          var value = Math.max(0, Number(rate.value) || 0);
+          var advanceValue = Math.max(0, Number(advance.value) || 0);
+          var sum = 0;
+          report.querySelectorAll('[data-attendance-days]').forEach(function (input) {
+            var days = Math.max(0, Number(input.value) || 0);
+            var amount = days * value;
+            sum += amount;
+            var output = input.closest('tr').querySelector('[data-attendance-cost]');
+            if (output) output.textContent = '₮' + money.format(amount);
+            var balance = input.closest('tr').querySelector('[data-attendance-balance]');
+            if (balance) {
+              var difference = advanceValue - amount;
+              balance.textContent = difference >= 0 ? 'Буцаах ₮' + money.format(difference) : 'Нэмэх ₮' + money.format(Math.abs(difference));
+            }
+          });
+          total.textContent = '₮' + money.format(sum);
+        }
+        function setReportPeriod() {
+          if (!month || !year) return;
+          var currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+          month.value = currentMonth;
+        }
+        setReportPeriod();
+        rate.addEventListener('input', updateMealCosts);
+        advance.addEventListener('input', updateMealCosts);
+        report.addEventListener('input', function (event) {
+          if (event.target.matches('[data-attendance-days]')) updateMealCosts();
+        });
+        report.querySelector('[data-attendance-report-apply]').addEventListener('click', function () {
+          status.textContent = year.options[year.selectedIndex].text + ' оны ' + month.options[month.selectedIndex].text + ' сарын тайлан бэлэн байна.';
+          updateMealCosts();
+        });
+        report.querySelectorAll('[data-attendance-export]').forEach(function (button) {
+          button.addEventListener('click', function () {
+            var format = button.getAttribute('data-attendance-export');
+            if (format === 'pdf') {
+              window.print();
+              return;
+            }
+            status.textContent = 'Excel экспортын товч бэлэн. Backend холбогдоход сонгосон сарын .xlsx файл татагдана.';
+          });
+        });
+        /* Backend хүүхдийн мөрийг `data-attendance-days` болон
+           `data-attendance-cost` атрибуттайгаар гаргахад энэ frontend
+           тооцоолол шууд ажиллана. */
+        updateMealCosts();
+      }());
       render(current);
     }());
     (function () {
@@ -640,20 +781,280 @@
         button.addEventListener('click', function () { setSurveyType(button.getAttribute('data-survey-type')); });
       });
 
-      survey.querySelector('[data-survey-publish]').addEventListener('click', function () { this.textContent = 'Нийтлэхэд бэлэн'; });
+      // "Авсан судалгаанууд" — no `Survey` model exists yet, so a created
+      // survey is kept in `localStorage` (this device only) instead of
+      // vanishing on click. See the comment above the list markup.
+      var STORAGE_KEY = 'teacher-surveys-v1';
+      var titleInput = survey.querySelector('[data-survey-title]');
+      var closesInput = survey.querySelector('[data-survey-closes]');
+      var statusEl = survey.querySelector('[data-survey-status]');
+      var publishBtn = survey.querySelector('[data-survey-publish]');
+      var cancelEditBtn = survey.querySelector('[data-survey-cancel-edit]');
+      var cardsBox = document.querySelector('[data-survey-cards]');
+      var emptyBox = document.querySelector('[data-survey-list-empty]');
+      var emptyMessageDefault = emptyBox ? emptyBox.querySelector('p').textContent : '';
+      var editingId = null;
+
+      function loadSurveys() {
+        try {
+          return JSON.parse(window.localStorage.getItem(STORAGE_KEY)) || [];
+        } catch (err) {
+          return [];
+        }
+      }
+      function saveSurveys(list) {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      }
+      function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
+      }
+      function formatDate(iso) {
+        var date = new Date(iso);
+        if (isNaN(date)) return '';
+        return date.toLocaleDateString('mn-MN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+      }
+
+      function ensureQuestionCount(count) {
+        var blocks = questionsBox.querySelectorAll('.teacher-surveys__question');
+        while (blocks.length < count) {
+          addQuestionBtn.click();
+          blocks = questionsBox.querySelectorAll('.teacher-surveys__question');
+        }
+        while (blocks.length > count) {
+          blocks[blocks.length - 1].remove();
+          blocks = questionsBox.querySelectorAll('.teacher-surveys__question');
+        }
+        renumberQuestions();
+      }
+      function fillQuestionBlock(block, question) {
+        var textarea = block.querySelector('textarea');
+        if (textarea) textarea.value = question.text || '';
+        var select = block.querySelector('[data-survey-answer-type]');
+        if (select) {
+          select.value = question.answerType || 'choice';
+          select.dispatchEvent(new Event('change'));
+        }
+        var options = block.querySelector('[data-survey-options]');
+        var values = question.options && question.options.length ? question.options : ['', ''];
+        if (options) {
+          options.innerHTML = '';
+          values.forEach(function (text, index) {
+            var label = document.createElement('label');
+            label.textContent = 'Сонголт ' + (index + 1);
+            var input = document.createElement('input');
+            input.placeholder = 'Сонголт';
+            input.value = text;
+            label.appendChild(input);
+            options.appendChild(label);
+          });
+        }
+      }
+      function collectBuilderData() {
+        var blocks = Array.prototype.slice.call(questionsBox.querySelectorAll('.teacher-surveys__question'));
+        return {
+          title: titleInput.value.trim(),
+          type: surveyType,
+          closesOn: closesInput.value || '',
+          questions: blocks.map(function (block) {
+            var textarea = block.querySelector('textarea');
+            var select = block.querySelector('[data-survey-answer-type]');
+            var optionInputs = block.querySelectorAll('[data-survey-options] input');
+            return {
+              text: textarea ? textarea.value.trim() : '',
+              answerType: select ? select.value : 'choice',
+              options: Array.prototype.slice.call(optionInputs)
+                .map(function (input) { return input.value.trim(); })
+                .filter(Boolean),
+            };
+          }),
+        };
+      }
+      function fillBuilder(data) {
+        titleInput.value = data.title || '';
+        setSurveyType(data.type || 'poll');
+        ensureQuestionCount(data.type === 'form' ? Math.max(1, data.questions.length) : 1);
+        var blocks = questionsBox.querySelectorAll('.teacher-surveys__question');
+        data.questions.slice(0, blocks.length).forEach(function (question, index) {
+          fillQuestionBlock(blocks[index], question);
+        });
+        closesInput.value = data.closesOn || '';
+        survey.hidden = false;
+        survey.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      function resetBuilder() {
+        editingId = null;
+        publishBtn.textContent = 'Ангийн самбарт нийтлэх';
+        cancelEditBtn.hidden = true;
+        fillBuilder({ title: '', type: 'poll', closesOn: '', questions: [{ text: '', answerType: 'choice', options: ['', ''] }] });
+        statusEl.textContent = '';
+        var label = titleInput.closest('label');
+        if (label) label.classList.remove('field-error');
+        var errorText = survey.querySelector('[data-survey-title-error]');
+        if (errorText) errorText.hidden = true;
+      }
+
+      function setListStatus(message, type) {
+        if (statusEl) statusEl.textContent = message;
+        if (typeof window.showToast === 'function') window.showToast(message, type || 'ok');
+      }
+
+      function renderTeacherSurveys() {
+        if (!cardsBox || !emptyBox) return;
+        var list = loadSurveys().slice().sort(function (a, b) {
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+        cardsBox.innerHTML = '';
+        if (!list.length) {
+          cardsBox.hidden = true;
+          emptyBox.hidden = false;
+          emptyBox.querySelector('p').textContent = emptyMessageDefault;
+          return;
+        }
+        cardsBox.hidden = false;
+        emptyBox.hidden = true;
+        list.forEach(function (item) {
+          var card = document.createElement('article');
+          card.className = 'survey-list-card';
+          card.dataset.surveyId = item.id;
+          card.dataset.surveySearch = item.title.toLowerCase();
+          var typeLabel = item.type === 'form' ? 'Форм судалгаа' : 'Пол';
+          card.innerHTML =
+            '<div class="survey-list-card__body">' +
+              '<strong>' + escapeHtml(item.title) + '</strong>' +
+              '<span class="badge badge--muted">' + typeLabel + '</span>' +
+              '<small>' + item.questions.length + ' асуулт · ' + formatDate(item.createdAt) +
+                (item.closesOn ? ' · Хаагдах: ' + item.closesOn : '') + '</small>' +
+            '</div>' +
+            '<details class="survey-list-card__actions">' +
+              '<summary aria-label="Үйлдэл">⋯</summary>' +
+              '<div class="survey-list-card__menu">' +
+                '<button type="button" data-survey-action="edit">Засах</button>' +
+                '<button type="button" data-survey-action="report">Тайлан харах</button>' +
+                '<button type="button" data-survey-action="pdf">PDF татах</button>' +
+                '<button type="button" data-survey-action="excel">Excel татах</button>' +
+                '<button type="button" data-survey-action="reuse">Дахин ашиглах</button>' +
+                '<button type="button" data-survey-action="delete">Устгах</button>' +
+              '</div>' +
+            '</details>';
+          cardsBox.appendChild(card);
+        });
+        filterTeacherSurveys();
+      }
+
+      function startEdit(id) {
+        var item = loadSurveys().find(function (survey) { return survey.id === id; });
+        if (!item) return;
+        editingId = id;
+        publishBtn.textContent = 'Хадгалах';
+        cancelEditBtn.hidden = false;
+        fillBuilder(item);
+      }
+      function startReuse(id) {
+        var item = loadSurveys().find(function (survey) { return survey.id === id; });
+        if (!item) return;
+        editingId = null;
+        publishBtn.textContent = 'Ангийн самбарт нийтлэх';
+        cancelEditBtn.hidden = true;
+        fillBuilder(Object.assign({}, item, { title: item.title + ' (хуулбар)' }));
+      }
+      function deleteSurvey(id) {
+        if (!window.confirm('Энэ судалгааг устгах уу?')) return;
+        saveSurveys(loadSurveys().filter(function (survey) { return survey.id !== id; }));
+        if (editingId === id) resetBuilder();
+        renderTeacherSurveys();
+      }
+
+      if (cardsBox) {
+        cardsBox.addEventListener('click', function (event) {
+          var button = event.target.closest('[data-survey-action]');
+          if (!button) return;
+          var details = button.closest('details');
+          if (details) details.open = false;
+          var id = button.closest('.survey-list-card').dataset.surveyId;
+          var action = button.dataset.surveyAction;
+          if (action === 'edit') startEdit(id);
+          else if (action === 'reuse') startReuse(id);
+          else if (action === 'delete') deleteSurvey(id);
+          else if (action === 'report') setListStatus('Хариулт хараахан ирээгүй тул тайлан алга.');
+          else if (action === 'pdf') setListStatus('Backend холбогдоход энэ судалгааны PDF файл эндээс шууд татагдана.');
+          else if (action === 'excel') setListStatus('Backend холбогдоход энэ судалгааны Excel файл эндээс шууд татагдана.');
+        });
+      }
+      document.addEventListener('click', function (event) {
+        document.querySelectorAll('.survey-list-card__actions[open]').forEach(function (details) {
+          if (!details.contains(event.target)) details.open = false;
+        });
+      });
+
+      var titleLabel = titleInput.closest('label');
+      var titleError = survey.querySelector('[data-survey-title-error]');
+      titleInput.addEventListener('input', function () {
+        if (titleLabel) titleLabel.classList.remove('field-error');
+        if (titleError) titleError.hidden = true;
+      });
+
+      publishBtn.addEventListener('click', function () {
+        var data = collectBuilderData();
+        if (!data.title) {
+          if (titleLabel) titleLabel.classList.add('field-error');
+          if (titleError) titleError.hidden = false;
+          setListStatus('Судалгааны гарчиг бичнэ үү.', 'error');
+          titleInput.focus();
+          return;
+        }
+        var list = loadSurveys();
+        var message;
+        if (editingId) {
+          list = list.map(function (item) {
+            return item.id === editingId
+              ? Object.assign({}, item, data, { id: item.id, createdAt: item.createdAt })
+              : item;
+          });
+          message = 'Судалгаа шинэчлэгдлээ.';
+        } else {
+          list.push(Object.assign({ id: 'sv' + Date.now(), createdAt: new Date().toISOString() }, data));
+          message = 'Судалгаа хадгалагдлаа. Ангийн самбарт бодитоор нийтлэхийг backend холбогдсоны дараа хийнэ.';
+        }
+        saveSurveys(list);
+        renderTeacherSurveys();
+        resetBuilder();
+        setListStatus(message);
+      });
+      cancelEditBtn.addEventListener('click', resetBuilder);
+      var excelButton = survey.querySelector('[data-survey-excel]');
+      if (excelButton) excelButton.addEventListener('click', function () { setListStatus('Backend холбогдоход судалгааны хариултыг Excel файлаар татна.'); });
+
+      renderTeacherSurveys();
     }());
 
-    // Судалгаа хайх — "Авсан судалгаанууд" жагсаалт хоосон атлаа энд
-    // зогсохгүй, жинхэнэ мөрүүд орж ирэхэд шууд ажиллана (.survey-list-card
-    // элемент бүр дээрээ data-survey-search агуулна гэж таамаглана).
+    // Судалгаа хайх — жагсаалтад бодит мөр орж ирсний дараа ажиллана
+    // (`.survey-list-card` бүр дээрээ `data-survey-search` агуулна).
     function filterTeacherSurveys() {
       var input = document.getElementById('id_survey_search');
-      if (!input) return;
+      var cardsBox = document.querySelector('[data-survey-cards]');
+      if (!input || !cardsBox) return;
+      var cards = cardsBox.querySelectorAll('.survey-list-card');
+      if (!cards.length) return;
       var query = input.value.trim().toLowerCase();
-      document.querySelectorAll('.survey-list-card').forEach(function (card) {
-        var haystack = (card.dataset.surveySearch || '').toLowerCase();
-        card.hidden = query !== '' && haystack.indexOf(query) === -1;
+      var visible = 0;
+      cards.forEach(function (card) {
+        var haystack = card.dataset.surveySearch || '';
+        var match = query === '' || haystack.indexOf(query) !== -1;
+        card.hidden = !match;
+        if (match) visible += 1;
       });
+      var emptyBox = document.querySelector('[data-survey-list-empty]');
+      if (!emptyBox) return;
+      if (visible === 0) {
+        cardsBox.hidden = true;
+        emptyBox.hidden = false;
+        emptyBox.querySelector('p').textContent = 'Хайлтад тохирох судалгаа олдсонгүй.';
+      } else {
+        cardsBox.hidden = false;
+        emptyBox.hidden = true;
+      }
     }
   </script>
 {% endblock %}

@@ -29,6 +29,8 @@
   <title>{% block title %}Эцэг эхийн хэсэг{% endblock %} · Хүүхдийн хөгжлийн хавтас</title>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <link rel="stylesheet" href="{% static 'css/chat.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chat-messages.css' %}">
+  <link rel="stylesheet" href="{% static 'css/parent-survey.css' %}">
   {% include "_theme_head.html" %}
 </head>
 <body>
@@ -141,5 +143,6 @@
 
   {% include "components/bottom_nav.html" %}
 </div>
+<script src="{% static 'js/ui-states.js' %}"></script>
 </body>
 </html>

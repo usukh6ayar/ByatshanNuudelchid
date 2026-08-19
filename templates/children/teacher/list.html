@@ -23,7 +23,7 @@
 {% block title %}{% if request.GET.report %}Тайлан{% else %}Хүүхдийн жагсаалт{% endif %}{% endblock %}
 {% block heading %}{% if request.GET.report %}Тайлан{% else %}Хүүхдүүд{% endif %}{% endblock %}
 {% block lede %}
-  <p class="lede">{% if request.GET.report %}Багшийн нэгдсэн тайлан, график, хэвлэх хувилбар.{% else %}Хариуцсан бүлгийн хүүхдүүд.{% endif %}</p>
+  <p class="lede">{% if request.GET.report %}Багшийн нэгдсэн тайлан, график, хэвлэх хувилбар.{% elif selected_group %}{{ selected_group.name }} бүлгийн хүүхдүүд.{% else %}Хариуцсан бүлгийн хүүхдүүд.{% endif %}</p>
 {% endblock %}
 
 {% block content %}
@@ -40,12 +40,67 @@
       <svg class="ic ic--sm" aria-hidden="true"><use href="#i-folder"></use></svg>
       Excel-ээр оруулах
     </button>
+    {% comment %} Export, the other direction — client request 2026-08-19.
+       Both genuinely work with no backend: "Excel татах" builds a CSV (Excel
+       opens it natively) straight from the rows already rendered on this
+       page — real names, ages, groups, guardian contacts, nothing invented.
+       "PDF татах" is `window.print()` against the print rules already in
+       app.css's "UI STATES" section (sidebar/topbar/buttons hidden, `.kidrow`
+       stays readable) — the browser's own Save-as-PDF *is* the PDF export
+       here, not a placeholder for one. {% endcomment %}
+    <button type="button" class="btn btn--ghost" data-export-csv id="id_export_csv">
+      <svg class="ic ic--sm" aria-hidden="true"><use href="#i-folder"></use></svg>
+      Excel татах (CSV)
+    </button>
+    <button type="button" class="btn btn--ghost" onclick="window.print()">
+      <svg class="ic ic--sm" aria-hidden="true"><use href="#i-report"></use></svg>
+      PDF татах
+    </button>
   </div>
+
+  {% comment %} Ангийн нэгдсэн статистик — client request 2026-08-19. Нийт
+     тоо нь `page.paginator.count`, серверийн үнэн дүн (олон хуудастай ч
+     зөв); хүйс, дундаж насны хуваарилалт нь энэ хуудсан дээр бодитоор
+     үзүүлсэн мөрүүдээс клиент талд бодогдоно (`data-sex`/`data-dob`) —
+     ихэнх бүлэг 25-аас цөөн хүүхэдтэй тул page_size (25)-тай давхацна, гэхч
+     хуудаслалт идэвхтэй үед үүнийг тодруулан бичнэ. Ирцийн хувь нь ирцийн
+     backend байхгүй тул зохиомжлохгүй, шударга "—" төлөвтэй. {% endcomment %}
+  {% if page.paginator.count %}
+    <div class="classstats" data-classstats>
+      <div class="classstat">
+        <span class="classstat__label">Нийт хүүхэд</span>
+        <strong class="classstat__value">{{ page.paginator.count }}</strong>
+        <small data-classstat-sex>&nbsp;</small>
+      </div>
+      <div class="classstat">
+        <span class="classstat__label">Дундаж нас</span>
+        <strong class="classstat__value" data-classstat-age>—</strong>
+        <small>{% if page.has_other_pages %}энэ хуудасны хүүхдээр{% else %}бүх хүүхдээр{% endif %}</small>
+      </div>
+      <div class="classstat classstat--muted">
+        <span class="classstat__label">Энэ сарын дундаж ирц</span>
+        <strong class="classstat__value">0%</strong>
+        <small>Энэ сарын ирц бүртгэгдээгүй байна</small>
+      </div>
+      <div class="classstat classstat--muted">
+        <span class="classstat__label">Хоолны зардал (сар)</span>
+        <strong class="classstat__value">₮0</strong>
+        <small>Энэ сарын хоолны зардал бүртгэгдээгүй байна</small>
+      </div>
+    </div>
+  {% endif %}
 
   {% comment %} One form wraps both the search row and the disclosure below
      it, so submitting from either keeps every filter that is set. Splitting
-     them into two forms would silently drop the other's values. {% endcomment %}
+     them into two forms would silently drop the other's values.
+
+     Search input, Хайх, and Шүүлт ба эрэмбэ share one row now (client
+     feedback 2026-08-19: "Inline Filter Bar") — `.searchrow` is a plain
+     flex row with `flex-wrap: wrap`, so a phone gets the same markup and
+     folds it to two lines on its own; nothing here decides the breakpoint
+     by hand. {% endcomment %}
   <form method="get">
+    <div class="searchrow">
     <div class="searchbar">
       <svg class="ic searchbar__ic" aria-hidden="true"><use href="#i-search"></use></svg>
       <label class="sr-only" for="id_q">Хүүхэд хайх</label>
@@ -54,12 +109,17 @@
       <button type="submit" class="btn btn--ghost">Хайх</button>
     </div>
 
-    {% comment %} The other six filters, collapsed unless one is applied.
-       Open they stand about 700px tall on a 375px screen and push the first
-       child off it. `open` is decided on the server, because CSS cannot open
-       a `<details>` and a filter that is narrowing the list must never be
-       doing so invisibly. {% endcomment %}
-    <details class="filterwrap"
+    {% comment %} The other six filters, in a popover now rather than
+       expanding in place — client feedback 2026-08-19: the in-flow version
+       pushed the list down (700px tall at 375px, per the note this replaces).
+       `.filterwrap--popover` only changes where `.filterbar` renders
+       (absolutely positioned, closes over the list instead of displacing
+       it); `open` is still decided on the server for the same reason as
+       before — CSS cannot open a `<details>`, and a filter narrowing the
+       list must never do so invisibly. Under 720px it drops back to the
+       plain in-flow accordion (see the media query on `.filterwrap--popover`)
+       — a floating panel has nowhere good to sit on a narrow phone. {% endcomment %}
+    <details class="filterwrap filterwrap--popover"
       {% if selected_group or filters.school_year or filters.status or filters.sex or filters.age %}open{% endif %}>
       <summary>
         <svg class="ic ic--sm" aria-hidden="true"><use href="#i-review"></use></svg>
@@ -147,7 +207,20 @@
         </div>
       </div>
     </details>
+    </div>
   </form>
+
+  {% comment %} Native `<details>` has no outside-click-to-close of its own
+     — same gap as the survey card's own `⋮` menu (dashboard/teacher.html)
+     and closed the same way there: a document-level click listener that
+     closes the popover when the click lands outside it. {% endcomment %}
+  <script>
+    document.addEventListener('click', function (event) {
+      document.querySelectorAll('.filterwrap--popover[open]').forEach(function (details) {
+        if (!details.contains(event.target)) details.removeAttribute('open');
+      });
+    });
+  </script>
 
   {% if page.paginator.count %}
     <div class="listmeta">
@@ -161,16 +234,22 @@
   <div class="kidhead" aria-hidden="true">
     <span>Хүүхэд</span>
     <span>Нас</span>
-    <span>Бүлэг</span>
+    <span>Бүрдэлт</span>
     <span>Төлөв</span>
     <span></span>
   </div>
 
   <div class="kidlist">
     {% for child in page.object_list %}
-      <div class="kidrow">
+      {% with primary_guardianship=child.guardianships.all.0 %}
+      <div class="kidrow" data-sex="{{ child.sex }}" data-dob="{{ child.date_of_birth|date:'Y-m-d' }}"
+           data-search="{{ child.full_name|lower }}"
+           data-profile-photo="{% if child.photo %}1{% else %}0{% endif %}"
+           data-profile-health="{% if child.health_notes %}1{% else %}0{% endif %}"
+           data-profile-guardian="{% if child.guardianships.all %}1{% else %}0{% endif %}">
         <a class="kidrow__main" href="{% url 'children:detail' child.pk %}">
           {% include "components/avatar.html" with person=child %}
+          <span class="attendance-dot attendance-dot--pending" title="Өнөөдрийн ирц бүртгэгдээгүй" aria-label="Өнөөдрийн ирц бүртгэгдээгүй"></span>
           <span class="kidrow__id">
             <span class="kidrow__name">{{ child.full_name }}</span>
             <span class="kidrow__code">{{ child.national_id }}</span>
@@ -179,17 +258,26 @@
 
         {% comment %} Two cells on a desktop, where the column headers name
            them; one line on a phone, where two labelled rows cost about
-           70px per child and only two children fit a screen. {% endcomment %}
-        <div class="kidrow__cell kidrow__age">{{ child.age }} нас</div>
+           70px per child and only two children fit a screen.
 
-        <div class="kidrow__cell kidrow__group">
-          <span class="kidrow__sep" aria-hidden="true">·</span>
-          {% for enrollment in child.active_enrollments %}
-            {{ enrollment.group.name }}
-          {% empty %}
-            <span class="badge badge--muted">Бүлэггүй</span>
-          {% endfor %}
-        </div>
+           Насны сар — client request 2026-08-19 ("4 нас 5 сартай"), СӨБ-ын
+           бие бялдрын стандартад чухал. `child.age` (бүтэн жил) серверээс,
+           сар нь `data-dob`-оос клиент талд бодогдоно — Django-д сар хоорондын
+           зөрүү бодох стандарт template filter байхгүй бөгөөд шинэ template
+           filter нэмэх нь backend өөрчлөлт (CLAUDE.md — templatetags/*.py). {% endcomment %}
+        <div class="kidrow__cell kidrow__age">{{ child.age }} нас <span data-age-months></span></div>
+
+        <details class="profile-completion" data-profile-completion>
+          <summary aria-label="{{ child.full_name }}-ийн мэдээллийн бүрдэлт">
+            <span class="profile-completion__ring" data-profile-ring style="position:relative"><b data-profile-percent>—</b></span>
+            <span><strong data-profile-label>Шалгаж байна</strong><small>мэдээллийн бүрдэлт</small></span>
+          </summary>
+          <div class="profile-completion__popover">
+            <strong>Дутуу мэдээлэл</strong>
+            <ul data-profile-missing></ul>
+            <a href="{% url 'children:edit' child.pk %}">Мэдээлэл нөхөх</a>
+          </div>
+        </details>
 
         <div class="kidrow__flags">
           {% comment %} Lifecycle states are shown only when they are not the
@@ -199,12 +287,39 @@
              history rather than a problem — muted, never red. {% endcomment %}
           {% if child.status != 'active' %}
             <span class="badge badge--muted">{{ child.get_status_display }}</span>
+            {% comment %} Буцаан идэвхжүүлэх — client request 2026-08-19: a
+               child who left often comes back a few months later, and the
+               portfolio/observation history should already be sitting
+               there waiting rather than starting over. Real button on a
+               real row — `child.status` genuinely isn't 'active' here,
+               nothing about which children can see this is invented.
+               Reopens the same fixed-drawer pattern as "Хөдөлгөөн бүртгэх"
+               above, prefilled from these two data attributes. No
+               `reactivate_child` service exists yet (CLAUDE.md §2.1 — it
+               would need to flip `Child.status` and open a new
+               `Enrollment` row for the chosen group in the same
+               transaction), so the submit stays the same honest,
+               non-persisting toast every other prep form on this page
+               already uses. {% endcomment %}
+            <button type="button" class="reactivate-btn" data-reactivate-open
+                    data-reactivate-child="{{ child.pk }}"
+                    data-reactivate-name="{{ child.full_name }}">
+              <span aria-hidden="true">🔄</span> Буцаан идэвхжүүлэх
+            </button>
           {% endif %}
           {% if not child.guardianships.all %}
             {% comment %} §3.5 — a child with no guardian linked has no family
                reading their portfolio. The one thing on this screen that
                genuinely wants a teacher's attention. {% endcomment %}
             <span class="badge badge--warn">Эцэг эх холбогдоогүй</span>
+          {% else %}
+            {% for guardianship in child.guardianships.all %}
+              {% if guardianship.guardian_user.phone and guardianship.relation == 'mother' %}
+                <a class="kidrow__phone" href="tel:{{ guardianship.guardian_user.phone }}" title="Ээж рүү залгах"><span aria-hidden="true">Ээж · ☎</span>{{ guardianship.guardian_user.phone }}</a>
+              {% elif guardianship.guardian_user.phone and guardianship.relation == 'father' %}
+                <a class="kidrow__phone" href="tel:{{ guardianship.guardian_user.phone }}" title="Аав руу залгах"><span aria-hidden="true">Аав · ☎</span>{{ guardianship.guardian_user.phone }}</a>
+              {% endif %}
+            {% endfor %}
           {% endif %}
         </div>
 
@@ -236,6 +351,17 @@
               <svg class="ic ic--sm" aria-hidden="true"><use href="#i-report"></use></svg>
               PDF тайлан
             </a>
+            {% if primary_guardianship.guardian_user.phone %}
+              {% comment %} "Шууд занах / Мессеж бичих" — client request
+                 2026-08-19. Both real browser features (`tel:`/`sms:` URI
+                 schemes), not a backend integration — a text message here
+                 opens the phone's own SMS app pre-addressed, same as
+                 tapping the number on any contact card. {% endcomment %}
+              <a href="sms:{{ primary_guardianship.guardian_user.phone }}">
+                <svg class="ic ic--sm" aria-hidden="true"><use href="#i-chat"></use></svg>
+                Эцэг эхэд мессеж бичих
+              </a>
+            {% endif %}
             {% comment %} No route yet — archiving a child is not exposed to a
                teacher. Muted and not a link, so it cannot 404 the page.
                Kept from the client's branch; the class follows the `rowmenu`
@@ -247,6 +373,7 @@
           </div>
         </details>
       </div>
+      {% endwith %}
     {% empty %}
       {% comment %} Two states that must not read alike: nothing matched a
          search, and no children at all. The first offers a way back, the
@@ -280,8 +407,506 @@
       </nav>
     {% endwith %}
   {% endif %}
+
+  {% comment %} Шилжилт хөдөлгөөн — expanded per client spec 2026-08-19:
+     three tabs (Шинээр орсон / Шилжсэн / Гарсан), a 5-column table, a
+     school-year picker, a summary bar, and a "+ Хөдөлгөөн бүртгэх" form.
+
+     `school_years` is real — the same queryset "Хичээлийн жил" above
+     already lists — so the year picker and its selected label are genuine.
+     The three tables render with **zero rows**, deliberately: no selector
+     anywhere in this codebase can answer "who transferred, and when, and
+     why" for a given year. `Child.enrolled_on` looked like a shortcut for
+     the "Шинээр орсон" tab, but it is set once at a child's very first
+     registration — a third-year child still carries their original date,
+     so filtering by it would mislabel a continuing child as newly
+     enrolled this year. That is a wrong answer, not an honest gap, so it
+     was not built. The client's own example rows (Б. Бат-Эрдэнэ, etc.)
+     are a wireframe of the target shape, not real children — nothing
+     here invents rows to match them.
+
+     The summary counts are read off the rendered table rows by JS
+     (`updateMigrationSummary`), so they are correct *for whatever the
+     tables actually contain* — 0 today, real counts the moment a backend
+     developer starts rendering real `<tr>`s into these `<tbody>`s. {% endcomment %}
+  {% if school_years %}
+    <section class="section migration" id="migration" style="margin-top:var(--s5)">
+      <div class="migration__head">
+        <div>
+          <span>ХИЧЭЭЛИЙН ЖИЛИЙН БҮРТГЭЛ</span>
+          <h2>Шилжилт хөдөлгөөн</h2>
+          <p>Шинээр орсон, шилжсэн, гарсан хүүхдүүдийн жилийн архив.</p>
+        </div>
+        <div class="migration__head-actions">
+          <label class="sr-only" for="id_migration_year">Хичээлийн жил</label>
+          <select id="id_migration_year" data-migration-year>
+            {% for year in school_years %}
+              <option value="{{ year.name }}" {% if year.is_current %}selected{% endif %}>
+                Хичээлийн жил: {{ year.name }}{% if year.is_current %} (одоогийн){% endif %}
+              </option>
+            {% endfor %}
+          </select>
+          <button type="button" class="btn" data-migration-open>
+            <svg class="ic ic--sm" aria-hidden="true"><use href="#i-plus"></use></svg>
+            Хөдөлгөөн бүртгэх
+          </button>
+        </div>
+      </div>
+
+      <div class="migration__summary">
+        <div class="migration__stat migration__stat--in">
+          <span aria-hidden="true">📥</span>
+          <strong data-migration-count="in">0</strong>
+          <small>Элссэн</small>
+        </div>
+        <div class="migration__stat migration__stat--transfer">
+          <span aria-hidden="true">📤</span>
+          <strong data-migration-count="transfer">0</strong>
+          <small>Шилжсэн</small>
+        </div>
+        <div class="migration__stat migration__stat--out">
+          <span aria-hidden="true">🚫</span>
+          <strong data-migration-count="out">0</strong>
+          <small>Гарсан</small>
+        </div>
+        <div class="migration__stat migration__stat--net">
+          <span aria-hidden="true">📊</span>
+          <strong data-migration-net>+0</strong>
+          <small>Ангийн цэвэр өөрчлөлт</small>
+        </div>
+      </div>
+
+      <div class="migration__tabs" role="tablist">
+        <button type="button" class="is-active" data-migration-tab="in">🟢 Шинээр орсон</button>
+        <button type="button" data-migration-tab="transfer">🟡 Шилжсэн</button>
+        <button type="button" data-migration-tab="out">🔴 Гарсан / Чөлөөлөгдсөн</button>
+      </div>
+
+      <div class="migration__panel" data-migration-panel="in">
+        <div class="table-wrap">
+          <table class="migration__table">
+            <thead>
+              <tr><th>Хүүхдийн нэр</th><th>Регистр / Код</th><th>Огноо</th><th>Шалтгаан / Тэмдэглэл</th><th>Тушаал / Тусгай бичиг</th></tr>
+            </thead>
+            <tbody data-migration-rows="in"></tbody>
+          </table>
+        </div>
+        <div data-migration-empty="in">
+          {% include "components/empty.html" with icon="children" message="Сонгосон хичээлийн жилд шинээр орсон хүүхдийн бүртгэл алга." %}
+        </div>
+      </div>
+      <div class="migration__panel" data-migration-panel="transfer" hidden>
+        <div class="table-wrap">
+          <table class="migration__table">
+            <thead>
+              <tr><th>Хүүхдийн нэр</th><th>Регистр / Код</th><th>Огноо</th><th>Шалтгаан / Тэмдэглэл</th><th>Тушаал / Тусгай бичиг</th></tr>
+            </thead>
+            <tbody data-migration-rows="transfer"></tbody>
+          </table>
+        </div>
+        <div data-migration-empty="transfer">
+          {% include "components/empty.html" with icon="children" message="Сонгосон хичээлийн жилд шилжсэн хүүхдийн бүртгэл алга." %}
+        </div>
+      </div>
+      <div class="migration__panel" data-migration-panel="out" hidden>
+        <div class="table-wrap">
+          <table class="migration__table">
+            <thead>
+              <tr><th>Хүүхдийн нэр</th><th>Регистр / Код</th><th>Огноо</th><th>Шалтгаан / Тэмдэглэл</th><th>Тушаал / Тусгай бичиг</th></tr>
+            </thead>
+            <tbody data-migration-rows="out"></tbody>
+          </table>
+        </div>
+        <div data-migration-empty="out">
+          {% include "components/empty.html" with icon="children" message="Сонгосон хичээлийн жилд гарсан хүүхдийн бүртгэл алга." %}
+        </div>
+      </div>
+    </section>
+
+    {% comment %} "+ Хөдөлгөөн бүртгэх" — same fixed-overlay drawer pattern
+       as "Шинэ ажиглалт нэмэх" (observations/list.html, 2026-08-19). Picks
+       a real child from this group's real roster (`page.object_list`);
+       posts nowhere — there is no `transfer_child`/`archive_child` service
+       yet (that write needs to move `Child.status` and close the current
+       `Enrollment` row together, in one transaction, which is exactly the
+       kind of service-layer logic CLAUDE.md §2.1 keeps out of a template).
+       {% endcomment %}
+    <div class="addnote-drawer" data-migration-drawer hidden>
+      <div class="addnote-drawer__backdrop" data-migration-close></div>
+      <div class="addnote-drawer__panel" role="dialog" aria-modal="true"
+           aria-labelledby="migration-drawer-title" tabindex="-1">
+        <div class="addnote__body">
+          <div class="addnote__card">
+            <div class="addnote__card-head">
+              <h3 id="migration-drawer-title">Хөдөлгөөн бүртгэх</h3>
+              <button type="button" class="addnote__close" aria-label="Хаах" data-migration-close>×</button>
+            </div>
+
+            <form data-migration-form novalidate>
+              <label for="id_migration_child">Хүүхэд *</label>
+              <select id="id_migration_child" name="child" required>
+                <option value="">Сонгох</option>
+                {% for child in page.object_list %}
+                  <option value="{{ child.pk }}">{{ child.full_name }} ({{ child.national_id }})</option>
+                {% endfor %}
+              </select>
+
+              <label>Шилжилтийн төрөл *</label>
+              <div class="migration-form__kind">
+                <label class="choice">
+                  <input type="radio" name="kind" value="transfer" checked>
+                  <span class="choice__body"><span class="choice__title">🟡 Шилжсэн</span><span class="choice__note">Өөр цэцэрлэг эсвэл бүлэг рүү</span></span>
+                </label>
+                <label class="choice">
+                  <input type="radio" name="kind" value="out">
+                  <span class="choice__body"><span class="choice__title">🔴 Гарсан / Чөлөөлөгдсөн</span><span class="choice__note">Сургалтаас бүрмөсөн гарсан</span></span>
+                </label>
+              </div>
+
+              <label for="id_migration_date">Огноо *</label>
+              <input type="date" id="id_migration_date" name="date" required>
+
+              <label for="id_migration_reason">Шалтгаан / Тэмдэглэл *</label>
+              <textarea id="id_migration_reason" name="reason" required
+                        placeholder="Жишээ: Хөдөө орон нутаг руу нүүсэн"></textarea>
+
+              <label for="id_migration_order">Тушаал / Тусгай бичиг <span class="field__opt">— заавал биш</span></label>
+              <input type="text" id="id_migration_order" name="order_ref" placeholder="Жишээ: Тушаал №A/12">
+
+              <label class="photofield" for="id_migration_file">
+                Баримт бичиг хавсаргах <span class="field__opt">— заавал биш</span>
+                <span class="photofield__picker">
+                  <svg class="ic ic--sm" aria-hidden="true"><use href="#i-folder"></use></svg>
+                  Файл сонгох
+                </span>
+                <input type="file" id="id_migration_file" name="document" accept="image/*,application/pdf" hidden>
+              </label>
+
+              <p class="migration-form__status" data-migration-status role="status"></p>
+
+              <div class="btn-row">
+                <button type="submit" class="btn">Хадгалах</button>
+                <button type="button" class="btn btn--ghost" data-migration-close>Болих</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
   {% endif %}
 
+  {% comment %} Буцаан идэвхжүүлэх drawer — outside `{% if school_years %}`
+     since a non-active child (and the button above) can exist even when
+     that section is hidden. One shared drawer for every row's button;
+     `data-reactivate-open` on each button carries which child and name,
+     read into the drawer's title/hidden field on open. {% endcomment %}
+  <div class="addnote-drawer" data-reactivate-drawer hidden>
+    <div class="addnote-drawer__backdrop" data-reactivate-close></div>
+    <div class="addnote-drawer__panel" role="dialog" aria-modal="true"
+         aria-labelledby="reactivate-drawer-title" tabindex="-1">
+      <div class="addnote__body">
+        <div class="addnote__card">
+          <div class="addnote__card-head">
+            <h3 id="reactivate-drawer-title">Буцаан идэвхжүүлэх</h3>
+            <button type="button" class="addnote__close" aria-label="Хаах" data-reactivate-close>×</button>
+          </div>
+          <p class="reactivate-form__intro">
+            <strong data-reactivate-display-name></strong>-г идэвхжүүлэхэд өмнөх хувийн хавтас,
+            ажиглалтын түүх хадгалагдсан хэвээр байж, идэвхтэй хүүхдүүдийн жагсаалт руу буцна.
+          </p>
+
+          <form data-reactivate-form novalidate>
+            <input type="hidden" name="child" data-reactivate-child-input>
+
+            <label for="id_reactivate_group">Одоо орох бүлэг *</label>
+            <select id="id_reactivate_group" name="group" required>
+              <option value="">Сонгох</option>
+              {% for group in groups %}
+                <option value="{{ group.pk }}">{{ group.name }} ({{ group.school_year.name }})</option>
+              {% endfor %}
+            </select>
+
+            <label for="id_reactivate_date">Буцаж орсон огноо *</label>
+            <input type="date" id="id_reactivate_date" name="date" required>
+
+            <label for="id_reactivate_note">Тэмдэглэл <span class="field__opt">— заавал биш</span></label>
+            <textarea id="id_reactivate_note" name="note" placeholder="Жишээ: Гэр бүл буцаж нүүсэн"></textarea>
+
+            <p class="migration-form__status" data-reactivate-status role="status"></p>
+
+            <div class="btn-row">
+              <button type="submit" class="btn">Идэвхжүүлэх</button>
+              <button type="button" class="btn btn--ghost" data-reactivate-close>Болих</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <script>
+    (function () {
+      document.querySelectorAll('[data-profile-completion]').forEach(function (widget) {
+        var row = widget.closest('.kidrow');
+        var checks = [
+          [row.getAttribute('data-profile-photo') === '1', 'Цээж зураг дутуу'],
+          [row.getAttribute('data-profile-health') === '1', 'Цусны бүлэг, эрүүл мэндийн мэдээлэл дутуу'],
+          [row.getAttribute('data-profile-guardian') === '1', 'Эцэг эхийн ажлын газар, холбоо барих мэдээлэл дутуу']
+        ];
+        var missing = checks.filter(function (item) { return !item[0]; }).map(function (item) { return item[1]; });
+        var percent = Math.round(((checks.length - missing.length) / checks.length) * 100);
+        var ring = widget.querySelector('[data-profile-ring]');
+        ring.style.setProperty('--completion', percent + '%');
+        widget.querySelector('[data-profile-percent]').textContent = percent + '%';
+        widget.querySelector('[data-profile-label]').textContent = percent === 100 ? 'Бүрэн' : percent >= 70 ? 'Дутуу байна' : 'Мэдээлэл дутуу';
+        var list = widget.querySelector('[data-profile-missing]');
+        list.innerHTML = missing.length ? missing.map(function (item) { return '<li>' + item + '</li>'; }).join('') : '<li class="is-complete">Бүх үндсэн мэдээлэл бүрэн байна.</li>';
+      });
+    }());
+  </script>
+
+  {% comment %} Насны сар, ангийн статистик, CSV татах — client request
+     2026-08-19, бүгд `.kidrow`-нд аль хэдийн байгаа бодит `data-*`
+     утгуудаас (`date_of_birth`, `sex`) тооцоологдоно, юу ч зохиомжлохгүй.
+     {% endcomment %}
+  <script>
+    (function () {
+      var rows = document.querySelectorAll('.kidrow');
+      if (!rows.length) return;
+
+      // Насны сар — "4 нас 5 сартай". Бүтэн сарын зөрүү, өдрийг тооцохгүй
+      // (child.age-тэй адил "бүтэн" нэгжээр хэмждэг арга барил).
+      function ageYearsMonths(dobStr) {
+        var dob = new Date(dobStr);
+        var today = new Date();
+        var years = today.getFullYear() - dob.getFullYear();
+        var months = today.getMonth() - dob.getMonth();
+        if (today.getDate() < dob.getDate()) months -= 1;
+        if (months < 0) { years -= 1; months += 12; }
+        return { years: years, months: months };
+      }
+
+      var totalAgeMonths = 0;
+      var sexCounts = { male: 0, female: 0 };
+      rows.forEach(function (row) {
+        var dob = row.getAttribute('data-dob');
+        if (dob) {
+          var a = ageYearsMonths(dob);
+          var span = row.querySelector('[data-age-months]');
+          if (span) span.textContent = a.months + ' сартай';
+          totalAgeMonths += a.years * 12 + a.months;
+        }
+        var sex = row.getAttribute('data-sex');
+        if (sex === 'male' || sex === 'female') sexCounts[sex] += 1;
+      });
+
+      var stats = document.querySelector('[data-classstats]');
+      if (stats) {
+        var sexEl = stats.querySelector('[data-classstat-sex]');
+        if (sexEl) sexEl.textContent = 'Эрэгтэй: ' + sexCounts.male + ', Эмэгтэй: ' + sexCounts.female;
+        var ageEl = stats.querySelector('[data-classstat-age]');
+        if (ageEl && rows.length) {
+          var avgMonths = totalAgeMonths / rows.length;
+          ageEl.textContent = (avgMonths / 12).toFixed(1) + ' нас';
+        }
+      }
+
+      // Excel татах — CSV, яг харагдаж буй мөрүүдээс. Хоолны зардал зэрэг
+      // backend-гүй баганыг оруулаагүй — экспортод юу ч зохиомжлохгүй.
+      var csvBtn = document.getElementById('id_export_csv');
+      if (csvBtn) {
+        csvBtn.addEventListener('click', function () {
+          var header = ['Нэр', 'Бүртгэлийн дугаар', 'Нас', 'Хүйс', 'Утас'];
+          var lines = [header.join(',')];
+          rows.forEach(function (row) {
+            var name = row.querySelector('.kidrow__name');
+            var code = row.querySelector('.kidrow__code');
+            var phone = row.querySelector('.kidrow__phone');
+            var dob = row.getAttribute('data-dob');
+            var ageLabel = '';
+            if (dob) { var a = ageYearsMonths(dob); ageLabel = a.years + ' нас ' + a.months + ' сартай'; }
+            var sexLabel = row.getAttribute('data-sex') === 'male' ? 'Эрэгтэй' : row.getAttribute('data-sex') === 'female' ? 'Эмэгтэй' : '';
+            var phoneValue = phone ? phone.textContent.replace(/\s+/g, ' ').trim() : '';
+            var cells = [name ? name.textContent.trim() : '', code ? code.textContent.trim() : '', ageLabel, sexLabel, phoneValue];
+            lines.push(cells.map(function (cell) { return '"' + cell.replace(/"/g, '""') + '"'; }).join(','));
+          });
+          var csv = '﻿' + lines.join('\r\n');
+          var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          var url = URL.createObjectURL(blob);
+          var link = document.createElement('a');
+          link.href = url;
+          link.download = 'huuhduud-' + new Date().toISOString().slice(0, 10) + '.csv';
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+          if (typeof window.showToast === 'function') window.showToast('CSV файл татагдлаа.', 'ok');
+        });
+      }
+    }());
+  </script>
+
+  {% comment %} Шилжилт хөдөлгөөн — tabs, year picker, summary counts read
+     off the (currently empty) tables, and the "+ Хөдөлгөөн бүртгэх" drawer.
+     {% endcomment %}
+  <script>
+    (function () {
+      var section = document.getElementById('migration');
+      if (!section) return;
+
+      section.querySelectorAll('[data-migration-tab]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var target = button.getAttribute('data-migration-tab');
+          section.querySelectorAll('[data-migration-tab]').forEach(function (item) { item.classList.remove('is-active'); });
+          button.classList.add('is-active');
+          section.querySelectorAll('[data-migration-panel]').forEach(function (panel) {
+            panel.hidden = panel.getAttribute('data-migration-panel') !== target;
+          });
+        });
+      });
+
+      function updateMigrationSummary() {
+        var counts = {};
+        ['in', 'transfer', 'out'].forEach(function (kind) {
+          var body = section.querySelector('[data-migration-rows="' + kind + '"]');
+          var n = body ? body.children.length : 0;
+          counts[kind] = n;
+          var countEl = section.querySelector('[data-migration-count="' + kind + '"]');
+          if (countEl) countEl.textContent = n;
+          var emptyEl = section.querySelector('[data-migration-empty="' + kind + '"]');
+          var panel = section.querySelector('[data-migration-panel="' + kind + '"]');
+          if (emptyEl && panel) {
+            emptyEl.hidden = n > 0;
+            panel.querySelector('.table-wrap').hidden = n === 0;
+          }
+        });
+        var net = counts.in - counts.transfer - counts.out;
+        var netEl = section.querySelector('[data-migration-net]');
+        if (netEl) netEl.textContent = (net > 0 ? '+' : '') + net;
+      }
+      updateMigrationSummary();
+
+      // Жилийн сонголт — бүх жил адилхан бодит backend-гүй хоосон төлөвтэй
+      // тул зөвхөн харуулж буй жилийн нэрийг шинэчилнэ, шинэ өгөгдөл
+      // зохиомжлохгүй.
+      var yearSelect = section.querySelector('[data-migration-year]');
+      if (yearSelect) {
+        function applySelectedYear() {
+          var label = yearSelect.options[yearSelect.selectedIndex].textContent
+            .replace('Хичээлийн жил: ', '').replace(' (одоогийн)', '');
+          section.querySelectorAll('[data-migration-empty] .empty p').forEach(function (p) {
+            p.textContent = p.textContent.replace(/Сонгосон хичээлийн жилд/, label + ' хичээлийн жилд');
+          });
+        }
+        yearSelect.addEventListener('change', applySelectedYear);
+      }
+
+      // "+ Хөдөлгөөн бүртгэх" drawer — reuses the exact open/close shape as
+      // observations/list.html's own drawer (a separate instance, since
+      // this page has its own trigger/backdrop/close elements).
+      var drawer = document.querySelector('[data-migration-drawer]');
+      var openBtn = document.querySelector('[data-migration-open]');
+      if (drawer && openBtn) {
+        var panel = drawer.querySelector('.addnote-drawer__panel');
+        function openDrawer() {
+          drawer.hidden = false;
+          document.body.style.overflow = 'hidden';
+          window.requestAnimationFrame(function () { drawer.classList.add('is-open'); });
+          if (panel) panel.focus();
+        }
+        function closeDrawer() {
+          drawer.classList.remove('is-open');
+          document.body.style.overflow = '';
+          window.setTimeout(function () { drawer.hidden = true; }, 250);
+        }
+        openBtn.addEventListener('click', openDrawer);
+        drawer.querySelectorAll('[data-migration-close]').forEach(function (el) {
+          el.addEventListener('click', closeDrawer);
+        });
+        document.addEventListener('keydown', function (event) {
+          if (event.key === 'Escape' && drawer.classList.contains('is-open')) closeDrawer();
+        });
+
+        var form = document.querySelector('[data-migration-form]');
+        if (form) {
+          form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            var status = form.querySelector('[data-migration-status]');
+            var childSelect = form.querySelector('#id_migration_child');
+            if (!childSelect.value) {
+              if (status) status.textContent = 'Хүүхэд сонгоно уу.';
+              if (typeof window.showToast === 'function') window.showToast('Хүүхэд сонгоно уу.', 'error');
+              return;
+            }
+            var message = 'Бэлэн. Backend холбогдоход ' +
+              childSelect.options[childSelect.selectedIndex].textContent + '-ийн төлөв шинэчлэгдэнэ.';
+            if (status) status.textContent = message;
+            if (typeof window.showToast === 'function') window.showToast('Хөдөлгөөний бүртгэл бэлэн боллоо.', 'ok');
+            window.setTimeout(closeDrawer, 900);
+          });
+        }
+      }
+    }());
+  </script>
+
+  {% comment %} Буцаан идэвхжүүлэх drawer — one instance, opened from any
+     `[data-reactivate-open]` button on the page (each non-active child's
+     row has its own). {% endcomment %}
+  <script>
+    (function () {
+      var drawer = document.querySelector('[data-reactivate-drawer]');
+      var openButtons = document.querySelectorAll('[data-reactivate-open]');
+      if (!drawer || !openButtons.length) return;
+      var panel = drawer.querySelector('.addnote-drawer__panel');
+      var nameEl = drawer.querySelector('[data-reactivate-display-name]');
+      var childInput = drawer.querySelector('[data-reactivate-child-input]');
+      var form = drawer.querySelector('[data-reactivate-form]');
+      var status = drawer.querySelector('[data-reactivate-status]');
+
+      function openDrawer(button) {
+        nameEl.textContent = button.getAttribute('data-reactivate-name') || '';
+        childInput.value = button.getAttribute('data-reactivate-child') || '';
+        status.textContent = '';
+        drawer.hidden = false;
+        document.body.style.overflow = 'hidden';
+        window.requestAnimationFrame(function () { drawer.classList.add('is-open'); });
+        if (panel) panel.focus();
+      }
+      function closeDrawer() {
+        drawer.classList.remove('is-open');
+        document.body.style.overflow = '';
+        window.setTimeout(function () { drawer.hidden = true; }, 250);
+      }
+      openButtons.forEach(function (button) {
+        button.addEventListener('click', function () { openDrawer(button); });
+      });
+      drawer.querySelectorAll('[data-reactivate-close]').forEach(function (el) {
+        el.addEventListener('click', closeDrawer);
+      });
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && drawer.classList.contains('is-open')) closeDrawer();
+      });
+
+      if (form) {
+        form.addEventListener('submit', function (event) {
+          event.preventDefault();
+          var groupSelect = form.querySelector('#id_reactivate_group');
+          if (!groupSelect.value) {
+            status.textContent = 'Бүлэг сонгоно уу.';
+            if (typeof window.showToast === 'function') window.showToast('Бүлэг сонгоно уу.', 'error');
+            return;
+          }
+          var message = nameEl.textContent + ' идэвхжүүлэхэд бэлэн. Backend холбогдоход идэвхтэй жагсаалт руу шилжинэ.';
+          status.textContent = message;
+          if (typeof window.showToast === 'function') window.showToast('Идэвхжүүлэхэд бэлэн боллоо.', 'ok');
+          window.setTimeout(closeDrawer, 900);
+        });
+      }
+    }());
+  </script>
+
+  {% if request.GET.report %}
   <section class="teacher-report-ui" id="teacher-report-dashboard" aria-labelledby="teacher-report-title">
     <div class="teacher-report-ui__head">
       <div>
@@ -305,9 +930,9 @@
 
     <div class="teacher-report-ui__kpis">
       <div><span>ХҮҮХЭД</span><strong>{{ page.paginator.count }}</strong><small>одоогийн жагсаалт</small></div>
-      <div><span>АЖИГЛАЛТ</span><strong>—</strong><small>өгөгдөл холбогдоогүй</small></div>
-      <div><span>БҮТЭЭЛ</span><strong>—</strong><small>өгөгдөл холбогдоогүй</small></div>
-      <div><span>ЭЦЭГ ЭХИЙН ТЭМДЭГЛЭЛ</span><strong>—</strong><small>өгөгдөл холбогдоогүй</small></div>
+      <div><span>АЖИГЛАЛТ</span><strong>0</strong><small>Одоогоор ажиглалт бүртгэгдээгүй байна</small></div>
+      <div><span>БҮТЭЭЛ</span><strong>0</strong><small>Одоогоор бүтээл бүртгэгдээгүй байна</small></div>
+      <div><span>ЭЦЭГ ЭХИЙН ТЭМДЭГЛЭЛ</span><strong>0</strong><small>Одоогоор эцэг эхийн тэмдэглэл байхгүй байна</small></div>
     </div>
 
     <div class="teacher-report-ui__grid">
@@ -335,16 +960,5 @@
       <p>Түвшинтэй ажиглалт, үнэлгээний бодит өгөгдлөөр чиглэл бүрийн ахицыг харуулна.</p>
     </section>
   </section>
-  <script>
-    (function () {
-      function setReportMode() {
-        document.body.classList.toggle(
-          'showing-teacher-report',
-          window.location.hash === '#teacher-report-dashboard'
-        );
-      }
-      setReportMode();
-      window.addEventListener('hashchange', setReportMode);
-    }());
-  </script>
+  {% endif %}
 {% endblock %}

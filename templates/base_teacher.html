@@ -38,6 +38,17 @@
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <link rel="stylesheet" href="{% static 'css/teacher-organization.css' %}">
   <link rel="stylesheet" href="{% static 'css/chat.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chat-messages.css' %}">
+  <link rel="stylesheet" href="{% static 'css/child-list-attendance.css' %}">
+  <link rel="stylesheet" href="{% static 'css/profile-completion.css' %}">
+  <link rel="stylesheet" href="{% static 'css/attendance-report.css' %}">
+  <link rel="stylesheet" href="{% static 'css/attendance-report-enhancements.css' %}">
+  <link rel="stylesheet" href="{% static 'css/assessment-quick-grid.css' %}">
+  <link rel="stylesheet" href="{% static 'css/assessment-target-kpi.css' %}">
+  <link rel="stylesheet" href="{% static 'css/summary-modal.css' %}">
+  <link rel="stylesheet" href="{% static 'css/summary-modal-enhancements.css' %}">
+  <link rel="stylesheet" href="{% static 'css/summary-drawer.css' %}">
+  <link rel="stylesheet" href="{% static 'css/artwork-progress.css' %}">
   {% include "_theme_head.html" %}
 </head>
 <body>
@@ -108,6 +119,28 @@
       </a>
     </div>
 
+    {% comment %} Бүлгийн шатлал — moved off the dashboard's own content and
+       shrunk into a compact vertical strip right under the signed-in
+       identity (2026-08-18), per the client's request. `band_track` is
+       still only ever supplied by `selectors.teacher_dashboard()`
+       (apps/dashboard/selectors.py), so on every other teacher screen this
+       simply renders nothing — the same "only when a real band track
+       exists" rule as before, just placed here instead of on the dashboard
+       page. {% endcomment %}
+    {% if band_track %}
+      <ol class="bandmini" aria-label="Бүлгийн шатлал">
+        {% for step in band_track %}
+          <li class="bandmini__step bandmini__step--{{ step.state }}">
+            <span class="bandmini__dot" aria-hidden="true"></span>
+            <span class="bandmini__body">
+              <span class="bandmini__name">{{ step.label }}</span>
+              <span class="bandmini__years">{{ step.years }}</span>
+            </span>
+          </li>
+        {% endfor %}
+      </ol>
+    {% endif %}
+
     {% block sidebar_foot %}{% endblock %}
   </aside>
 
@@ -137,5 +170,6 @@
     {% block content %}{% endblock %}
   </main>
 </div>
+<script src="{% static 'js/ui-states.js' %}"></script>
 </body>
 </html>

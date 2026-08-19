@@ -1,0 +1,2 @@
+/* Non-modal drawer: observation cards remain visible and scrollable while writing. */
+.summary-drawer[open]{position:fixed;inset:0 0 0 auto;width:min(580px,94vw);max-width:none;max-height:none;margin:0;border-radius:18px 0 0 18px;animation:summary-drawer-in .2s ease-out}.summary-drawer[open] .summary-modal__box{height:100%;overflow-y:auto}.summary-drawer::backdrop{display:none}@keyframes summary-drawer-in{from{transform:translateX(100%)}to{transform:translateX(0)}}

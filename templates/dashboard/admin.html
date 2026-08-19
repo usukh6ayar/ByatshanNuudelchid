@@ -21,6 +21,13 @@
       <article><span>👩‍🏫</span><div><small>Багш нар</small><strong>{{ figures.teachers }}</strong><b>Идэвхтэй багш</b></div></article>
     </div>
     <div class="admin-board__grid">
+      {% comment %} §12.2's attendance line — "бүх ангийн ирц шууд нэгтгэгдэн,
+         хувь болон графикаар тайлан гарч харагдана" (2026-08-18). `apps.attendance`
+         has a real model/services/selectors but no web-reachable view yet
+         (CLAUDE.md §7.1 boundary — backend to follow), so this panel is the same
+         honest zero-data placeholder as its siblings: three group rows, ready to
+         take a real percent and bar width once the aggregation exists. {% endcomment %}
+      <article class="admin-board__panel admin-board__panel--full"><h3>Ирцийн нэгтгэл</h3><div class="admin-attendance-bars"><div class="admin-attendance-bars__row"><span>Бага бүлэг</span><i><em></em></i><b>—%</b></div><div class="admin-attendance-bars__row"><span>Дунд бүлэг</span><i><em></em></i><b>—%</b></div><div class="admin-attendance-bars__row"><span>Ахлах бүлэг</span><i><em></em></i><b>—%</b></div></div><p>Ирсэн, чөлөөтэй, өвчтэй, тасалсан хүүхдийн хувь бүлэг тус бүрээр backend холбогдоход энд харагдана.</p></article>
       <article class="admin-board__panel admin-board__panel--wide"><h3>Бүлгүүдийн судалгааны харьцуулалт</h3><div class="admin-placeholder-bars"><div><i></i><i></i><i></i><small>Бага бүлэг</small></div><div><i></i><i></i><i></i><small>Дунд бүлэг</small></div><div><i></i><i></i><i></i><small>Ахлах бүлэг</small></div></div><p>Судалгааны оролцоо болон бүлгийн дундажийг backend өгөгдлөөр зурна.</p></article>
       <article class="admin-board__panel"><h3>Бүлгүүдийн явцын үнэлгээ</h3><div class="admin-radar-placeholder"><span>Хэл яриа</span><span>Математик</span><span>Нийгэмшил</span><span>Бие бялдар</span><b>—</b></div><p>Хөгжлийн чиглэлийн бодит дундаж гарна.</p></article>
       <article class="admin-board__panel"><h3>Багш нарын гүйцэтгэл</h3><div class="admin-lines"><span></span><span></span><span></span></div><p>Ажиглалт, үнэлгээ, судалгааны гүйцэтгэл.</p></article>
