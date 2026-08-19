@@ -75,9 +75,7 @@
          The whole bar is `display:flex` (see `.quick-filter-bar` in
          app.css) so it reads as one row on a desktop and wraps, not
          stacks fully, on a phone. {% endcomment %}
-      <section class="quick-filter-bar" aria-label="Хүүхэд ба тэмдэглэлийн шүүлтүүр">
-        <div class="quick-filter-bar__group"><small>Бүлэг</small><strong>{{ group.name }}</strong></div>
-
+      <section class="quick-filter-bar quick-filter-bar--notes" aria-label="Хүүхэд ба тэмдэглэлийн шүүлтүүр">
         <form method="get" class="quick-filter-bar__child" data-focus-form>
           <input type="hidden" name="domain" value="{{ domain.pk }}">
           <input type="hidden" name="term" value="{{ term.pk }}">
@@ -102,9 +100,12 @@
         </form>
 
         <div class="quick-filter-bar__types" aria-label="Тэмдэглэлийн төрөл">
-          <a class="notetab notetab--green" href="{% url 'observations:list' focus_id %}?open=1"><span aria-hidden="true">👁️</span>Ажиглалт</a>
-          <a class="notetab notetab--blue" href="{% url 'observations:list' focus_id %}?open=1"><span aria-hidden="true">💬</span>Ярилцлага</a>
-          <a class="notetab notetab--amber" href="{% url 'observations:list' focus_id %}?open=1"><span aria-hidden="true">🎨</span>Бүтээл</a>
+          <small>Шинэ тэмдэглэл</small>
+          <div>
+            <a class="notetab notetab--green quick-note-button" href="{% url 'observations:list' focus_id %}?open=1"><span aria-hidden="true">👁️</span><b>Ажиглалт</b></a>
+            <a class="notetab notetab--blue quick-note-button" href="{% url 'observations:list' focus_id %}?open=1"><span aria-hidden="true">💬</span><b>Ярилцлага</b></a>
+            <a class="notetab notetab--amber quick-note-button" href="{% url 'observations:list' focus_id %}?open=1"><span aria-hidden="true">🎨</span><b>Бүтээл</b></a>
+          </div>
         </div>
       </section>
 
@@ -123,7 +124,7 @@
        private to that dashboard and not reusable here without a backend
        change, so the four branches below mirror its math directly in the
        template instead of waiting on that refactor). {% endcomment %}
-    <section class="section" style="margin-top:var(--s5)">
+    <section class="section" style="margin-top:var(--s5)" hidden>
       {% include "components/section_head.html" with title="Төлөвлөлтийн тойм" %}
       {% if group.age_band %}
         {% with s=group.school_year.starts_on.year %}
@@ -155,39 +156,12 @@
         {% include "components/empty.html" with icon="cake" message="Энэ бүлгийн нас (age_band) администраторын хэсэгт тохируулаагүй тул он дараалал харагдахгүй байна." %}
       {% endif %}
 
-      {% comment %} Сарын норм (нэг хүүхдэд сард 1-5 тэмдэглэл) — 7.24-д байгаа
-         тохиргоо. `Observation`-д зорилтын тоо хадгалах багана алга, зорилтыг
-         тохируулж, биелэлтийг тоолох selector ч алга (backend хайлт баталгаажсан
-         — apps/dashboard/selectors.py, apps/observations/selectors.py-д
-         байхгүй, дэлгэрэнгүйг docs/superpowers/specs/2026-08-18-progress-overview-backend.md-ээс).
-         Тохиргооны сонголт өөрөө бодит зүйл байж болно — зорилтыг backend
-         байхгүй үед ч `localStorage`-д (энэ төхөөрөмж дээр, зурвасын зүрх
-         шиг) хадгалж, доорх "Ахиц" хэсгийн картуудад бодит харьцуулалт
-         (0/нийт, зорилт N) хийхэд ашиглана. Зөвхөн бодит тоо
-         (`total`, `group.school_year`) ашигласан, юу ч зохиомжлоогүй.
-         {% endcomment %}
-      <div class="normset" data-norm-set data-norm-key="assessment-norm-{{ group.pk }}-{{ group.school_year.pk }}">
-        <div class="normset__year">
-          <span>ХИЧЭЭЛИЙН ЖИЛ</span>
-          <strong>{{ group.school_year.name }}</strong>
-        </div>
-        <label class="normset__field">
-          Сард нэг хүүхдэд орох тэмдэглэлийн тоо
-          <select data-norm-target>
-            <option value="">Сонгоогүй</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-          </select>
-        </label>
-        <p class="normset__status" data-norm-status role="status"></p>
-        <div class="target-kpi" data-target-kpi data-total-children="{{ total }}" hidden>
-          <div><small>Энэ сарын биелэлт</small><strong data-target-kpi-value>0%</strong><span data-target-kpi-count>0 / 0 тэмдэглэл</span></div>
-          <div class="target-kpi__track" aria-hidden="true"><i data-target-kpi-bar></i></div>
-          <p data-target-kpi-note>Тэмдэглэл бүртгэгдсэний дараа биелэлт автоматаар шинэчлэгдэнэ.</p>
-        </div>
+      {% comment %} Хичээлийн жилийн тэмдэглэл — статик, бодит утгаар. Сарын
+         зорилтын интерактив сонголт `.assessment-goal-board`-д нэгтгэгдсэн
+         (доор), давхардуулахгүйн тулд. {% endcomment %}
+      <div class="normset__year">
+        <span>ХИЧЭЭЛИЙН ЖИЛ</span>
+        <strong>{{ group.school_year.name }}</strong>
       </div>
     </section>
 
@@ -201,7 +175,7 @@
        алга тул жагсаалтын мөрийг зохиомжлохгүй — гагцхүү бэлэн эцсийн
        хэлбэрийг (тоолуур бүхий disclosure) харуулж, backend бэлэн болмогц
        мөрүүдийг л нэмнэ. {% endcomment %}
-    <section class="section" style="margin-top:var(--s5)">
+    <section class="section" style="margin-top:var(--s5)" hidden>
       {% include "components/section_head.html" with title="Санал болгох хүүхэд" %}
       <details class="recommend">
         <summary>Санал болгох хүүхдийн жагсаалт <span class="badge badge--muted">—</span></summary>
@@ -221,7 +195,7 @@
        зохиомжлоогүй. "Тайлан харах" холбоос нь "Хүүхэд сонгох"-оор
        сонгосон хүүхдийн бодит улирлын тайлан руу (reports:request, §549)
        ордог тул өөрчлөлтгүй үлдэв. {% endcomment %}
-    <section class="section" style="margin-top:var(--s5)">
+    <section class="section" style="margin-top:var(--s5)" hidden>
       {% url 'reports:request' focus_id as focus_report_url %}
       {% include "components/section_head.html" with title="Ахиц" link=focus_report_url link_label="Тайлан харах" %}
 
@@ -275,7 +249,70 @@
        "assessed / total": the template has no arithmetic, and computing the
        difference in the view would be a backend change for a number the
        teacher can read either way. {% endcomment %}
-    <div class="listmeta" style="margin-top:var(--s5)">
+    {% comment %} Зорилт тохируулах интерактив сонголт — client request
+       2026-08-19. Дөрвөн бэлэн сонголт (1/2/3+ удаа, эсвэл зөвхөн анхаарах
+       хүүхдүүд), сонгомогц зорилт = нийт хүүхэд × сонгосон тоо гэж бодит
+       тооцоолол хийгдэнэ (`total` бодит, сонголт бодит хэрэглэгчийн
+       сонголт). "Хэдэн удаа үнэлэгдсэн" гэдэг тоо (completed) нь сарын
+       тэмдэглэлийг бүлгээр бүлэглэх selector алга тул (TruncMonth
+       aggregation хаана ч алга — docs/superpowers/specs/
+       2026-08-18-progress-overview-backend.md) үргэлж 0-ээс эхэлнэ,
+       зохиомол тоо биш — тэмдэглэл бүртгэгдсэний дараа backend талд бодит
+       болно. {% endcomment %}
+    <section class="assessment-analytics" aria-label="Үнэлгээний сарын тойм">
+      <div class="assessment-goal-board" data-goal-board data-total-children="{{ total }}"
+           data-norm-key="assessment-norm-{{ group.pk }}-{{ group.school_year.pk }}">
+        <div>
+          {% comment %} Сар сонгож харах боломж — client request 2026-08-19
+             ("бүлгийн хүүхдүүдээ судалсан байдлаа сараа сонгоод харж
+             болох уу"). Сонголтууд бодит 9-5 сарын жагсаалт (мини
+             графиктай ижил); тоо тухайн сард бодит тэмдэглэлтэй
+             хүүхдийн тоо, зохиомол биш — доорх fetch/DOMParser
+             механизмаас гарна. {% endcomment %}
+          <div class="goal-board__month-row">
+            <span>ЗОРИЛТ</span>
+            <select class="goal-board__month-select" data-goal-month aria-label="Тайлант сар сонгох"></select>
+          </div>
+          <h3>Хүүхэд бүрийн үнэлгээний хамралт</h3>
+          {% comment %} Бичдэг тоо, сонгодог биш — client feedback 2026-08-19.
+             `<select>` дөрвөн бэлэн сонголтоор хязгаарлагдаж байсныг тоо
+             бичдэг талбар болгосон (аль ч тоог бичиж болно, зөвхөн
+             1/2/3-аар хязгаарлагдахгүй); "Зөвхөн анхаарах хүүхдүүд" горим
+             тоотой зэрэгцэшгүй тул тусдаа чекбокс болгосон. {% endcomment %}
+          <div class="goal-board__input-row">
+            <label class="goal-board__number-label">
+              <input type="number" data-goal-multiplier min="1" max="20" step="1" value="2" inputmode="numeric">
+              <span>хүүхдэд тэмдэглэл хөтлөх</span>
+            </label>
+          </div>
+          <p class="goal-board__formula" data-goal-formula></p>
+        </div>
+        <div class="assessment-goal-board__result">
+          <div class="goal-board__meter">
+            <strong data-goal-count>0 / 2</strong>
+            <span data-goal-percent>0%</span>
+          </div>
+          <i class="goal-board__track" aria-hidden="true"><em data-goal-bar></em></i>
+          <small class="goal-board__status" data-goal-status></small>
+        </div>
+      </div>
+      <div class="assessment-charts assessment-charts--coverage"><article><h3>Ажиглалтын төрлийн бүрдэлт</h3><div class="coverage-bars"><p><span>👁️ Ажиглалт</span><i><em style="width:0%"></em></i><b>0</b></p><p><span>💬 Ярилцлага</span><i><em style="width:0%"></em></i><b>0</b></p><p><span>🎨 Бүтээл</span><i><em style="width:0%"></em></i><b>0</b></p></div><small>3 төрлийн тэмдэглэлийг тэнцвэртэй хөтөлж буй эсэх.</small></article><article><h3>Сургалтын чиглэлийн хамралт</h3><div class="coverage-bars"><p><span>Танин мэдэхүй</span><i><em style="width:0%"></em></i><b>0</b></p><p><span>Бие бялдар</span><i><em style="width:0%"></em></i><b>0</b></p><p><span>Нийгэмшихүй</span><i><em style="width:0%"></em></i><b>0</b></p><p><span>Хэл яриа, урлаг</span><i><em style="width:0%"></em></i><b>0</b></p></div><small>Чиглэл орхигдоогүй эсэхийг харуулна.</small></article><article><h3>Үйл ажиллагааны явц</h3><div class="coverage-bars"><p><span>Чөлөөт тоглоом</span><i><em style="width:0%"></em></i><b>0</b></p><p><span>Хичээл, зохион байгуулалт</span><i><em style="width:0%"></em></i><b>0</b></p><p><span>Гадаа үйл ажиллагаа</span><i><em style="width:0%"></em></i><b>0</b></p><p><span>Өдөр тутмын дэглэм</span><i><em style="width:0%"></em></i><b>0</b></p></div><small>Ямар үйл ажиллагаанд тэмдэглэл хөтөлснийг харуулна.</small></article>
+        {% comment %} 9-р сараас 5-р сар хүртэлх сар бүрийн тэмдэглэлийн
+           хамралтын жижиг график — client request 2026-08-19. Сар бүрийн
+           бодит тоо гаргах selector алга (TruncMonth aggregation хаана ч
+           алга), тиймээс энд ч мөн бүх багана 0 өндөртэй шударга
+           эхэлнэ. Зөвхөн сарын нэрс бодит (9-р сар...5-р сарын дараалал,
+           зохиомол биш). Жижиг хэмжээтэй байхыг зориудаар (өндөр 44px)
+           барьсан — эргэн тойрны карттай адил том биш. {% endcomment %}
+        <article class="coverage-card--month">
+          <h3>Сарын тэмдэглэлийн хамралт</h3>
+          <div class="month-mini-bars" data-month-mini-bars></div>
+          <small>Сар бүр хичнээн хүүхдэд тэмдэглэл хөтөлснийг харуулна (9-5 сар).</small>
+        </article>
+      </div>
+    </section>
+
+    <div class="listmeta" id="assessment-grid" style="margin-top:var(--s5)" hidden>
       <span>
         Нийт {{ total }} хүүхэд ·
         {% if missing %}
@@ -284,26 +321,22 @@
           <span class="badge badge--ok">Бүгд үнэлэгдсэн</span>
         {% endif %}
       </span>
-
-      {% comment %} §14 — what 1 to 4 mean, stated once here rather than
-         repeated on every chip of every row. The colours come from
-         `AssessmentLevel.color` (§6.2), never from the domain. {% endcomment %}
-      <span class="levelkey">
-        {% for level in levels %}
-          <span><i style="background:{{ level.color }}"></i>{{ level.value }}. {{ level.label }}</span>
-        {% endfor %}
-      </span>
+      {% comment %} The 1–4 level legend used to repeat here — client
+         feedback 2026-08-19: redundant with the colour + numeral already
+         on every chip in every row below, so it was dropped rather than
+         stated a second time. {% endcomment %}
     </div>
 
-    <form method="post" class="gridform">
+    <form method="post" class="gridform" hidden>
       {% csrf_token %}
 
       <div class="obslist" style="margin-top:var(--s3)">
+        <div class="assessment-matrix-head"><span>Хүүхдийн нэр</span><span>Өмнөх сарын түвшин</span><span>Энэ сарын үнэлгээ</span><span>Ахиц</span></div>
         {% for row in rows %}
-          <div class="gridrow{% if not row.assessment %} gridrow--todo{% endif %}">
+          <div class="gridrow{% if not row.assessment %} gridrow--todo{% endif %}" data-observation-url="{% url 'observations:list' row.child.pk %}">
             <div class="gridrow__who">
               {% include "components/avatar.html" with person=row.child size="sm" %}
-              <a class="gridrow__name" href="{% url 'assessment:child' row.child.pk %}">
+              <a class="gridrow__name" href="{% url 'assessment:child' row.child.pk %}" data-child-progress-open data-child-name="{{ row.child.full_name }}">
                 {{ row.child.full_name }}
               </a>
             </div>
@@ -360,7 +393,23 @@
     </form>
   {% endif %}
 
+  <dialog class="child-progress-drawer" data-child-progress-drawer><div><button type="button" data-child-progress-close aria-label="Хаах">×</button><span>ХҮҮХДИЙН АХИЦ</span><h2 data-child-progress-name>Хүүхэд</h2><div class="child-radar"><b>Радар график</b></div><p>9–5-р сарын хөгжлийн ахиц, өмнөх тэмдэглэлүүд бодит өгөгдөлтэй холбогдоход энд харагдана.</p></div></dialog>
+
   <script>
+    (function () {
+      var cards = document.querySelectorAll('.assessment-charts--coverage article');
+      var domainCard = Array.prototype.find.call(cards, function (card) { return card.querySelector('h3') && card.querySelector('h3').textContent.trim() === 'Сургалтын чиглэлийн хамралт'; });
+      if (!domainCard) return;
+      var domains = ['Нийгэм-сэтгэл хөдлөл', 'Хөдөлгөөн, эрүүл мэнд', 'Хэл яриа', 'Байгаль, нийгмийн орчин', 'Математик', 'Зураг, урлал', 'Хөгжим'];
+      domainCard.querySelector('.coverage-bars').innerHTML = domains.map(function (name) { return '<p><span>' + name + '</span><i><em style="width:0%"></em></i><b>0</b></p>'; }).join('');
+      domainCard.querySelector('small').textContent = 'СӨБ-ын 7 чиглэл орхигдоогүй эсэхийг харуулна.';
+      var activityCard = Array.prototype.find.call(cards, function (card) { return card.querySelector('h3') && card.querySelector('h3').textContent.trim() === 'Үйл ажиллагааны явц'; });
+      if (!activityCard) return;
+      var activities = ['Өглөөний хүлээн авалт', 'Тоглоомын цаг', 'Өглөөний дасгал', 'Өглөөний цай', 'Сургалт, үйл ажиллагаа', 'Ариун цэвэр, дадал хэвшил', 'Зугаалгын цаг', 'Өдрийн хоол', 'Өдрийн унтлага', 'Үдийн цай', 'Ганцаарчилсан сургалт', 'Хөгжөөн баясгах үйл ажиллагаа', 'Таралт'];
+      activityCard.querySelector('.coverage-bars').innerHTML = activities.map(function (name) { return '<p><span>' + name + '</span><i><em style="width:0%"></em></i><b>—</b></p>'; }).join('');
+      activityCard.querySelector('small').textContent = 'Үйл ажиллагааны үе шат одоогийн тэмдэглэлд сонгогдоогүй байна.';
+    }());
+    (function(){var drawer=document.querySelector('[data-child-progress-drawer]');document.querySelectorAll('[data-child-progress-open]').forEach(function(link){link.addEventListener('click',function(event){event.preventDefault();drawer.querySelector('[data-child-progress-name]').textContent=link.getAttribute('data-child-name');drawer.showModal();});});if(drawer)drawer.querySelector('[data-child-progress-close]').addEventListener('click',function(){drawer.close();});document.querySelectorAll('[data-assessment-month]').forEach(function(button){button.addEventListener('click',function(){document.querySelectorAll('[data-assessment-month]').forEach(function(item){item.classList.remove('is-active');});button.classList.add('is-active');document.getElementById('assessment-grid').scrollIntoView({behavior:'smooth',block:'start'});});});}());
     {% comment %} Хүүхэд сонгох — merged searchable combobox (client feedback
        2026-08-19), replacing the separate `<select>` + search `<input>`
        this screen had. Still posts the same real `focus_child` GET param
@@ -443,57 +492,169 @@
     }());
 
     (function () {
-      // Сарын норм — kept in localStorage (this device only, same pattern
-      // as the announcement heart reaction) until `ObservationNorm` exists
+      // Сарын зорилт — interactive target setter, client request 2026-08-19.
+      // Kept in localStorage (this device only, same pattern as the
+      // announcement heart reaction) until `ObservationNorm` exists
       // server-side (docs/superpowers/specs/2026-08-18-progress-overview-backend.md).
-      // Read by the "Ахиц" panels below so their cards' "зорилт N" figure
-      // is real once a teacher sets it, not a placeholder.
-      var normSet = document.querySelector('[data-norm-set]');
-      if (normSet) {
-        var key = normSet.getAttribute('data-norm-key');
-        var select = normSet.querySelector('[data-norm-target]');
-        var status = normSet.querySelector('[data-norm-status]');
-        var kpi = normSet.querySelector('[data-target-kpi]');
-        var stored = window.localStorage.getItem(key);
-        if (stored) select.value = stored;
-        function updateTargetKpi() {
-          var target = Number(select.value) || 0;
-          var total = Number(kpi.getAttribute('data-total-children')) || 0;
-          var expected = target * total;
-          var reminder = document.querySelector('[data-note-reminder]');
-          kpi.hidden = !target;
-          if (!target) { if (reminder) reminder.hidden = true; return; }
-          kpi.querySelector('[data-target-kpi-value]').textContent = '0%';
-          kpi.querySelector('[data-target-kpi-count]').textContent = '0 / ' + expected + ' тэмдэглэл';
-          kpi.querySelector('[data-target-kpi-bar]').style.width = '0%';
-          var lastTenDays = new Date().getDate() >= 21;
-          if (reminder && lastTenDays) {
-            var month = new Intl.DateTimeFormat('mn-MN', { month: 'long' }).format(new Date());
-            reminder.hidden = false;
-            reminder.querySelector('[data-note-reminder-text]').textContent = 'Та энэ ' + month + ' ' + total + ' хүүхэд дээр тэмдэглэл бичиж амжаагүй байна. Гүйцэтгэл 0%-тай байна.';
-          }
-        }
-        select.addEventListener('change', function () {
-          if (select.value) {
-            window.localStorage.setItem(key, select.value);
-            status.textContent = 'Зорилт хадгалагдлаа. Backend холбогдоход бүлгийн тохиргоонд бичигдэнэ.';
-          } else {
-            window.localStorage.removeItem(key);
-            status.textContent = '';
-          }
-          if (typeof window.showToast === 'function' && select.value) {
-            window.showToast('Сарын зорилт ' + select.value + ' болж хадгалагдлаа.', 'ok');
-          }
-          document.querySelectorAll('[data-norm-value]').forEach(function (el) {
-            el.textContent = select.value || '—';
+      // `target` is the number of children a teacher deliberately chose,
+      // not every child in the class. `completed` stays honestly 0 — no selector groups this group's
+      // Observation rows by month, so there is nothing true to count yet.
+      var board = document.querySelector('[data-goal-board]');
+      if (board) {
+        var key = board.getAttribute('data-norm-key');
+        var total = Number(board.getAttribute('data-total-children')) || 0;
+        var countInput = board.querySelector('[data-goal-multiplier]');
+        var attentionBox = board.querySelector('[data-goal-attention]') || { checked: false };
+        var formula = board.querySelector('[data-goal-formula]');
+        var countEl = board.querySelector('[data-goal-count]');
+        var percentEl = board.querySelector('[data-goal-percent]');
+        var bar = board.querySelector('[data-goal-bar]');
+        var statusEl = board.querySelector('[data-goal-status]');
+        var monthSelect = board.querySelector('[data-goal-month]');
+        var completed = 0;
+        var completedByMonth = {};
+        var monthLabels = ['9', '10', '11', '12', '1', '2', '3', '4', '5'];
+        var realMonth = String(new Date().getMonth() + 1);
+        var selectedMonth = monthLabels.indexOf(realMonth) !== -1 ? realMonth : monthLabels[0];
+        if (monthSelect) {
+          monthSelect.innerHTML = monthLabels.map(function (m) {
+            return '<option value="' + m + '">' + m + '-р сар</option>';
+          }).join('');
+          monthSelect.value = selectedMonth;
+          monthSelect.addEventListener('change', function () {
+            selectedMonth = monthSelect.value;
+            completed = completedByMonth[selectedMonth] || 0;
+            render();
           });
-          updateTargetKpi();
+        }
+
+        // Stored as JSON — a plain number string was enough for the old
+        // <select>, but this now also carries the attention checkbox.
+        try {
+          var stored = JSON.parse(window.localStorage.getItem(key) || 'null');
+          if (stored && stored.count) countInput.value = stored.count;
+          if (stored && stored.attention) attentionBox.checked = true;
+        } catch (err) { /* ignore a malformed old value */ }
+
+        function render() {
+          var reminder = document.querySelector('[data-note-reminder]');
+          countInput.disabled = attentionBox.checked;
+
+          if (attentionBox.checked) {
+            formula.textContent = 'Зөвхөн анхаарал шаардлагатай хүүхдүүдийг үнэлнэ.';
+            countEl.textContent = '—';
+            percentEl.textContent = '';
+            bar.style.width = '0%';
+            statusEl.textContent = 'Анхаарах хүүхдийг тодорхойлох тооцоолол backend холбогдоход бэлэн болно.';
+            statusEl.className = 'goal-board__status';
+            if (reminder) reminder.hidden = true;
+            return;
+          }
+
+          var target = Math.max(1, Number(countInput.value) || 1);
+          var percent = target ? Math.round((completed / target) * 100) : 0;
+          var monthLabel = selectedMonth + '-р сард';
+
+          formula.textContent = 'Зорилт: ' + monthLabel + ' ' + target + ' өөр хүүхдэд тэмдэглэл хөтлөх.';
+          countEl.textContent = completed + ' / ' + target;
+          percentEl.textContent = percent + '%';
+          bar.style.width = percent + '%';
+
+          var met = target > 0 && completed >= target;
+          if (met) {
+            statusEl.textContent = '🟢 Зорилт биелсэн! Сонгосон хүүхдүүдэд ' + monthLabel + ' тэмдэглэл хөтөлсөн байна.';
+            statusEl.className = 'goal-board__status goal-board__status--met';
+          } else {
+            statusEl.textContent = '🟡 ' + monthLabel + ' одоогоор ' + completed + '/' + target + ' хүүхэд — ' + percent + '% биелэлттэй байна.';
+            statusEl.className = 'goal-board__status';
+          }
+
+          if (reminder) {
+            var lastTenDays = selectedMonth === realMonth && new Date().getDate() >= 21;
+            if (lastTenDays && !met && target > 0) {
+              var monthName = new Intl.DateTimeFormat('mn-MN', { month: 'long' }).format(new Date());
+              reminder.hidden = false;
+              reminder.querySelector('[data-note-reminder-text]').textContent =
+                'Та энэ ' + monthName + ' ' + total + ' хүүхэд дээр тэмдэглэл бичиж амжаагүй байна. Гүйцэтгэл ' + percent + '%-тай байна.';
+            } else {
+              reminder.hidden = true;
+            }
+          }
+
+          // The (currently hidden) "Ахиц" cards still read this for their
+          // own "зорилт N" figure — kept fed so nothing silently breaks if
+          // that section is unhidden again.
+          document.querySelectorAll('[data-norm-value]').forEach(function (el) {
+            el.textContent = String(target);
+          });
+        }
+
+        function persistAndRender() {
+          window.localStorage.setItem(key, JSON.stringify({
+            count: Number(countInput.value) || 2,
+            attention: attentionBox.checked
+          }));
+          if (typeof window.showToast === 'function') {
+            window.showToast('Сарын зорилт шинэчлэгдлээ.', 'ok');
+          }
+          render();
+        }
+        countInput.addEventListener('change', persistAndRender);
+        if (typeof attentionBox.addEventListener === 'function') attentionBox.addEventListener('change', persistAndRender);
+        render();
+        /* Frontend-only bridge: use the existing child observation pages to
+           count, per month, how many distinct children have a note. It
+           changes no backend state and can be replaced by one aggregate API
+           call later. */
+        var urls = Array.prototype.map.call(document.querySelectorAll('[data-observation-url]'), function (row) { return row.getAttribute('data-observation-url'); });
+        Promise.all(urls.map(function (url) {
+          return fetch(url + '?open=1', { credentials: 'same-origin' })
+            .then(function (response) { return response.ok ? response.text() : ''; })
+            .then(function (html) {
+              var doc = new DOMParser().parseFromString(html, 'text/html');
+              var item = { months: {}, types: { observation: 0, interview: 0, artwork: 0 }, domains: {} };
+              var domainNames = {};
+              doc.querySelectorAll('#id_domain_top option[value]').forEach(function (option) { if (option.value) domainNames[option.value] = option.textContent.trim(); });
+              doc.querySelectorAll('.memo-card[data-month]').forEach(function (card) {
+                var cardMonth = card.getAttribute('data-month');
+                item.months[cardMonth] = (item.months[cardMonth] || 0) + 1;
+                var search = (card.getAttribute('data-search') || '').toLowerCase();
+                if (search.indexOf('ярилцлага') !== -1) item.types.interview += 1;
+                else if (search.indexOf('бүтээл') !== -1) item.types.artwork += 1;
+                else item.types.observation += 1;
+                (card.getAttribute('data-domain') || '').trim().split(/\s+/).forEach(function (id) { if (domainNames[id]) item.domains[domainNames[id]] = (item.domains[domainNames[id]] || 0) + 1; });
+              });
+              return item;
+            })
+            .catch(function () { return { months: {}, types: { observation: 0, interview: 0, artwork: 0 }, domains: {} }; });
+        })).then(function (results) {
+          monthLabels.forEach(function (m) { completedByMonth[m] = 0; });
+          results.forEach(function (result) {
+            monthLabels.forEach(function (m) { if ((result.months[m] || 0) > 0) completedByMonth[m] += 1; });
+          });
+          completed = completedByMonth[selectedMonth] || 0;
+          render();
+          var months = {}, types = { observation: 0, interview: 0, artwork: 0 }, domains = {};
+          results.forEach(function (result) { Object.keys(result.months).forEach(function (key) { months[key] = (months[key] || 0) + result.months[key]; }); Object.keys(types).forEach(function (key) { types[key] += result.types[key]; }); Object.keys(result.domains).forEach(function (name) { domains[name] = (domains[name] || 0) + result.domains[name]; }); });
+          var typeRows = document.querySelectorAll('.assessment-charts--coverage article:first-child .coverage-bars p');
+          [types.observation, types.interview, types.artwork].forEach(function (count, index) { if (typeRows[index]) { typeRows[index].querySelector('b').textContent = count; typeRows[index].querySelector('em').style.width = Math.min(100, count * 10) + '%'; } });
+          var domainRows = document.querySelectorAll('.assessment-charts--coverage article:nth-child(2) .coverage-bars p');
+          domainRows.forEach(function (row) { var name = row.querySelector('span').textContent.trim(); var count = domains[name] || 0; row.querySelector('b').textContent = count; row.querySelector('em').style.width = Math.min(100, count * 10) + '%'; });
+          document.querySelectorAll('[data-month-mini-bars] > div').forEach(function (bar) { var label = bar.querySelector('small').textContent; var count = months[label] || 0; bar.querySelector('b').textContent = count; bar.querySelector('i').style.height = Math.max(2, Math.min(44, count * 6)) + 'px'; bar.title = label + '-р сард ' + count + ' тэмдэглэл'; });
         });
-        document.querySelectorAll('[data-norm-value]').forEach(function (el) {
-          el.textContent = stored || '—';
-        });
-        updateTargetKpi();
       }
+    }());
+
+    (function () {
+      // Сарын тэмдэглэлийн хамралтын жижиг график (9-р сараас 5-р сар) —
+      // client request 2026-08-19. Сарын нэрс бодит; тоо backend хайлт
+      // алга тул шударга 0-ээс эхэлнэ.
+      var wrap = document.querySelector('[data-month-mini-bars]');
+      if (!wrap) return;
+      var monthLabels = ['9', '10', '11', '12', '1', '2', '3', '4', '5'];
+      wrap.innerHTML = monthLabels.map(function (m) {
+        return '<div><b>0</b><i style="height:2px"></i><small>' + m + '</small></div>';
+      }).join('');
     }());
 
     (function () {

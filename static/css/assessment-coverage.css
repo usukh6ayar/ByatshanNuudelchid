@@ -1,0 +1,25 @@
+.assessment-charts--coverage{grid-template-columns:repeat(3,minmax(0,1fr))}.coverage-bars{display:grid;gap:9px;margin-top:12px}.coverage-bars p{display:grid;grid-template-columns:minmax(90px,1fr) 1.4fr 18px;gap:7px;align-items:center;margin:0!important;color:var(--ink)!important}.coverage-bars p span,.coverage-bars p b{font-size:var(--t-label)}.coverage-bars i{height:8px;overflow:hidden;border-radius:99px;background:#e3eaf0}.coverage-bars em{display:block;height:100%;border-radius:inherit;background:#4b91ce}.assessment-charts--coverage article:nth-child(1) em{background:#39a97a}.assessment-charts--coverage article:nth-child(3) em{background:#e7a33c}.assessment-charts--coverage small{display:block;margin-top:12px;color:var(--muted);font-size:var(--t-label)}@media(max-width:900px){.assessment-charts--coverage{grid-template-columns:1fr}}
+.assessment-goal-board{display:flex;justify-content:space-between;gap:18px;padding:16px;border:1px solid #cfe6d9;border-radius:14px;background:linear-gradient(135deg,#f2fcf6,#fff)}.assessment-goal-board span{display:block;color:#2c8658;font-size:var(--t-label);font-weight:800;letter-spacing:.06em}.assessment-goal-board h3{margin:4px 0}.assessment-goal-board p{margin:0;color:var(--muted);font-size:var(--t-meta)}.assessment-goal-board__result{min-width:230px}.assessment-goal-board__result strong{display:block;font-size:1.55rem}.assessment-goal-board__result i{display:block;height:10px;margin:7px 0;border-radius:99px;background:#dceee2}.assessment-goal-board__result em{display:block;width:0;height:100%;border-radius:inherit;background:#39a97a;transition:width .2s ease}.assessment-goal-board__result small{color:var(--muted);font-size:var(--t-label)}@media(max-width:620px){.assessment-goal-board{display:grid}.assessment-goal-board__result{min-width:0}}
+/* Зорилт тохируулах интерактив сонголт — client request 2026-08-19. */
+.goal-board__month-row{display:flex;align-items:center;gap:8px}
+.goal-board__month-row span{color:#2c8658;font-size:var(--t-label);font-weight:800;letter-spacing:.06em}
+.goal-board__month-select{min-height:30px;padding:2px 8px;border:1px solid #b9dcc6;border-radius:8px;background:#fff;font:inherit;font-weight:700;color:#2c8658}
+.goal-board__input-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:8px}
+.goal-board__number-label{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink)}
+.goal-board__number-label input[type=number]{width:64px;min-height:38px;padding:6px 8px;border:1px solid #b9dcc6;border-radius:10px;background:#fff;font:inherit;font-weight:700;text-align:center}
+.goal-board__number-label input[type=number]:disabled{opacity:.5}
+.choice--compact{padding:8px 12px;margin-top:0;gap:8px}
+.choice--compact .choice__title{font-size:var(--t-label);font-weight:600}
+.goal-board__formula{margin-top:8px!important;font-weight:600;color:#2c8658!important}
+.goal-board__meter{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.goal-board__meter span{color:#2c8658;font-weight:800;font-size:1.1rem}
+.goal-board__status--met{color:#248657!important;font-weight:700}
+
+/* Сарын тэмдэглэлийн хамралтын жижиг график — client request 2026-08-19
+   ("график жижиг харагдах"): 44px өндөртэй, эргэн тойрны coverage
+   картуудаас тодорхой жижиг. */
+.coverage-card--month .month-mini-bars{display:flex;align-items:end;gap:4px;height:44px;margin-top:12px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+.month-mini-bars>div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px}
+.month-mini-bars i{display:block;width:100%;max-width:12px;border-radius:3px 3px 0 0;background:var(--line);transition:height .2s ease}
+.month-mini-bars small{font-size:.62rem;color:var(--muted)}
+.month-mini-bars b{font-size:.66rem;font-weight:700;color:var(--ink)}

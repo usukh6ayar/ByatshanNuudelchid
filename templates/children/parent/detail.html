@@ -106,16 +106,22 @@
       <section class="parent-attendance" id="parent-attendance" aria-labelledby="parent-attendance-title">
         <div><span>ИРЦИЙН МЭДЭЭЛЭЛ</span><h3 id="parent-attendance-title">{{ child.first_name }}-ийн ирц</h3></div>
 
+        <div class="parent-attendance__today"><div><small>Өнөөдөр</small><strong>Ирц бүртгэгдээгүй байна</strong><span>Багш бүртгэсний дараа төлөв шууд шинэчлэгдэнэ.</span></div><i aria-hidden="true"></i></div>
+
         <div class="parent-attendance__notice" data-attendance-notice hidden>
           <svg class="ic ic--sm" aria-hidden="true"><use href="#i-bell"></use></svg>
           <span><b>{{ child.first_name }}</b> <span data-attendance-notice-text>ирлээ</span></span>
         </div>
 
-        <p>Ирсэн, чөлөөтэй, өвчтэй, тасалсан, хагас өдөр болон бусад төлөвийн түүх энд харагдана.</p>
+        <div class="parent-attendance__month"><label>Хугацаа<select data-attendance-month><option>2026 оны 8-р сар</option><option>2026 оны 7-р сар</option><option>2026 оны 6-р сар</option></select></label><button type="button" class="btn btn--ghost btn--sm" data-attendance-history>Энэ сарын дэлгэрэнгүй</button></div>
+        <div class="parent-attendance__summary"><span><small>Ирсэн</small><b>0 өдөр</b></span><span><small>Өвчтэй</small><b>0 өдөр</b></span><span><small>Чөлөөтэй</small><b>0 өдөр</b></span><span><small>Ирц</small><b>— %</b></span></div>
+        <div class="parent-attendance__history" data-attendance-history-panel hidden><p>Сонгосон сарын өдөр тутмын ирцийн түүх энд харагдана.</p></div>
+
+        <div class="parent-pickup"><div><strong>Өнөөдөр хүүхдийг хэн авах вэ?</strong><small>Багшид нэг товшилтоор мэдэгдэнэ.</small></div><div><button type="button" data-quick-pickup="Ээж авна">Ээж авна</button><button type="button" data-quick-pickup="Аав авна">Аав авна</button><button type="button" data-attendance-open="pickup">Бусад</button></div></div>
 
         <div class="parent-attendance__actions">
-          <button type="button" class="btn btn--ghost btn--sm" data-attendance-open="leave">Чөлөө хүсэх</button>
-          <button type="button" class="btn btn--ghost btn--sm" data-attendance-open="sick">Өвчний акт хавсаргах</button>
+          <button type="button" class="btn btn--ghost btn--sm" data-attendance-open="leave">Чөлөө</button>
+          <button type="button" class="btn btn--ghost btn--sm" data-attendance-open="sick">Эмчийн бичиг</button>
         </div>
 
         <form class="parent-attendance__form" data-attendance-form="leave" hidden novalidate>
@@ -141,35 +147,31 @@
           </div>
         </form>
 
+        <form class="parent-attendance__form" data-attendance-form="pickup" hidden novalidate>
+          <label>Өнөөдөр хүүхдийг хэн авах вэ?<select name="pickup_person"><option>Ээж авна</option><option>Аав авна</option><option>Бусад хүн авна</option></select></label>
+          <label>Ойролцоогоор авах цаг<input type="time" name="pickup_time"></label>
+          <label class="wide">Нэмэлт тайлбар<textarea name="pickup_note" placeholder="Хэрэв өөр хүн авах бол нэр, хамаарлыг бичнэ үү"></textarea></label>
+          <div class="btn-row"><button type="submit" class="btn btn--sm">Багшид мэдэгдэх</button><button type="button" class="btn btn--ghost btn--sm" data-attendance-cancel>Болих</button></div>
+        </form>
+
         <p class="parent-attendance__status" data-attendance-status aria-live="polite"></p>
-        <small>Ирцийн бодит бүртгэл, мэдэгдэл, чөлөө болон өвчний акт backend-ээр холбогдоход автоматаар хадгалагдана.</small>
+        <small>Ирц, сарын тойм, чөлөө, акт болон таралтын мэдэгдэл backend-д холбогдоход багшийн бүртгэлтэй шууд уялдана.</small>
       </section>
       <section class="parent-surveys" id="parent-surveys" aria-labelledby="parent-surveys-title">
         <div><span>СУДАЛГАА</span><h3 id="parent-surveys-title">Эцэг эхийн судалгаа</h3></div>
-        <p>Багшаас ирсэн асуулга, санал хүсэлт болон баталгаажуулах судалгааг бөглөж илгээнэ.</p>
-        <article class="parent-survey-card" data-parent-survey data-api="/api/v1/surveys/responses/">
-          <strong>Ангийн аялалд оролцох эсэх</strong><small>Багшийн судалгаа · Хаагдах огноо backend-ээс ирнэ</small>
-          <form data-parent-survey-form><fieldset><legend>Та хүүхдээ аялалд оролцуулах уу?</legend><label><input type="radio" name="trip_response" value="yes" required> Тийм, оролцуулна</label><label><input type="radio" name="trip_response" value="no"> Үгүй, оролцуулахгүй</label></fieldset><label>Нэмэлт тайлбар <span class="field__opt">— заавал биш</span><textarea name="comment" placeholder="Санал, тайлбараа бичнэ үү"></textarea></label><button class="btn btn--sm" type="submit">Хариултаа илгээх</button></form>
-          <p data-parent-survey-status aria-live="polite"></p>
-        </article>
-        <p class="parent-surveys__note">Шинэ судалгаанууд backend холбогдоход энд жагсаагдана.</p>
+        <div class="parent-survey-tabs" role="tablist"><button type="button" class="is-active" data-parent-survey-tab="active">Бөглөх</button><button type="button" data-parent-survey-tab="history">Өмнөх судалгаанууд</button><button type="button" data-parent-survey-tab="progress">Хүүхдийн ахиц</button></div>
+        <div data-parent-survey-panel="active"><article class="parent-survey-card" data-parent-survey><strong>Ангийн аялалд оролцох эсэх</strong><small>Хаагдах хугацаа: —</small><form data-parent-survey-form><fieldset><legend>Та хүүхдээ аялалд оролцуулах уу?</legend><label><input type="radio" name="trip_response" value="yes" required> Тийм, оролцуулна</label><label><input type="radio" name="trip_response" value="no"> Үгүй, оролцуулахгүй</label></fieldset><label>Нэмэлт тайлбар <span class="field__opt">— заавал биш</span><textarea name="comment" placeholder="Санал, тайлбараа бичнэ үү"></textarea></label><button class="btn btn--sm" type="submit">Хариултаа илгээх</button></form><p data-parent-survey-status aria-live="polite"></p></article></div>
+        <div data-parent-survey-panel="history" hidden><div class="parent-survey-history"><details open><summary>2026–2027 · 5 нас</summary><p>Энэ насанд бөглөсөн судалгаа одоогоор алга.</p></details><details><summary>2025–2026 · 4 нас</summary><p>Бөглөсөн судалгааны архив.</p></details><details><summary>2024–2025 · 3 нас</summary><p>Бөглөсөн судалгааны архив.</p></details></div></div>
+        <div data-parent-survey-panel="progress" hidden><div class="parent-survey-progress"><article><small>Судалгааны оролцоо</small><strong>0 / 0 · —%</strong><i><em style="width:0%"></em></i></article><article><small>Хүүхдийн хөгжлийн ахиц</small><div class="parent-survey-progress__chart"><i></i><i></i><i></i><i></i><i></i></div><p>Багшийн баталгаажуулсан ажиглалт, үнэлгээний улирлын ахиц энд гарна.</p></article></div></div>
       </section>
       <section class="parent-meals" id="parent-meals" aria-labelledby="parent-meals-title">
         <div class="parent-meals__head">
-          <div><span>ХООЛ БА ЦЭС</span><h3 id="parent-meals-title">Өнөөдрийн хоолны мэдээлэл</h3></div>
+          <div><span>ХООЛ БА ЦЭС</span><h3 id="parent-meals-title">7 хоногийн хоолны цэс</h3></div>
           <time data-parent-today></time>
         </div>
-        <div class="parent-meals__grid">
-          <article><strong>Өглөөний цай</strong><p>Меню backend-ээр холбогдоход энд харагдана.</p></article>
-          <article><strong>Үдийн хоол</strong><p>Меню backend-ээр холбогдоход энд харагдана.</p></article>
-          <article><strong>Үдээс хойших цай</strong><p>Меню backend-ээр холбогдоход энд харагдана.</p></article>
-          <article><strong>Нэмэлт хоол</strong><p>Шаардлагатай үед тусгайлан харуулна.</p></article>
-        </div>
-        <div class="parent-meals__nutrition">
-          <span><small>Илчлэг</small><b>— ккал</b></span><span><small>Уураг</small><b>— г</b></span><span><small>Өөх тос</small><b>— г</b></span><span><small>Нүүрс ус</small><b>— г</b></span>
-        </div>
-        <div class="parent-meals__photo"><svg class="ic" aria-hidden="true"><use href="#i-photo"></use></svg><span>Өнөөдрийн бэлэн болсон хоолны зураг энд харагдана.</span></div>
-        <p class="parent-meals__alert"><strong>Харшлын анхааруулга:</strong> Хүүхдийн харшлын болон тусгай хоолны мэдээллийг менютэй тулган энд анхааруулна.</p>
+        <div class="parent-week"><strong data-parent-week-range>Энэ долоо хоног</strong><div class="parent-week__days" role="tablist"><button type="button" data-parent-meal-day="Даваа">Даваа</button><button type="button" data-parent-meal-day="Мягмар">Мягмар</button><button type="button" data-parent-meal-day="Лхагва">Лхагва</button><button type="button" data-parent-meal-day="Пүрэв">Пүрэв</button><button type="button" data-parent-meal-day="Баасан">Баасан</button></div></div>
+        <section class="parent-meal-day" aria-live="polite"><div><strong data-parent-meal-day-title>Өнөөдөр</strong><span>Тухайн өдрийн цэс</span></div><p data-parent-meal-empty>Өнөөдрийн цэс нийтлэгдээгүй байна.</p></section>
+        <p class="parent-meal-flex-note">Өглөөний цай, үдийн хоол, уух зүйл, хөнгөн зууш зэрэг тогоочийн нэмсэн бүх хоол энэ хэсэгт мөрөөрөө гарна.</p>
       </section>
       <div class="parent-finance" id="parent-finance" data-parent-finance-panel aria-live="polite">
         <div class="parent-finance__head"><strong>Санхүүгийн мэдээлэл</strong><span>Энэ сарын төлбөр</span></div>
@@ -184,8 +186,42 @@
   </section>
   <script>
     (function () {
+      var gateway = document.querySelector('.child-gateway');
+      var attendance = document.getElementById('parent-attendance');
+      var meals = document.getElementById('parent-meals');
+      if (!gateway || !attendance || !meals) return;
+      var dailySection = attendance.closest('.child-gateway__section');
+      function showDailyModuleOnly() {
+        var activePanel = window.location.hash === '#parent-attendance' ? attendance : window.location.hash === '#parent-meals' ? meals : null;
+        var dailyMode = !!activePanel;
+        gateway.querySelectorAll('.child-gateway__section').forEach(function (section) {
+          if (section !== dailySection) section.hidden = dailyMode;
+        });
+        if (dailySection) {
+          Array.prototype.forEach.call(dailySection.children, function (item) {
+            if (item !== attendance && item !== meals) item.hidden = dailyMode;
+            if (item === attendance || item === meals) item.hidden = dailyMode && item !== activePanel;
+          });
+        }
+      }
+      showDailyModuleOnly();
+      window.addEventListener('hashchange', showDailyModuleOnly);
+    }());
+
+    (function () {
       var date = document.querySelector('[data-parent-today]');
       if (date) date.textContent = new Intl.DateTimeFormat('mn-MN', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date());
+      var range = document.querySelector('[data-parent-week-range]');
+      var dayTitle = document.querySelector('[data-parent-meal-day-title]');
+      var dayNames = ['Ням', 'Даваа', 'Мягмар', 'Лхагва', 'Пүрэв', 'Баасан', 'Бямба'];
+      var now = new Date(); var monday = new Date(now); monday.setDate(now.getDate() - ((now.getDay() + 6) % 7)); var friday = new Date(monday); friday.setDate(monday.getDate() + 4);
+      var shortDate = new Intl.DateTimeFormat('mn-MN', { month: 'numeric', day: 'numeric' });
+      if (range) range.textContent = shortDate.format(monday) + ' — ' + shortDate.format(friday);
+      document.querySelectorAll('[data-parent-meal-day]').forEach(function (button) {
+        var isToday = button.getAttribute('data-parent-meal-day') === dayNames[now.getDay()];
+        button.classList.toggle('is-active', isToday);
+        button.addEventListener('click', function () { document.querySelectorAll('[data-parent-meal-day]').forEach(function (item) { item.classList.toggle('is-active', item === button); }); if (dayTitle) dayTitle.textContent = button.getAttribute('data-parent-meal-day'); });
+      });
     }());
 
     (function () {
@@ -208,29 +244,43 @@
           forms.forEach(function (form) { form.hidden = true; });
         });
       });
+      attendance.querySelectorAll('[data-quick-pickup]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var message = button.getAttribute('data-quick-pickup') + ' гэсэн таралтын мэдэгдэл бэлэн боллоо. Backend холбогдоход багшид шууд очно.';
+          attendance.querySelectorAll('[data-quick-pickup]').forEach(function (item) { item.classList.toggle('is-selected', item === button); });
+          if (status) status.textContent = message;
+          if (typeof window.showToast === 'function') window.showToast(message, 'ok');
+        });
+      });
       forms.forEach(function (form) {
         form.addEventListener('submit', function (event) {
           event.preventDefault();
           var kind = form.getAttribute('data-attendance-form');
           var message = kind === 'leave'
             ? 'Хүсэлт бэлэн. Backend холбогдоход багшид шууд очно.'
-            : 'Акт бэлэн. Backend холбогдоход багшид зураг, тэмдэглэлийн хамт очно.';
+            : kind === 'sick'
+              ? 'Акт бэлэн. Backend холбогдоход багшид зураг, тэмдэглэлийн хамт очно.'
+              : 'Таралтын мэдэгдэл бэлэн. Backend холбогдоход багшид шууд очно.';
           if (status) status.textContent = message;
           if (typeof window.showToast === 'function') window.showToast(message, 'ok');
           form.hidden = true;
         });
       });
+      var historyButton = attendance.querySelector('[data-attendance-history]');
+      var historyPanel = attendance.querySelector('[data-attendance-history-panel]');
+      if (historyButton && historyPanel) historyButton.addEventListener('click', function () { historyPanel.hidden = !historyPanel.hidden; historyButton.textContent = historyPanel.hidden ? 'Энэ сарын дэлгэрэнгүй' : 'Дэлгэрэнгүйг нуух'; });
     }());
 
     (function () {
       var survey = document.querySelector('[data-parent-survey]');
-      if (!survey) return;
-      survey.querySelector('[data-parent-survey-form]').addEventListener('submit', function (event) {
-        event.preventDefault();
-        var message = 'Хариулт бэлэн. Backend холбогдоход багшид шууд илгээгдэнэ.';
-        survey.querySelector('[data-parent-survey-status]').textContent = message;
-        if (typeof window.showToast === 'function') window.showToast(message, 'ok');
-      });
+      if (survey) survey.querySelector('[data-parent-survey-form]').addEventListener('submit', function (event) {
+          event.preventDefault();
+          var message = 'Хариулт бэлэн. Backend холбогдоход багшид шууд илгээгдэнэ.';
+          survey.querySelector('[data-parent-survey-status]').textContent = message;
+          if (typeof window.showToast === 'function') window.showToast(message, 'ok');
+        });
+      var surveyArea = document.getElementById('parent-surveys');
+      if (surveyArea) surveyArea.querySelectorAll('[data-parent-survey-tab]').forEach(function (button) { button.addEventListener('click', function () { var tab = button.getAttribute('data-parent-survey-tab'); surveyArea.querySelectorAll('[data-parent-survey-tab]').forEach(function (item) { item.classList.toggle('is-active', item === button); }); surveyArea.querySelectorAll('[data-parent-survey-panel]').forEach(function (panel) { panel.hidden = panel.getAttribute('data-parent-survey-panel') !== tab; }); }); });
     }());
   </script>
 {% endblock %}

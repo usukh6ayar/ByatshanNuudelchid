@@ -347,15 +347,17 @@
   </section>
 
   <section class="daily-register meal-register" id="meal-register" hidden aria-labelledby="meal-register-title">
-    <div class="daily-register__head"><div><span>ХООЛНЫ БҮРТГЭЛ</span><h2 id="meal-register-title">Өнөөдрийн хоол</h2><p>Хоолны төрөл, хүүхдийн хоолны төлөв болон бэлэн хоолны зургийг тусад нь бүртгэнэ.</p></div></div>
-    <div class="daily-register__filters"><label>Огноо<input type="date" data-meal-date></label><label>Бүлэг<select><option>Бүлэг сонгох</option>{% for group in groups %}<option value="{{ group.pk }}">{{ group.name }}</option>{% endfor %}</select></label></div>
-    <p class="daily-register__meal-types">Хоолны төрөл: Өглөөний цай · Үдийн хоол · Үдээс хойших цай · Нэмэлт хоол</p>
-    <div class="daily-register__statuses"><button type="button">Авсан</button><button type="button">Аваагүй</button><button type="button">Хэсэгчлэн</button><button type="button">Тусгай хоол</button></div>
+    <div class="daily-register__head"><div><span>ХООЛ БА ЦЭС</span><h2 id="meal-register-title">7 хоногийн хоолны цэс</h2><p>Тогоочийн нийтэлсэн цэс, шим тэжээлийн мэдээллийг багш харах боломжтой.</p></div></div>
+    <div class="meal-week" aria-label="7 хоногийн хоолны цэс">
+      <div class="meal-week__head"><span>Өдөр</span><span>Өглөөний цай</span><span>Үдийн хоол</span><span>Үдээс хойших цай</span></div>
+      <div><b>Даваа</b><span>—</span><span>—</span><span>—</span></div><div><b>Мягмар</b><span>—</span><span>—</span><span>—</span></div><div><b>Лхагва</b><span>—</span><span>—</span><span>—</span></div><div><b>Пүрэв</b><span>—</span><span>—</span><span>—</span></div><div><b>Баасан</b><span>—</span><span>—</span><span>—</span></div>
+    </div>
+    <p class="meal-week__note">Хоолны нэр дээр дарахад технологи карт болон илчлэгийн мэдээлэл нээгдэхээр бэлдсэн.</p>
     <section class="daily-kitchen" aria-labelledby="daily-kitchen-title">
-      <div><span>ХООЛНЫ БОДИТ МЭДЭЭЛЭЛ</span><h3 id="daily-kitchen-title">Цэс, шим тэжээл, зураг</h3></div>
-      <div class="daily-kitchen__grid"><label>Өнөөдрийн хоолны нэр<input type="text" placeholder="Жишээ: Ногоотой шөл"></label><label>Хоолны төрөл<select><option>Үдийн хоол</option><option>Өглөөний цай</option><option>Үдээс хойших цай</option><option>Нэмэлт хоол</option></select></label><label>Харшил үүсгэгч<textarea placeholder="Сүү, өндөг, самар зэрэг"></textarea></label><label class="daily-kitchen__photo">Бэлэн болсон хоолны зураг<input type="file" accept="image/*" data-meal-photo><span>Зураг сонгох</span></label></div>
+      <div><span>БАГШИЙН БОДИТ ЗУРАГ</span><h3 id="daily-kitchen-title">Бэлэн болсон хоолны зураг</h3></div>
+      <div class="daily-kitchen__grid"><label>Огноо<input type="date" data-meal-date></label><label>Хоолны төрөл<select><option>Үдийн хоол</option><option>Өглөөний цай</option><option>Үдээс хойших цай</option></select></label><label class="daily-kitchen__photo">Бэлэн болсон хоолны зураг<input type="file" accept="image/*" data-meal-photo><span>Зураг сонгох</span></label><label>Товч тайлбар<textarea placeholder="Жишээ: Хүүхдүүд үдийн хоолондоо ногоотой шөл идэв."></textarea></label></div>
       <div class="daily-kitchen__preview" data-meal-preview>Сонгосон зураг энд урьдчилан харагдана.</div>
-      <p>Технологи карт, нэг порцын орц болон шим тэжээлийн бодит өгөгдөл backend-ээр холбогдоход автоматаар бөглөгдөнө.</p>
+      <p>Багш зөвхөн бодит зураг, товч тайлбар нэмнэ. Цэс, жор, илчлэгийн мэдээллийг тогооч удирдана.</p>
     </section>
   </section>
 

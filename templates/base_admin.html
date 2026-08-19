@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <link rel="stylesheet" href="{% static 'css/chat.css' %}">
   <link rel="stylesheet" href="{% static 'css/chat-messages.css' %}">
+  <link rel="stylesheet" href="{% static 'css/admin-assessment.css' %}">
   {% include "_theme_head.html" %}
 </head>
 <body>
@@ -49,8 +50,8 @@
         <a href="{% url 'children:list' %}"{% if nav == 'children' %} aria-current="page"{% endif %}>👦 Хүүхдийн удирдлага</a>
         <a href="{% url 'accounts:staff_list' %}"{% if nav == 'staff' %} aria-current="page"{% endif %}>👩‍🏫 Багшийн удирдлага</a>
         <a href="{% url 'tenants:group_list' %}"{% if nav == 'groups' %} aria-current="page"{% endif %}>🏫 Бүлгийн удирдлага</a>
-        <a href="{% url 'dashboard:admin' %}#finance-ready">📅 Ирц</a>
-        <a href="{% url 'assessment:admin_domain_list' %}"{% if nav == 'domains' %} aria-current="page"{% endif %}>📈 Хөгжлийн шалгуур</a>
+        <a href="{% url 'dashboard:admin' %}#attendance-ready">📅 Ирц</a>
+        <a href="{% url 'assessment:admin_domain_list' %}"{% if nav == 'domains' %} aria-current="page"{% endif %}>📈 Үнэлгээ</a>
       </details>
       <details class="nav-group" open>
         <summary>🍲 Үйл ажиллагаа ба санхүү</summary>

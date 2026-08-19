@@ -35,31 +35,68 @@
     </div>
   </section>
 
-  <section class="kitchen-ready" id="kitchen-ready" aria-labelledby="kitchen-ready-title">
-    <div class="kitchen-ready__head"><div><span>ARTA ХООЛ ҮЙЛДВЭРЛЭЛ</span><h2 id="kitchen-ready-title">Гал тогоо, технологи карт</h2><p>Хоол үйлдвэрлэл, шим тэжээл, агуулахын мэдээллийг нэг дор бэлдэх frontend самбар.</p></div></div>
+  <section class="kitchen-ready" id="kitchen-ready" aria-labelledby="kitchen-ready-title" hidden>
+    <div class="kitchen-ready__head"><div><span>ГАЛ ТОГООНЫ УДИРДЛАГА</span><h2 id="kitchen-ready-title">Хоол үйлдвэрлэл</h2><p>Өдрийн цэс, жор, агуулах, тооцоо болон эрүүл ахуйн бүртгэлийг тусдаа удирдана.</p></div></div>
+    <div class="kitchen-ready__overview" aria-label="Гал тогооны өнөөдрийн тойм">
+      <article><span>Өнөөдрийн цэс</span><strong>—</strong><small>цэс бүртгэгдээгүй</small></article>
+      <article><span>Агуулахын анхааруулга</span><strong>0</strong><small>дуусах бараа алга</small></article>
+      <article><span>Өнөөдрийн хоолны тооцоо</span><strong>— ₮</strong><small>ирц бүртгэгдээгүй</small></article>
+    </div>
     <div class="kitchen-ready__tabs" role="tablist">
-      <button type="button" role="tab" aria-selected="true" data-kitchen-tab="recipe">Технологи карт</button>
-      <button type="button" role="tab" aria-selected="false" data-kitchen-tab="menu">Өдрийн цэс</button>
+      <button type="button" role="tab" aria-selected="true" data-kitchen-tab="menu">Өдрийн цэс</button>
+      <button type="button" role="tab" aria-selected="false" data-kitchen-tab="recipe">Технологи картын сан</button>
       <button type="button" role="tab" aria-selected="false" data-kitchen-tab="stock">Агуулах</button>
-      <button type="button" role="tab" aria-selected="false" data-kitchen-tab="hygiene">Эрүүл ахуй</button>
+      <button type="button" role="tab" aria-selected="false" data-kitchen-tab="calculation">Тооцоо</button>
+      <button type="button" role="tab" aria-selected="false" data-kitchen-tab="hygiene">Эрүүл ахуй ба тайлан</button>
     </div>
-    <div class="kitchen-ready__panel" data-kitchen-panel="recipe">
+    <div class="kitchen-ready__panel" data-kitchen-panel="menu">
+      <div class="kitchen-ready__panelhead"><div><h3>7 хоногийн хоолны цэс</h3><p>Excel файлаар эсвэл шууд хүснэгтэд бичиж оруулна.</p></div></div>
+      <div class="menu-entry-tabs" role="tablist"><button type="button" aria-selected="true" data-menu-entry="excel">Excel-ээр оруулах</button><button type="button" aria-selected="false" data-menu-entry="manual">Гараар оруулах</button></div>
+      <section data-menu-entry-panel="excel">
+        <label class="menu-excel-drop">Excel файл сонгох<input type="file" accept=".xlsx,.xls,.csv" data-menu-excel><span>.xlsx, .xls, .csv</span></label>
+        <p class="kitchen-ready__file" data-menu-file>Файл сонгоогүй байна.</p>
+        <p class="kitchen-ready__note">Файл сонгосны дараа доорх урьдчилан харах хэсгээс нийтлэгдэх цэсээ шалгана.</p>
+      </section>
+      <section data-menu-entry-panel="manual" hidden>
+        <p class="kitchen-ready__note">Нүд бүрт хоолны нэрээ шууд бичнэ. Технологи картын санд байгаа хоолыг сонгоход ккал нь дагаж гарна.</p>
+        <datalist id="kitchen-recipe-list"><option value="Ногоотой шөл" data-kcal="320"></option><option value="Будаатай хуурга" data-kcal="410"></option><option value="Сүүтэй будаа" data-kcal="260"></option><option value="Тараг" data-kcal="120"></option></datalist>
+        <div class="quick-recipe"><strong>Шинэ хоол нэмэх</strong><input data-new-recipe-name placeholder="Хоолны нэр"><input data-new-recipe-kcal type="number" min="0" placeholder="Нэг порцын ккал"><button type="button" data-add-recipe>Нэмэх</button><small>Бэлэн хоол сонгоход ккал автоматаар харагдана.</small></div>
+        <div class="meal-slot-manager"><span>Нэмэлт хоолны багана:</span><button type="button" data-menu-slot="Уух зүйл">+ Уух зүйл</button><button type="button" data-menu-slot="Хөнгөн зууш">+ Хөнгөн зууш</button><button type="button" data-menu-slot="Нэмэлт хоол">+ Нэмэлт хоол</button><button type="button" data-menu-slot="remove">− Сүүлчийн багана</button></div>
+        <div class="menu-editor" data-menu-editor aria-label="Гараар 7 хоногийн цэс оруулах">
+          <div class="menu-editor__head"><span>Өдөр</span><span>Өглөөний цай</span><span>Үдийн хоол</span><span>Үдээс хойших цай</span></div>
+          <div><b>Даваа</b><input data-menu-cell="Даваа|Өглөөний цай" placeholder="Хоолны нэр"><input data-menu-cell="Даваа|Үдийн хоол" placeholder="Хоолны нэр"><input data-menu-cell="Даваа|Үдээс хойших цай" placeholder="Хоолны нэр"></div>
+          <div><b>Мягмар</b><input data-menu-cell="Мягмар|Өглөөний цай" placeholder="Хоолны нэр"><input data-menu-cell="Мягмар|Үдийн хоол" placeholder="Хоолны нэр"><input data-menu-cell="Мягмар|Үдээс хойших цай" placeholder="Хоолны нэр"></div>
+          <div><b>Лхагва</b><input data-menu-cell="Лхагва|Өглөөний цай" placeholder="Хоолны нэр"><input data-menu-cell="Лхагва|Үдийн хоол" placeholder="Хоолны нэр"><input data-menu-cell="Лхагва|Үдээс хойших цай" placeholder="Хоолны нэр"></div>
+          <div><b>Пүрэв</b><input data-menu-cell="Пүрэв|Өглөөний цай" placeholder="Хоолны нэр"><input data-menu-cell="Пүрэв|Үдийн хоол" placeholder="Хоолны нэр"><input data-menu-cell="Пүрэв|Үдээс хойших цай" placeholder="Хоолны нэр"></div>
+          <div><b>Баасан</b><input data-menu-cell="Баасан|Өглөөний цай" placeholder="Хоолны нэр"><input data-menu-cell="Баасан|Үдийн хоол" placeholder="Хоолны нэр"><input data-menu-cell="Баасан|Үдээс хойших цай" placeholder="Хоолны нэр"></div>
+        </div>
+      </section>
+      <section class="menu-web-preview" aria-labelledby="menu-preview-title"><div><h3 id="menu-preview-title">Эцэг эхэд ингэж харагдана</h3><p>Нийтлэхээсээ өмнө 7 хоногийн цэсээ шалгана.</p></div><div class="meal-week" data-menu-preview-table><div class="meal-week__head"><span>Өдөр</span><span>Өглөөний цай</span><span>Үдийн хоол</span><span>Үдээс хойших цай</span></div><div><b>Даваа</b><span data-menu-preview="Даваа|Өглөөний цай">—</span><span data-menu-preview="Даваа|Үдийн хоол">—</span><span data-menu-preview="Даваа|Үдээс хойших цай">—</span></div><div><b>Мягмар</b><span data-menu-preview="Мягмар|Өглөөний цай">—</span><span data-menu-preview="Мягмар|Үдийн хоол">—</span><span data-menu-preview="Мягмар|Үдээс хойших цай">—</span></div><div><b>Лхагва</b><span data-menu-preview="Лхагва|Өглөөний цай">—</span><span data-menu-preview="Лхагва|Үдийн хоол">—</span><span data-menu-preview="Лхагва|Үдээс хойших цай">—</span></div><div><b>Пүрэв</b><span data-menu-preview="Пүрэв|Өглөөний цай">—</span><span data-menu-preview="Пүрэв|Үдийн хоол">—</span><span data-menu-preview="Пүрэв|Үдээс хойших цай">—</span></div><div><b>Баасан</b><span data-menu-preview="Баасан|Өглөөний цай">—</span><span data-menu-preview="Баасан|Үдийн хоол">—</span><span data-menu-preview="Баасан|Үдээс хойших цай">—</span></div></div></section>
+      <button type="button" class="btn btn--ghost" data-open-recipe>Шим тэжээл, илчлэг тооцоолох</button>
+      <div class="kitchen-ready__exports"><button type="button" class="btn btn--ghost" data-menu-draft>Ноорог хадгалах</button><button type="button" class="btn" data-menu-publish>Багш, эцэг эхэд нийтлэх</button><span class="kitchen-ready__publish-status" data-menu-publish-status></span></div>
+    </div>
+    <div class="kitchen-ready__panel" data-kitchen-panel="recipe" hidden>
+      <div class="kitchen-ready__panelhead"><div><h3>Технологи картын сан</h3><p>Жор, порц болон шим тэжээлийн дэлгэрэнгүй мэдээллийг энд нэг удаа бүртгэнэ.</p></div></div>
       <div class="kitchen-ready__form"><label>Хоолны нэр<input placeholder="Жишээ: Ногоотой шөл"></label><label>Нэг порцын хэмжээ<input placeholder="гр / мл"></label><label class="wide">Орц, найрлага<textarea placeholder="Орц бүрийн нэр, хэмжээ, нэгж"></textarea></label><label class="wide">Бэлтгэх технологи<textarea placeholder="Хийх дараалал, хугацаа, температур"></textarea></label></div>
-      <div class="kitchen-ready__metrics"><span>Илчлэг <b>— ккал</b></span><span>Уураг <b>— г</b></span><span>Өөх тос <b>— г</b></span><span>Нүүрс ус <b>— г</b></span></div>
-      <p class="kitchen-ready__allergy">Харшил үүсгэгч: Өндөг · Сүү · Самар · Цавуулаг — backend холбоход жорын орцтой автоматаар тулгана.</p>
+      <section class="nutrition-calculator" aria-labelledby="nutrition-calculator-title"><div><h3 id="nutrition-calculator-title">Шим тэжээл, илчлэгийн тооцоолуур</h3><p>Орцын грамм болон 100 гр-д ногдох үзүүлэлтийг оруулна.</p></div><div class="nutrition-calculator__grid"><div class="nutrition-calculator__head"><span>Орц</span><span>Грамм</span><span>Ккал / 100г</span><span>Уураг / 100г</span><span>Өөх / 100г</span><span>Нүүрс ус / 100г</span></div><div><input placeholder="Орцын нэр"><input type="number" min="0" data-nutrition="grams" placeholder="0"><input type="number" min="0" data-nutrition="calories" placeholder="0"><input type="number" min="0" data-nutrition="protein" placeholder="0"><input type="number" min="0" data-nutrition="fat" placeholder="0"><input type="number" min="0" data-nutrition="carbs" placeholder="0"></div><div><input placeholder="Орцын нэр"><input type="number" min="0" data-nutrition="grams" placeholder="0"><input type="number" min="0" data-nutrition="calories" placeholder="0"><input type="number" min="0" data-nutrition="protein" placeholder="0"><input type="number" min="0" data-nutrition="fat" placeholder="0"><input type="number" min="0" data-nutrition="carbs" placeholder="0"></div><div><input placeholder="Орцын нэр"><input type="number" min="0" data-nutrition="grams" placeholder="0"><input type="number" min="0" data-nutrition="calories" placeholder="0"><input type="number" min="0" data-nutrition="protein" placeholder="0"><input type="number" min="0" data-nutrition="fat" placeholder="0"><input type="number" min="0" data-nutrition="carbs" placeholder="0"></div></div></section>
+      <div class="kitchen-ready__metrics" data-nutrition-result><span>Илчлэг <b data-nutrition-total="calories">0 ккал</b></span><span>Уураг <b data-nutrition-total="protein">0 г</b></span><span>Өөх тос <b data-nutrition-total="fat">0 г</b></span><span>Нүүрс ус <b data-nutrition-total="carbs">0 г</b></span></div>
     </div>
-    <div class="kitchen-ready__panel" data-kitchen-panel="menu" hidden><div class="kitchen-ready__form"><label>Огноо<input type="date" data-kitchen-date></label><label>Хоолны төрөл<select><option>Өглөөний цай</option><option>Үдийн хоол</option><option>Үдээс хойших цай</option><option>Нэмэлт хоол</option></select></label><label class="wide">Эцэг эхэд харагдах тайлбар<textarea placeholder="Өнөөдрийн цэсийн тайлбар"></textarea></label></div><p class="kitchen-ready__note">Бэлэн хоолны зураг, технологи карт болон ирцийн тоо энд API-аар холбогдоно.</p></div>
-    <div class="kitchen-ready__panel" data-kitchen-panel="stock" hidden><div class="finance-ready__grid"><article><strong>Орлого</strong><small>Түүхий эд хүлээн авалт</small></article><article><strong>Зарлага</strong><small>Ирцээс тооцсон зарцуулалт</small></article><article><strong>Үлдэгдэл</strong><small>Агуулахын үлдэгдэл</small></article><article><strong>Зөрүү</strong><small>Тулгалт, тайлбар</small></article></div><p class="kitchen-ready__note">Бодит орлого, зарлага, үлдэгдэл нь баталгаажсан гүйлгээгээр backend-д тооцогдоно.</p></div>
-    <div class="kitchen-ready__panel" data-kitchen-panel="hygiene" hidden><div class="kitchen-ready__form"><label>Шалгалтын огноо<input type="date"></label><label>Хариуцсан ажилтан<input placeholder="Нэр"></label><label class="wide">Эрүүл ахуйн тэмдэглэл<textarea placeholder="Температур, цэвэрлэгээ, анхаарах зүйл"></textarea></label></div><p class="kitchen-ready__note">Баримт, зураг, audit түүхийг backend-д хадгална.</p></div>
+    <div class="kitchen-ready__panel" data-kitchen-panel="stock" hidden><div class="kitchen-ready__form"><label>Түүхий эдийн нэр<input placeholder="Жишээ: Гурил"></label><label>Нийлүүлэгч<input placeholder="Нийлүүлэгчийн нэр"></label><label>Орлого / зарлага<select><option>Орлого</option><option>Зарлага</option></select></label><label>Хугацаа дуусах огноо<input type="date"></label><label class="wide">Тоо хэмжээ, үлдэгдэл<textarea placeholder="Нэгж, орсон/гарсан тоо, үлдэгдэл"></textarea></label></div><p class="kitchen-ready__note">Улаан сануулга: дуусах гэж буй бараа болон хугацаа дуусах дөхсөн түүхий эд энд гарна.</p></div>
+    <div class="kitchen-ready__panel" data-kitchen-panel="calculation" hidden><div class="kitchen-ready__form"><label>Өдрийн ирц<input placeholder="0 хүүхэд" inputmode="numeric"></label><label>Нэг хүүхдийн хоолны тариф<input placeholder="₮" inputmode="numeric"></label><label>Бүлэг<select><option>Бүлэг сонгох</option></select></label><label>Хугацаа<select><option>Энэ сар</option><option>Энэ хичээлийн жил</option></select></label></div><div class="kitchen-ready__metrics"><span>Хооллосон хүүхэд <b>—</b></span><span>Төлөвлөсөн зардал <b>— ₮</b></span><span>Бодит зарцуулалт <b>— ₮</b></span><span>Зөрүү <b>— ₮</b></span></div><p class="kitchen-ready__note">Ирц болон агуулахын гүйлгээ холбогдоход тооцоо автоматаар шинэчлэгдэнэ.</p></div>
+    <div class="kitchen-ready__panel" data-kitchen-panel="hygiene" hidden><div class="kitchen-ready__form"><label>Шалгалтын огноо<input type="date"></label><label>Хариуцсан ажилтан<input placeholder="Нэр"></label><label>Хөргөгчийн температур<input placeholder="°C"></label><label class="kitchen-ready__photo">Зураг, баримт хавсаргах<input type="file" accept="image/*,.pdf"><span>Файл сонгох</span></label><label class="wide">Цэвэрлэгээ, шалгалтын тэмдэглэл<textarea placeholder="Температур, цэвэрлэгээ, анхаарах зүйл"></textarea></label></div><div class="kitchen-ready__exports"><button type="button" class="btn btn--ghost">PDF тайлан</button><button type="button" class="btn btn--ghost">Excel тайлан</button></div></div>
   </section>
-  <section class="finance-ready" id="finance-ready" aria-labelledby="finance-ready-title">
-    <div><span>САНХҮҮГИЙН МОДУЛЬ</span><h2 id="finance-ready-title">Ирц, хоол, санхүү</h2><p>Backend холбогдоход энд бодит тооцоо, invoice, төлбөр болон audit log харагдана.</p></div>
+  <section class="finance-ready" id="attendance-ready" aria-labelledby="attendance-ready-title">
+    <div><span>ИРЦИЙН МОДУЛЬ</span><h2 id="attendance-ready-title">Ирцийн нэгтгэл</h2><p>Өдрийн ирц, сарын нэгтгэл, чөлөө болон өвчний бүртгэл энд тусдаа харагдана.</p></div>
     <div class="finance-ready__grid">
       <article><strong>Ирцийн нэгтгэл</strong><small>Ирсэн өдөр, таслалт, чөлөө</small></article>
-      <article><strong>Хоолны зардал</strong><small>Хооллосон өдөр, тариф</small></article>
-      <article><strong>Санхүүжилт</strong><small>Тооцсон, баталгаажсан, хүлээн авсан</small></article>
-      <article><strong>Invoice, төлбөр</strong><small>Нэхэмжлэл, үлдэгдэл, тулгалт</small></article>
+      <article><strong>Сарын ирц</strong><small>Хувь, таслалтын шалтгаан</small></article>
+      <article><strong>Чөлөө, өвчлөл</strong><small>Хүсэлт, эмчийн акт</small></article>
+      <article><strong>Ирцийн тайлан</strong><small>Бүлэг, сар, хичээлийн жилээр</small></article>
     </div>
+  </section>
+  <section class="finance-ready" id="finance-ready" aria-labelledby="finance-ready-title">
+    <div><span>САНХҮҮГИЙН МОДУЛЬ</span><h2 id="finance-ready-title">Санхүү, төлбөр</h2><p>Нэхэмжлэл, төлбөр, санхүүжилт болон тайланг энд удирдана.</p></div>
+    <div class="finance-ready__grid"><article><strong>Нэхэмжлэл</strong><small>Эцэг эхийн төлбөр</small></article><article><strong>Төлбөр</strong><small>Орлого, үлдэгдэл</small></article><article><strong>Санхүүжилт</strong><small>Тооцсон, баталгаажсан</small></article><article><strong>Тайлан</strong><small>Орлого, зарлагын нэгтгэл</small></article></div>
   </section>
   {% comment %} Tinted, one colour per statistic, as admin-dashboard.jpeg
      draws them and as the teacher's dashboard already did. A director scans
@@ -166,6 +203,26 @@
     (function () {
       var root = document.getElementById('kitchen-ready');
       if (!root) return;
+
+      /* Гал тогоо нь хяналтын самбар, ирцийн дэлгэцэд холилдохгүй.
+         Зөвхөн зүүн цэсний “Гал тогоо” холбоос (#kitchen-ready)-оор
+         ороход энэ frontend модуль дэлгэгдэнэ. */
+      function toggleKitchenPanel() {
+        var isKitchen = window.location.hash === '#kitchen-ready';
+        root.hidden = !isKitchen;
+        root.parentElement.classList.toggle('main--kitchen', isKitchen);
+
+        /* Гал тогоо нь тусдаа ажлын орчин. Тиймээс энэ hash нээгдэхэд
+           админы хяналтын самбар, ирц, санхүү, үнэлгээ зэрэг өөр модулийн
+           картууд дэлгэцэд давхардахгүй. */
+        Array.prototype.forEach.call(root.parentElement.children, function (item) {
+          if (item === root || item.matches('.topbar, script, .msg')) return;
+          item.hidden = isKitchen;
+        });
+      }
+      toggleKitchenPanel();
+      window.addEventListener('hashchange', toggleKitchenPanel);
+
       root.querySelectorAll('[data-kitchen-tab]').forEach(function (tab) {
         tab.addEventListener('click', function () {
           var name = tab.getAttribute('data-kitchen-tab');
@@ -175,6 +232,117 @@
       });
       var date = root.querySelector('[data-kitchen-date]');
       if (date) date.value = new Date().toISOString().slice(0, 10);
+
+      var menuExcel = root.querySelector('[data-menu-excel]');
+      var menuFile = root.querySelector('[data-menu-file]');
+      if (menuExcel && menuFile) {
+        menuExcel.addEventListener('change', function () {
+          var file = menuExcel.files && menuExcel.files[0];
+          menuFile.textContent = file
+            ? 'Сонгосон Excel файл: ' + file.name + ' — вэб урьдчилан харах болон импортлоход бэлэн.'
+            : 'Excel файл сонгоогүй байна.';
+        });
+      }
+
+      root.querySelectorAll('[data-menu-entry]').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          var entry = tab.getAttribute('data-menu-entry');
+          root.querySelectorAll('[data-menu-entry]').forEach(function (item) { item.setAttribute('aria-selected', item === tab ? 'true' : 'false'); });
+          root.querySelectorAll('[data-menu-entry-panel]').forEach(function (panel) { panel.hidden = panel.getAttribute('data-menu-entry-panel') !== entry; });
+        });
+      });
+      var recipes = { 'Ногоотой шөл': 320, 'Будаатай хуурга': 410, 'Сүүтэй будаа': 260, 'Тараг': 120 };
+      function bindMenuCell(cell) {
+        cell.setAttribute('list', 'kitchen-recipe-list');
+        cell.addEventListener('input', function () {
+          var target = root.querySelector('[data-menu-preview="' + cell.getAttribute('data-menu-cell') + '"]');
+          var name = cell.value.trim();
+          var kcal = recipes[name];
+          if (target) target.textContent = name ? name + (kcal ? ' · ' + kcal + ' ккал' : '') : '—';
+        });
+      }
+      root.querySelectorAll('[data-menu-cell]').forEach(bindMenuCell);
+
+      var addRecipe = root.querySelector('[data-add-recipe]');
+      if (addRecipe) addRecipe.addEventListener('click', function () {
+        var nameInput = root.querySelector('[data-new-recipe-name]');
+        var kcalInput = root.querySelector('[data-new-recipe-kcal]');
+        var name = nameInput.value.trim();
+        var kcal = parseFloat(kcalInput.value);
+        if (!name || isNaN(kcal)) return;
+        recipes[name] = kcal;
+        var option = document.createElement('option'); option.value = name; option.setAttribute('data-kcal', kcal); root.querySelector('#kitchen-recipe-list').appendChild(option);
+        nameInput.value = ''; kcalInput.value = '';
+        if (publishStatus) publishStatus.textContent = name + ' · ' + kcal + ' ккал технологи картын санал болголтод нэмэгдлээ.';
+      });
+
+      var addedSlots = [];
+      var editor = root.querySelector('[data-menu-editor]');
+      var previewTable = root.querySelector('[data-menu-preview-table]');
+      function resizeMenuTables() {
+        var columns = 4 + addedSlots.length;
+        [editor, previewTable].forEach(function (table) {
+          if (!table) return;
+          table.querySelectorAll(':scope > div').forEach(function (row) {
+            row.style.gridTemplateColumns = '90px repeat(' + (columns - 1) + ', minmax(150px, 1fr))';
+          });
+        });
+      }
+      root.querySelectorAll('[data-menu-slot]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var slot = button.getAttribute('data-menu-slot');
+          if (!editor || !previewTable) return;
+          if (slot === 'remove') {
+            var removed = addedSlots.pop();
+            if (!removed) return;
+            editor.querySelectorAll(':scope > div').forEach(function (row) { row.lastElementChild.remove(); });
+            previewTable.querySelectorAll(':scope > div').forEach(function (row) { row.lastElementChild.remove(); });
+            resizeMenuTables();
+            return;
+          }
+          if (addedSlots.indexOf(slot) !== -1) return;
+          addedSlots.push(slot);
+          var editorRows = editor.querySelectorAll(':scope > div');
+          var previewRows = previewTable.querySelectorAll(':scope > div');
+          var header = document.createElement('span'); header.textContent = slot; editorRows[0].appendChild(header);
+          var previewHeader = document.createElement('span'); previewHeader.textContent = slot; previewRows[0].appendChild(previewHeader);
+          for (var i = 1; i < editorRows.length; i += 1) {
+            var day = editorRows[i].querySelector('b').textContent;
+            var key = day + '|' + slot;
+            var input = document.createElement('input'); input.placeholder = 'Хоолны нэр'; input.setAttribute('data-menu-cell', key); editorRows[i].appendChild(input); bindMenuCell(input);
+            var output = document.createElement('span'); output.textContent = '—'; output.setAttribute('data-menu-preview', key); previewRows[i].appendChild(output);
+          }
+          resizeMenuTables();
+        });
+      });
+      var openRecipe = root.querySelector('[data-open-recipe]');
+      if (openRecipe) openRecipe.addEventListener('click', function () { root.querySelector('[data-kitchen-tab="recipe"]').click(); });
+
+      function updateNutrition() {
+        var sums = { calories: 0, protein: 0, fat: 0, carbs: 0 };
+        root.querySelectorAll('.nutrition-calculator__grid > div:not(.nutrition-calculator__head)').forEach(function (row) {
+          var grams = parseFloat((row.querySelector('[data-nutrition="grams"]') || {}).value) || 0;
+          ['calories', 'protein', 'fat', 'carbs'].forEach(function (name) {
+            var input = row.querySelector('[data-nutrition="' + name + '"]');
+            sums[name] += grams * ((parseFloat(input && input.value) || 0) / 100);
+          });
+        });
+        Object.keys(sums).forEach(function (name) {
+          var target = root.querySelector('[data-nutrition-total="' + name + '"]');
+          if (target) target.textContent = sums[name].toFixed(1).replace('.0', '') + (name === 'calories' ? ' ккал' : ' г');
+        });
+      }
+      root.querySelectorAll('[data-nutrition]').forEach(function (input) { input.addEventListener('input', updateNutrition); });
+
+      var publishMenu = root.querySelector('[data-menu-publish]');
+      var publishStatus = root.querySelector('[data-menu-publish-status]');
+      if (publishMenu && publishStatus) {
+        publishMenu.addEventListener('click', function () {
+          publishStatus.textContent = 'Цэс нийтлэхэд бэлэн. Backend холбогдсоны дараа багш, эцэг эхийн 7 хоногийн цэсэнд шууд гарна.';
+        });
+      }
+      var saveDraft = root.querySelector('[data-menu-draft]');
+      if (saveDraft && publishStatus) saveDraft.addEventListener('click', function () { publishStatus.textContent = 'Ноорог энэ төхөөрөмж дээр шалгахад бэлэн боллоо.'; });
     }());
   </script>
 {% endblock %}

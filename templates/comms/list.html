@@ -74,6 +74,10 @@
           <option value="Зугаалга">Зугаалга</option>
           <option value="Өдөрлөг">Өдөрлөг</option>
           <option value="Төрсөн өдөр">Төрсөн өдөр</option>
+          <option value="Зураг, видео">Зураг, видео</option>
+          <option value="Судалгаа">Судалгаа</option>
+          <option value="Хоолны цэс">Хоолны цэс</option>
+          <option value="Яаралтай">Яаралтай мэдээ</option>
           <option value="Бусад">Бусад</option>
         </select>
       </label>
@@ -96,6 +100,16 @@
         <span>Эцэг эхэд юу хуваалцах вэ?</span>
         <svg class="ic ic--sm" aria-hidden="true"><use href="#i-plus"></use></svg>
       </a>
+    {% endif %}
+
+    {% if base_template == "base_admin.html" %}
+      <section class="classboard-admin" aria-labelledby="admin-board-title">
+        <div><span>УДИРДЛАГЫН ХЯНАЛТ</span><h2 id="admin-board-title">Бүлгүүдийн ангийн самбар</h2><p>Бүлэг сонгоод багшийн нийтэлсэн мэдээ, зарыг нэг дор хянаарай.</p></div>
+        <div class="classboard-admin__stats"><article><small>Нийт пост</small><strong>{{ page.paginator.count }}</strong></article><article><small>Идэвхтэй бүлэг</small><strong data-admin-group-total>0</strong></article><article><small>Чухал пост</small><strong data-admin-important-total>0</strong></article></div>
+        <div class="classboard-admin__tools"><label><span class="sr-only">Бүлэг хайх</span><input type="search" placeholder="Бүлэг хайх..." data-admin-group-search></label><button type="button" class="is-active" data-admin-group-filter="all">Бүгд</button><button type="button" data-admin-group-filter="important">Чухал посттой</button></div>
+        <div class="classboard-admin__groups" data-admin-group-cards aria-label="Бүлгээр ангилсан самбар"></div>
+        <button type="button" class="classboard-admin__more" data-admin-group-more hidden>Бусад бүлгийг харах</button>
+      </section>
     {% endif %}
 
     {% if is_staff %}
@@ -363,6 +377,51 @@
         if (seenGroups[group]) button.remove();
         else { seenGroups[group] = true; button.hidden = false; }
       });
+      var adminGroupCards = document.querySelector('[data-admin-group-cards]');
+      if (adminGroupCards) {
+        var adminGroupTotal = document.querySelector('[data-admin-group-total]');
+        var adminImportantTotal = document.querySelector('[data-admin-important-total]');
+        var uniqueButtons = Array.prototype.slice.call(groupButtons).filter(function (button) { return button.isConnected && button.getAttribute('data-board-group'); });
+        if (adminGroupTotal) adminGroupTotal.textContent = uniqueButtons.length;
+        if (adminImportantTotal) adminImportantTotal.textContent = Array.prototype.filter.call(posts, function (post) { return post.getAttribute('data-board-important') === 'true'; }).length;
+        var showAllGroups = false;
+        var adminGroupSearch = document.querySelector('[data-admin-group-search]');
+        var selectedAdminFilter = 'all';
+        var adminMore = document.querySelector('[data-admin-group-more]');
+        function filterAdminCards() {
+          var query = (adminGroupSearch && adminGroupSearch.value || '').toLowerCase().trim();
+          var visibleCount = 0;
+          adminGroupCards.querySelectorAll('[data-admin-group-card]').forEach(function (card) {
+            var matchesSearch = card.getAttribute('data-group-name').toLowerCase().indexOf(query) !== -1;
+            var matchesFilter = selectedAdminFilter === 'all' || card.getAttribute('data-group-important') === 'true';
+            var show = matchesSearch && matchesFilter && (showAllGroups || visibleCount < 6);
+            card.hidden = !show;
+            if (matchesSearch && matchesFilter) visibleCount += 1;
+          });
+          if (adminMore) { adminMore.hidden = visibleCount <= 6 || !!query || selectedAdminFilter !== 'all'; adminMore.textContent = showAllGroups ? 'Цөөн бүлэг харуулах' : 'Бусад ' + (visibleCount - 6) + ' бүлгийг харах'; }
+        }
+        if (uniqueButtons.length) {
+          uniqueButtons.forEach(function (button) {
+            var group = button.getAttribute('data-board-group');
+            var count = Array.prototype.filter.call(posts, function (post) { return (post.getAttribute('data-board-groups') || '').split(' ').indexOf(group) !== -1; }).length;
+            var hasImportant = Array.prototype.some.call(posts, function (post) { return (post.getAttribute('data-board-groups') || '').split(' ').indexOf(group) !== -1 && post.getAttribute('data-board-important') === 'true'; });
+            var card = document.createElement('article');
+            card.setAttribute('data-admin-group-card', ''); card.setAttribute('data-group-name', button.textContent); card.setAttribute('data-group-important', String(hasImportant));
+            var title = document.createElement('strong'); title.textContent = button.textContent;
+            var meta = document.createElement('span'); meta.textContent = count + ' пост' + (hasImportant ? ' · Чухал мэдээтэй' : '');
+            var action = document.createElement('button'); action.type = 'button'; action.textContent = 'Самбарыг харах';
+            action.addEventListener('click', function () { button.click(); document.querySelector('.classboard__feed, .classboard-empty').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+            card.appendChild(title); card.appendChild(meta); card.appendChild(action);
+            adminGroupCards.appendChild(card);
+          });
+          if (adminGroupSearch) adminGroupSearch.addEventListener('input', filterAdminCards);
+          document.querySelectorAll('[data-admin-group-filter]').forEach(function (button) { button.addEventListener('click', function () { selectedAdminFilter = button.getAttribute('data-admin-group-filter'); document.querySelectorAll('[data-admin-group-filter]').forEach(function (item) { item.classList.toggle('is-active', item === button); }); filterAdminCards(); }); });
+          if (adminMore) adminMore.addEventListener('click', function () { showAllGroups = !showAllGroups; filterAdminCards(); });
+          filterAdminCards();
+        } else {
+          adminGroupCards.innerHTML = '<p>Бүлгийн анхны пост нийтлэгдсэний дараа тухайн бүлгийн самбар энд карт хэлбэрээр гарна.</p>';
+        }
+      }
       if (year) {
         var seenYears = {};
         Array.prototype.slice.call(year.options).forEach(function (option) {

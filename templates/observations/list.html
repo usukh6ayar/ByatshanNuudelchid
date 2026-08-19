@@ -80,7 +80,7 @@
       <span class="type-tab__icon" aria-hidden="true">
         <svg class="ic ic--sm" aria-hidden="true"><use href="#i-observation"></use></svg>
       </span>
-      Ажиглалт
+      <span class="type-tab__copy"><b>Ажиглалт</b><small>Өдөр тутмын ажиглалт</small></span>
       {% if not filters.type %}<span class="type-tab__count">{{ page.paginator.count }}</span>{% endif %}
     </a>
 
@@ -89,7 +89,7 @@
       <span class="type-tab__icon" aria-hidden="true">
         <svg class="ic ic--sm" aria-hidden="true"><use href="#i-chat"></use></svg>
       </span>
-      Ярилцлага
+      <span class="type-tab__copy"><b>Ярилцлага</b><small>Хүүхдийн яриа, санал</small></span>
       {% if filters.type == yarilzlaga_pk %}<span class="type-tab__count">{{ page.paginator.count }}</span>{% endif %}
     </a>
 
@@ -98,7 +98,7 @@
       <span class="type-tab__icon" aria-hidden="true">
         <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
       </span>
-      Бүтээл
+      <span class="type-tab__copy"><b>Бүтээл</b><small>Зураг, бүтээлийн баримт</small></span>
       {% if filters.type == buteel_pk %}<span class="type-tab__count">{{ page.paginator.count }}</span>{% endif %}
     </a>
   </div>
