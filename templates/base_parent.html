@@ -80,6 +80,10 @@
           <svg class="ic" aria-hidden="true"><use href="#i-money"></use></svg>
           Санхүү
         </a>
+        <a href="{% url 'children:parent_child_detail' child.pk %}#parent-kindergarten">
+          <svg class="ic" aria-hidden="true"><use href="#i-dashboard"></use></svg>
+          Цэцэрлэгийн мэдээлэл
+        </a>
       {% endif %}
       <a href="{% url 'accounts:profile' %}"
          {% if nav == 'profile' %}aria-current="page"{% endif %}>

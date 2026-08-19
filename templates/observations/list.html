@@ -18,13 +18,109 @@
    worth using. A list of links is what this is, and what a screen reader
    should hear. {% endcomment %}
 
-{% block title %}Ажиглалт{% endblock %}
-{% block heading %}Ажиглалт{% endblock %}
+{% block title %}{% if base_template == "base_parent.html" %}Хөгжил ба цэцэрлэгтээ{% else %}Ажиглалт{% endif %}{% endblock %}
+{% block heading %}{% if base_template == "base_parent.html" %}Хөгжил ба цэцэрлэгтээ{% else %}Ажиглалт{% endif %}{% endblock %}
 {% block lede %}
-  <p class="lede">Бүртгэсэн ажиглалтууд, шинээс нь эхэлж.</p>
+  {% if base_template == "base_parent.html" %}
+    <p class="lede">{{ child.full_name }}-ийн цэцэрлэгийн өдөр тутмын үйл явдал, бүтээл, ахицыг эндээс харна.</p>
+  {% else %}
+    <p class="lede">Бүртгэсэн ажиглалтууд, шинээс нь эхэлж.</p>
+  {% endif %}
 {% endblock %}
 
 {% block content %}
+{% if base_template == "base_parent.html" %}
+  <section class="parent-development" aria-label="Хүүхдийн хөгжил ба цэцэрлэгийн мэдээлэл">
+    <header class="parent-development__child">
+      {% include "components/avatar.html" with person=child %}
+      <div>
+        <strong>{{ child.full_name }}</strong>
+        <span>{{ child.age }} нас{% for enrollment in child.active_enrollments %} · {{ enrollment.group.name }}{% endfor %}</span>
+      </div>
+    </header>
+
+    <div class="parent-development__tabs" role="tablist" aria-label="Хөгжлийн мэдээлэл">
+      <button type="button" class="is-active" role="tab" aria-selected="true" data-parent-development-tab="events">Сүүлийн үйл явдал</button>
+      <button type="button" role="tab" aria-selected="false" data-parent-development-tab="gallery">Бүтээл ба зураг</button>
+      <button type="button" role="tab" aria-selected="false" data-parent-development-tab="progress">Хөгжлийн ахиц</button>
+    </div>
+
+    <section data-parent-development-panel="events">
+      <div class="parent-development__section-head"><div><h2>Сүүлийн үйл явдал</h2><p>Багшийн хуваалцсан тэмдэглэлүүд</p></div><span>{{ page.paginator.count }} тэмдэглэл</span></div>
+      <div class="parent-development__timeline">
+        {% for observation in page.object_list %}
+          <a class="parent-development__event" href="{% url 'observations:detail' child.pk observation.pk %}">
+            <span class="parent-development__event-date">{{ observation.observed_on|date:"Y.m.d" }}</span>
+            <span class="parent-development__event-body">
+              <small>{{ observation.type.name }}{% for link in observation.domain_links.all %} · {{ link.domain.name }}{% endfor %}</small>
+              <strong>{{ observation.summary|default:"Тэмдэглэл" }}</strong>
+              {% if observation.teacher_comment %}<em>{{ observation.teacher_comment|truncatewords:18 }}</em>{% endif %}
+            </span>
+            <b aria-hidden="true">›</b>
+          </a>
+        {% empty %}
+          <div class="parent-development__empty"><span aria-hidden="true">🌱</span><strong>Одоогоор хуваалцсан тэмдэглэл алга</strong><p>Багш шинэ тэмдэглэл хуваалцмагц энд харагдана.</p></div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section data-parent-development-panel="gallery" hidden>
+      <div class="parent-development__section-head"><div><h2>Бүтээл ба зураг</h2><p>Багшийн хуваалцсан дурсамжууд</p></div></div>
+      <div class="parent-development__gallery">
+        {% for observation in page.object_list %}
+          {% for photo in observation.media_links.all %}
+            <button type="button" class="parent-development__photo" data-parent-photo
+                    data-photo-src="{% url 'media:serve' photo.media_file.public_id 'full' %}"
+                    data-photo-caption="{{ observation.summary }} · {{ observation.observed_on|date:'Y.m.d' }}">
+              <img src="{% url 'media:serve' photo.media_file.public_id 'full' %}" alt="{{ observation.summary }}" loading="lazy">
+              <span>{{ observation.observed_on|date:"Y.m.d" }}</span>
+            </button>
+          {% endfor %}
+        {% endfor %}
+      </div>
+      <div class="parent-development__empty" data-parent-gallery-empty hidden><span aria-hidden="true">🖼️</span><strong>Зураг хараахан хуваалцаагүй байна</strong><p>Багш зураг нэмэхэд энд цомгоор харагдана.</p></div>
+      {% if page.object_list %}<p class="parent-development__gallery-note">Зураг дээр дарж томоор хараарай.</p>{% endif %}
+    </section>
+
+    <section data-parent-development-panel="progress" hidden>
+      <div class="parent-development__section-head"><div><h2>Хөгжлийн ахиц</h2><p>Багшийн хуваалцсан мэдээллийн товч тойм</p></div></div>
+      <div class="parent-development__progress-cards">
+        <article><small>Хуваалцсан тэмдэглэл</small><strong>{{ page.paginator.count }}</strong><span>цэцэрлэгийн үйл явдал</span></article>
+        <article><small>Сүүлд шинэчлэгдсэн</small><strong>{% if page.object_list.0 %}{{ page.object_list.0.observed_on|date:"M сарын d" }}{% else %}—{% endif %}</strong><span>багшийн хуваалцсан огноо</span></article>
+      </div>
+      <div class="parent-development__insight">
+        <span aria-hidden="true">✨</span>
+        <div><strong>Улирлын хөгжлийн дүгнэлт</strong><p>Багш улирлын нэгдсэн дүгнэлтийг хуваалцсаны дараа энд хүүхдийн хөгжлийн чиглэлүүдийн ахиц цэгцтэй харагдана.</p></div>
+      </div>
+    </section>
+  </section>
+
+  <div class="parent-photo-lightbox" data-parent-photo-lightbox hidden>
+    <button type="button" aria-label="Хаах" data-parent-photo-close>×</button>
+    <img src="" alt="" data-parent-photo-image">
+    <p data-parent-photo-caption></p>
+  </div>
+
+  <script>
+    (function () {
+      var tabs = document.querySelectorAll('[data-parent-development-tab]');
+      var panels = document.querySelectorAll('[data-parent-development-panel]');
+      tabs.forEach(function (tab) { tab.addEventListener('click', function () {
+        tabs.forEach(function (item) { item.classList.toggle('is-active', item === tab); item.setAttribute('aria-selected', item === tab ? 'true' : 'false'); });
+        panels.forEach(function (panel) { panel.hidden = panel.dataset.parentDevelopmentPanel !== tab.dataset.parentDevelopmentTab; });
+      }); });
+      var lightbox = document.querySelector('[data-parent-photo-lightbox]');
+      var galleryEmpty = document.querySelector('[data-parent-gallery-empty]');
+      var galleryNote = document.querySelector('.parent-development__gallery-note');
+      if (galleryEmpty && !document.querySelector('[data-parent-photo]')) { galleryEmpty.hidden = false; if (galleryNote) galleryNote.hidden = true; }
+      if (!lightbox) return;
+      var image = lightbox.querySelector('[data-parent-photo-image]');
+      var caption = lightbox.querySelector('[data-parent-photo-caption]');
+      document.querySelectorAll('[data-parent-photo]').forEach(function (button) { button.addEventListener('click', function () { image.src = button.dataset.photoSrc; image.alt = button.dataset.photoCaption; caption.textContent = button.dataset.photoCaption; lightbox.hidden = false; }); });
+      lightbox.addEventListener('click', function (event) { if (event.target === lightbox || event.target.closest('[data-parent-photo-close]')) { lightbox.hidden = true; image.src = ''; } });
+    }());
+  </script>
+{% else %}
   {% comment %} Which child, in the same strip the entry form uses — this
      list is scoped to one child by the URL, so the page must say who.
      {% endcomment %}
@@ -80,7 +176,7 @@
       <span class="type-tab__icon" aria-hidden="true">
         <svg class="ic ic--sm" aria-hidden="true"><use href="#i-observation"></use></svg>
       </span>
-      Ажиглалт
+      <span class="type-tab__copy"><b>Ажиглалт</b><small>Өдөр тутмын ажиглалт</small></span>
       {% if not filters.type %}<span class="type-tab__count">{{ page.paginator.count }}</span>{% endif %}
     </a>
 
@@ -89,7 +185,7 @@
       <span class="type-tab__icon" aria-hidden="true">
         <svg class="ic ic--sm" aria-hidden="true"><use href="#i-chat"></use></svg>
       </span>
-      Ярилцлага
+      <span class="type-tab__copy"><b>Ярилцлага</b><small>Хүүхдийн яриа, санал</small></span>
       {% if filters.type == yarilzlaga_pk %}<span class="type-tab__count">{{ page.paginator.count }}</span>{% endif %}
     </a>
 
@@ -98,7 +194,7 @@
       <span class="type-tab__icon" aria-hidden="true">
         <svg class="ic ic--sm" aria-hidden="true"><use href="#i-photo"></use></svg>
       </span>
-      Бүтээл
+      <span class="type-tab__copy"><b>Бүтээл</b><small>Зураг, бүтээлийн баримт</small></span>
       {% if filters.type == buteel_pk %}<span class="type-tab__count">{{ page.paginator.count }}</span>{% endif %}
     </a>
   </div>
@@ -1193,4 +1289,5 @@
     });
   });
 </script>
+{% endif %}
 {% endblock %}

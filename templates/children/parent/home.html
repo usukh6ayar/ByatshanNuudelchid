@@ -32,72 +32,49 @@
 {% block heading %}Нүүр хуудас{% endblock %}
 
 {% block content %}
-  {% comment %} One warm block per screen — the 20% of the 80/20. The
-     mockup's mobile sheets open every parent variant this way. {% endcomment %}
-  <div class="greet">
-    <h2>Сайн байна уу, {{ request.user.first_name|default:request.user }}! 💜</h2>
-    <p>{{ child.first_name }}-ийн сүүлийн үеийн мэдээллийг эндээс харна уу.</p>
-  </div>
-
   {% include "components/child_switcher.html" %}
 
   <section class="parent-hub" aria-label="{{ child.full_name }}-ийн мэдээлэл">
     <a class="parent-hub__child" href="{% url 'children:parent_child_detail' child.pk %}">
       {% include "components/avatar.html" with person=child size="lg" %}
       <span>
-        <span class="parent-hub__child-name">{{ child.full_name }}</span>
         <span class="parent-hub__child-meta">
           {{ child.age }} нас{% if enrollment %} · {{ enrollment.group.name }}{% endif %}
         </span>
+        <span class="parent-hub__attendance"><i></i> Өнөөдрийн ирц бүртгэгдээгүй байна</span>
         <span class="parent-hub__child-go">Хүүхдийн дэлгэрэнгүй хуудас →</span>
       </span>
     </a>
 
     <div class="parent-hub__label">
-      <strong>{{ child.first_name }}-ийн мэдээлэл</strong>
-      <span>Доорх хэсгээс сонгоно уу</span>
+      <strong>Ангийн самбар</strong>
+      <a href="{% url 'comms:list' %}">Бүгдийг харах →</a>
     </div>
+    <a class="parent-home-news" href="{% url 'comms:list' %}"><span class="parent-home-news__icon"><svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg></span><span><strong>{% if unread_announcements %}{{ unread_announcements }} шинэ мэдээ байна{% else %}Багшийн мэдээ, зарлал{% endif %}</strong><small>Ангийн сүүлийн мэдээллийг харах</small></span><b aria-hidden="true">→</b></a>
+
+    <div class="parent-hub__label parent-hub__label--compact"><strong>{{ child.first_name }}-ийн мэдээлэл</strong></div>
 
     <div class="parent-hub__grid">
-      <a class="parent-action parent-action--portfolio" href="{% url 'portfolio:overview' child.pk %}">
-        <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-portfolio"></use></svg></span>
-        <span><strong>Хүүхдийн мэдээлэл</strong><small>Миний тухай, нас насны хөгжил</small></span>
-        <b aria-hidden="true">→</b>
+      <a class="parent-action parent-action--attendance" href="{% url 'children:parent_child_detail' child.pk %}#parent-attendance">
+        <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-children"></use></svg></span>
+        <span><strong>Өнөөдрийн ирц</strong><small>Ирц бүртгэгдсэний дараа харагдана</small></span><b aria-hidden="true">→</b>
       </a>
-      <a class="parent-action parent-action--observation" href="{% url 'observations:list' child.pk %}">
-        <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-observation"></use></svg></span>
-        <span><strong>Би цэцэрлэгтээ</strong><small>Ажиглалт, зураг, тэмдэглэл</small></span>
-        <b aria-hidden="true">→</b>
+      <a class="parent-action parent-action--meal" href="{% url 'children:parent_child_detail' child.pk %}#parent-meals">
+        <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-meal"></use></svg></span>
+        <span><strong>Өнөөдрийн хоол</strong><small>7 хоногийн цэс, илчлэг, бодит зураг</small></span><b aria-hidden="true">→</b>
       </a>
-      <a class="parent-action parent-action--assessment" href="{% url 'assessment:child' child.pk %}">
+      <a class="parent-action parent-action--development" href="{% url 'observations:list' child.pk %}">
         <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg></span>
-        <span><strong>Хөгжлийн үнэлгээ</strong><small>Хөгжлийн чиглэл бүрийн ахиц</small></span>
-        <b aria-hidden="true">→</b>
-      </a>
-      <a class="parent-action parent-action--report" href="{% url 'reports:request' child.pk %}">
-        <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-report"></use></svg></span>
-        <span><strong>Тайлан, дурсамж</strong><small>Хувийн тайлангаа татах</small></span>
-        <b aria-hidden="true">→</b>
-      </a>
-      <a class="parent-action parent-action--news" href="{% url 'comms:list' %}">
-        <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg></span>
-        <span><strong>Мэдээ, мэдэгдэл</strong><small>{% if unread_announcements %}{{ unread_announcements }} шинэ мэдэгдэл{% else %}Багшийн мэдээлэл, зар{% endif %}</small></span>
-        <b aria-hidden="true">→</b>
-      </a>
-      <a class="parent-action parent-action--gallery" href="{% url 'portfolio:overview' child.pk %}#gallery">
-        <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-photo"></use></svg></span>
-        <span><strong>Зургийн цомог</strong><small>Нас бүрийн зураг, дурсамж</small></span>
-        <b aria-hidden="true">→</b>
-      </a>
-      <a class="parent-action parent-action--comparison" href="{% url 'portfolio:overview' child.pk %}#memories">
-        <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-assessment"></use></svg></span>
-        <span><strong>Хөгжлийн харьцуулалт</strong><small>2–5 насны хөгжлийн мэдээлэл</small></span>
-        <b aria-hidden="true">→</b>
+        <span><strong>Хөгжил ба цэцэрлэгтээ</strong><small>Ажиглалт, бүтээл, хөгжлийн ахиц</small></span><b aria-hidden="true">→</b>
       </a>
       <a class="parent-action parent-action--survey" href="{% url 'children:parent_child_detail' child.pk %}#parent-surveys">
         <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-survey"></use></svg></span>
-        <span><strong>Судалгаа</strong><small>Асуулга, санал хүсэлт</small></span>
+        <span><strong>Бөглөх судалгаа</strong><small>Асуулга, санал хүсэлт</small></span>
         <b aria-hidden="true">→</b>
+      </a>
+      <a class="parent-action parent-action--finance" href="{% url 'children:parent_child_detail' child.pk %}#parent-finance">
+        <span class="parent-action__icon"><svg class="ic" aria-hidden="true"><use href="#i-money"></use></svg></span>
+        <span><strong>Санхүү</strong><small>Төлбөр, үлдэгдэл, баримт</small></span><b aria-hidden="true">→</b>
       </a>
     </div>
   </section>

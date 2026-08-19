@@ -1,56 +1,36 @@
 {% extends base_template %}
-{# RFP §4.1 #}
-
 {% block title %}Миний тухай{% endblock %}
-{% block heading %}Миний тухай — {{ child.full_name }}{% endblock %}
-
+{% block heading %}Миний тухай{% endblock %}
 {% block content %}
-  <div class="card" style="max-width:760px">
-    {% if error %}<p class="msg msg--error" role="alert">{{ error }}</p>{% endif %}
-
-    <form method="post" novalidate>
-      {% csrf_token %}
-
-      <label for="id_introduction">Хүүхдийн танилцуулга</label>
-      <textarea name="introduction" id="id_introduction"
-                placeholder="Хүүхдийн тухай товч">{{ form.introduction|default:'' }}</textarea>
-
-      <label for="id_name_meaning">Нэрний утга</label>
-      <textarea name="name_meaning" id="id_name_meaning">{{ form.name_meaning|default:'' }}</textarea>
-
-      <label for="id_memorable_sayings">Миний хэлсэн сонирхолтой үг</label>
-      <textarea name="memorable_sayings" id="id_memorable_sayings">{{ form.memorable_sayings|default:'' }}</textarea>
-
-      <label for="id_dream">Миний мөрөөдөл</label>
-      <textarea name="dream" id="id_dream">{{ form.dream|default:'' }}</textarea>
-
-      <label for="id_distinguishing_traits">Миний онцлог</label>
-      <textarea name="distinguishing_traits" id="id_distinguishing_traits">{{ form.distinguishing_traits|default:'' }}</textarea>
-
-      <div class="grid grid--2" style="gap:0 16px">
-        <div>
-          <label for="id_height_cm">Миний өндөр (см)</label>
-          <input type="number" step="0.1" min="30" max="200"
-                 name="height_cm" id="id_height_cm"
-                 value="{{ form.height_cm|default:'' }}">
-        </div>
-        <div>
-          <label for="id_weight_kg">Миний жин (кг)</label>
-          <input type="number" step="0.01" min="2" max="100"
-                 name="weight_kg" id="id_weight_kg"
-                 value="{{ form.weight_kg|default:'' }}">
-        </div>
-      </div>
-
-      <label for="id_recorded_on">Бүртгэсэн огноо</label>
-      <input type="date" name="recorded_on" id="id_recorded_on"
-             value="{{ form.recorded_on|date:'Y-m-d'|default:'' }}">
-
-      <div class="btn-row">
-        <button type="submit" class="btn">Хадгалах</button>
-        <a class="btn btn--ghost"
-           href="{% url 'portfolio:overview' child.pk %}">Цуцлах</a>
-      </div>
-    </form>
-  </div>
+<section class="about-edit-shell" aria-label="{{ child.full_name }}-ийн хувийн мэдээлэл">
+  <header class="about-edit-hero">
+    {% if child.photo %}<img src="{% url 'media:serve' child.photo.public_id 'full' %}" alt="{{ child.full_name }}-ийн зураг">{% else %}<span class="about-edit-hero__avatar">{{ child.first_name|slice:':1' }}</span>{% endif %}
+    <div><small>Энэ бол би</small><h2>Миний тухай</h2><p>{{ child.full_name }}{% for enrollment in child.active_enrollments %} · {{ enrollment.group.name }} бүлэг{% endfor %}</p></div>
+    <a class="about-edit-hero__photo" href="{% url 'media:child_photo' child.pk %}" aria-label="Зураг солих">📷</a>
+  </header>
+  <form method="post" class="about-edit-form" novalidate>
+    {% csrf_token %}{% if error %}<p class="msg msg--error" role="alert">{{ error }}</p>{% endif %}
+    <div class="about-edit-form__title"><span>♙</span><div><strong>Нэр, хувийн мэдээлэл</strong><small>Хүүхдийн үндсэн танилцуулга.</small></div></div>
+    <div class="about-edit-grid">
+      <label>Ургийн овог<input value="{{ child.last_name }}" readonly></label><label>Овог<input value="{{ child.last_name }}" readonly></label>
+      <label>Нэр<input value="{{ child.first_name }}" readonly></label><label>Өхөөрддөг нэр<input name="nickname" value="{{ form.nickname|default:'' }}" placeholder="Жишээ: Бэби"></label>
+      <label>Төрсөн өдөр<input type="date" value="{{ child.date_of_birth|date:'Y-m-d' }}" readonly></label><label>Хүйс<input value="{{ child.get_sex_display }}" readonly></label>
+      <label>Төрсөн газар<input name="birth_place" value="{{ form.birth_place|default:'' }}" placeholder="Жишээ: УБ"></label>
+      <label>Цусны бүлэг<select name="blood_type"><option value="">Сонгох</option><option value="А" {% if form.blood_type == 'А' %}selected{% endif %}>🩸 А</option><option value="В" {% if form.blood_type == 'В' %}selected{% endif %}>🩸 В</option><option value="АВ" {% if form.blood_type == 'АВ' %}selected{% endif %}>🩸 АВ</option><option value="О" {% if form.blood_type == 'О' %}selected{% endif %}>🩸 О</option></select></label>
+      <label>Үсний өнгө<select name="hair_color"><option value="">Сонгох</option><option value="Хар" {% if form.hair_color == 'Хар' %}selected{% endif %}>● Хар</option><option value="Хүрэн" {% if form.hair_color == 'Хүрэн' %}selected{% endif %}>● Хүрэн</option><option value="Шаравтар" {% if form.hair_color == 'Шаравтар' %}selected{% endif %}>● Шаравтар</option></select></label>
+      <label>Нүдний өнгө<select name="eye_color"><option value="">Сонгох</option><option value="Бор" {% if form.eye_color == 'Бор' %}selected{% endif %}>● Бор</option><option value="Хар" {% if form.eye_color == 'Хар' %}selected{% endif %}>● Хар</option><option value="Ногоон" {% if form.eye_color == 'Ногоон' %}selected{% endif %}>● Ногоон</option></select></label>
+    </div>
+    <details class="zodiac-picker zodiac-picker--animals" data-animal-picker><summary><b>Арван хоёр жил</b><span data-animal-current>Сонгох</span></summary><div class="zodiac-picker__grid" data-animal-grid>
+      <button type="button" data-animal="Хулгана">🐭<small>Хулгана</small></button><button type="button" data-animal="Үхэр">🐮<small>Үхэр</small></button><button type="button" data-animal="Бар">🐯<small>Бар</small></button><button type="button" data-animal="Туулай">🐰<small>Туулай</small></button><button type="button" data-animal="Луу">🐲<small>Луу</small></button><button type="button" data-animal="Могой">🐍<small>Могой</small></button><button type="button" data-animal="Морь">🐴<small>Морь</small></button><button type="button" data-animal="Хонь">🐑<small>Хонь</small></button><button type="button" data-animal="Бич">🐵<small>Бич</small></button><button type="button" data-animal="Тахиа">🐔<small>Тахиа</small></button><button type="button" data-animal="Нохой">🐶<small>Нохой</small></button><button type="button" data-animal="Гахай">🐷<small>Гахай</small></button>
+    </div></details>
+    <details class="zodiac-picker" data-zodiac-picker><summary><b>Одны орд</b><span data-zodiac-current>Сонгох</span></summary><div class="zodiac-picker__grid" data-zodiac-grid>
+      <button type="button" data-sign="Хонь">♈<small>Хонь</small></button><button type="button" data-sign="Үхэр">♉<small>Үхэр</small></button><button type="button" data-sign="Ихэр">♊<small>Ихэр</small></button><button type="button" data-sign="Мэлхий">♋<small>Мэлхий</small></button><button type="button" data-sign="Арслан">♌<small>Арслан</small></button><button type="button" data-sign="Охин">♍<small>Охин</small></button><button type="button" data-sign="Жинлүүр">♎<small>Жинлүүр</small></button><button type="button" data-sign="Хилэнц">♏<small>Хилэнц</small></button><button type="button" data-sign="Нум">♐<small>Нум</small></button><button type="button" data-sign="Матар">♑<small>Матар</small></button><button type="button" data-sign="Хумх">♒<small>Хумх</small></button><button type="button" data-sign="Загас">♓<small>Загас</small></button>
+    </div></details>
+    <input type="hidden" name="introduction" value="{{ form.introduction|default:'' }}"><input type="hidden" name="name_meaning" value="{{ form.name_meaning|default:'' }}"><input type="hidden" name="memorable_sayings" value="{{ form.memorable_sayings|default:'' }}"><input type="hidden" name="dream" value="{{ form.dream|default:'' }}"><input type="hidden" name="distinguishing_traits" value="{{ form.distinguishing_traits|default:'' }}"><input type="hidden" name="height_cm" value="{{ form.height_cm|default:'' }}"><input type="hidden" name="weight_kg" value="{{ form.weight_kg|default:'' }}"><input type="hidden" name="recorded_on" value="{{ form.recorded_on|date:'Y-m-d'|default:'' }}">
+    <div class="btn-row"><button type="submit" class="btn">Хадгалах</button><a class="btn btn--ghost" href="{% url 'portfolio:overview' child.pk %}">Буцах</a></div>
+  </form>
+</section>
+<script>
+(function(){var p='{{ child.date_of_birth|date:"Y-m-d" }}'.split('-'),year=+p[0],m=+p[1],d=+p[2];function picker(current,buttons,details,key,initial){function choose(name,close){current.textContent=name;buttons.forEach(function(b){b.classList.toggle('is-selected',b.dataset[key]===name)});if(close)details.open=false}choose(initial,false);buttons.forEach(function(b){b.addEventListener('click',function(){choose(b.dataset[key],true)})})}var animals=['Хулгана','Үхэр','Бар','Туулай','Луу','Могой','Морь','Хонь','Бич','Тахиа','Нохой','Гахай'],animal=animals[((year-2020)%12+12)%12];picker(document.querySelector('[data-animal-current]'),document.querySelectorAll('[data-animal-grid] button'),document.querySelector('[data-animal-picker]'),'animal',animal);var starts=[[1,20,'Матар'],[2,19,'Хумх'],[3,21,'Загас'],[4,20,'Хонь'],[5,21,'Үхэр'],[6,22,'Ихэр'],[7,23,'Мэлхий'],[8,23,'Арслан'],[9,23,'Охин'],[10,23,'Жинлүүр'],[11,22,'Хилэнц'],[12,22,'Нум']],choices=starts.filter(function(x){return m>x[0]||(m===x[0]&&d>=x[1])}),sign=(choices.pop()||starts[0])[2];picker(document.querySelector('[data-zodiac-current]'),document.querySelectorAll('[data-zodiac-grid] button'),document.querySelector('[data-zodiac-picker]'),'sign',sign)}());
+</script>
 {% endblock %}
